@@ -4,6 +4,7 @@ import { GraduationCap, Sparkles, Mail, Lock, AlertCircle, CalendarDays, Target,
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/UI';
 import InteractiveHoverButton from '../components/InteractiveHoverButton';
+import TypingAnimation from '../components/TypingAnimation';
 
 const FEATURES = [
   { icon: CalendarDays, label: 'Smart timetable', color: 'text-sky-300' },
@@ -93,7 +94,14 @@ export default function Login() {
               Your Career.
             </span>
             <span className="block animate-fade-up" style={{ animationDelay: '0.34s' }}>
-              <span className="shimmer-text animate-shimmer font-extrabold">Your AI Assistant.</span>
+              <TypingAnimation
+                words={['Your AI Assistant.', 'Your Study Planner.', 'Your Career Matchmaker.']}
+                loop
+                duration={80}
+                pauseDelay={1400}
+                className="shimmer-text animate-shimmer font-extrabold"
+                cursorClassName="!text-white"
+              />
             </span>
           </h1>
           <p className="text-white/75 text-lg max-w-md animate-fade-up drop-shadow" style={{ animationDelay: '0.46s' }}>

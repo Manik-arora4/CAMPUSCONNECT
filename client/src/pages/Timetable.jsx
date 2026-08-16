@@ -3,6 +3,7 @@ import { Plus, Copy, Trash2, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
 import { PageLoader, Card, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtTime, DAYS, todayIndex } from '../lib/format';
 import { CalendarDays } from 'lucide-react';
 
@@ -55,9 +56,9 @@ export default function Timetable() {
           <h1 className="page-title">Timetable</h1>
           <p className="page-subtitle">Your weekly class schedule. Tap a day to see classes.</p>
         </div>
-        <button className="btn-primary" onClick={() => setModalOpen(true)}>
+        <PulsatingButton onClick={() => setModalOpen(true)}>
           <Plus size={16} /> Add class
-        </button>
+        </PulsatingButton>
       </div>
 
       {conflicts.length > 0 ? (

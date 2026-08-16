@@ -57,6 +57,10 @@ export default {
           from: { transform: 'rotate(0deg)' },
           to: { transform: 'rotate(360deg)' },
         },
+        'blink-cursor': {
+          '0%, 49%': { opacity: '1' },
+          '50%, 100%': { opacity: '0' },
+        },
       },
       animation: {
         float: 'float 7s ease-in-out infinite',
@@ -67,6 +71,7 @@ export default {
         'gradient-pan': 'gradient-pan 8s ease infinite',
         'pulse-soft': 'pulse-soft 3.5s ease-in-out infinite',
         'spin-slow': 'spinSlow 14s linear infinite',
+        'blink-cursor': 'blink-cursor 1.2s step-end infinite',
       },
     },
   },

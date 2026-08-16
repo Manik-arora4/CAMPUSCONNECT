@@ -3,6 +3,7 @@ import { Sparkles, Save, UserCircle2, GraduationCap, MapPin, CheckCircle2 } from
 import { api } from '../lib/api';
 import { PageLoader, Card, Field, Badge, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
 
 const SKILLS = ['Python', 'JavaScript', 'Java', 'C', 'C++', 'SQL', 'React', 'Node.js', 'Machine Learning', 'AI', 'Data Science', 'HTML', 'CSS', 'Flutter', 'UI/UX', 'Cloud', 'Docker', 'Cybersecurity'];
@@ -247,9 +248,9 @@ export default function Profile() {
         </Card>
 
         <div className="flex items-center gap-3">
-          <button type="submit" className="btn-primary !px-6" disabled={saving}>
+          <PulsatingButton type="submit" className="!px-6" disabled={saving}>
             <Save size={16} /> {saving ? 'Saving…' : 'Save profile'}
-          </button>
+          </PulsatingButton>
           {saved ? (
             <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
               <CheckCircle2 size={16} /> Saved!
