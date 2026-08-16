@@ -91,21 +91,26 @@ export default function Opportunities() {
 
       {/* Filters */}
       <div className="flex flex-col lg:flex-row gap-3 lg:items-center">
-        <div className="flex flex-wrap gap-1.5">
-          {CATEGORIES.slice(0, 7).map((c) => (
-            <button
-              key={c}
-              onClick={() => {
-                setCategory(c);
-                setAiResults(null);
-              }}
-              className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
-                category === c && aiResults === null ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {c}
-            </button>
-          ))}
+        <div className="flex flex-wrap gap-2">
+          {CATEGORIES.slice(0, 7).map((c) => {
+            const active = category === c && aiResults === null;
+            return (
+              <button
+                key={c}
+                onClick={() => {
+                  setCategory(c);
+                  setAiResults(null);
+                }}
+                className={`rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition duration-300 ${
+                  active
+                    ? 'bg-gradient-to-r from-brand-600 to-violet-600 text-white shadow-glow-sm scale-[1.04]'
+                    : 'bg-white border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-700 hover:bg-brand-50 hover:-translate-y-0.5'
+                }`}
+              >
+                {c === 'all' ? '✨ All' : c}
+              </button>
+            );
+          })}
         </div>
         <div className="flex items-center gap-2 lg:ml-auto">
           <select value={mode} onChange={(e) => setMode(e.target.value)} className="input !w-auto !py-1.5 text-xs capitalize">
@@ -143,7 +148,7 @@ export default function Opportunities() {
             const opp = item.opportunity || item;
             const score = item.score;
             return (
-              <Link key={opp._id} to={`/opportunities/${opp._id}`} className="card p-5 hover:shadow-lift hover:-translate-y-0.5 transition group">
+              <Link key={opp._id} to={`/opportunities/${opp._id}`} className="card card-hover group p-5 hover:border-brand-200">
                 <div className="flex items-start justify-between gap-2">
                   <Badge className={categoryColor(opp.category)}>{opp.category}</Badge>
                   <div className="flex items-center gap-1">
@@ -167,7 +172,10 @@ export default function Opportunities() {
 
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {(opp.skillsRequired || []).slice(0, 3).map((s) => (
-                    <span key={s} className="text-[11px] bg-slate-100 text-slate-600 rounded-md px-2 py-0.5">
+                    <span
+                      key={s}
+                      className="text-[11px] font-medium bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 text-slate-600 rounded-full px-2.5 py-1 group-hover:border-brand-200 group-hover:text-brand-700 transition"
+                    >
                       {s}
                     </span>
                   ))}

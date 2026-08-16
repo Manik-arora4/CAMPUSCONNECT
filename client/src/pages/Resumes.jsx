@@ -139,7 +139,7 @@ export default function Resumes() {
                   {r.analysis?.parsed?.skills?.length ? (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {r.analysis.parsed.skills.slice(0, 10).map((s) => (
-                        <span key={s} className="text-[11px] bg-brand-50 text-brand-700 rounded-md px-2 py-0.5">
+                        <span key={s} className="skill-chip border-brand-200 bg-brand-50/50 text-brand-700 hover:border-brand-300">
                           {s}
                         </span>
                       ))}
@@ -149,7 +149,7 @@ export default function Resumes() {
                   {r.analysis?.missingKeywords?.length ? (
                     <div className="mt-2 flex flex-wrap gap-1.5">
                       {r.analysis.missingKeywords.slice(0, 6).map((s) => (
-                        <span key={s} className="text-[11px] bg-amber-50 text-amber-700 border border-amber-100 rounded-md px-2 py-0.5">
+                        <span key={s} className="skill-chip border-amber-200 bg-amber-50/50 text-amber-700 hover:border-amber-300">
                           + {s}
                         </span>
                       ))}

@@ -139,7 +139,7 @@ export default function OpportunityDetail() {
                 <h3 className="font-semibold text-slate-800 mt-5 mb-2 text-sm">Skills required</h3>
                 <div className="flex flex-wrap gap-2">
                   {opp.skillsRequired.map((s) => (
-                    <span key={s} className="text-xs bg-slate-100 text-slate-700 rounded-lg px-2.5 py-1">
+                    <span key={s} className="skill-chip text-xs px-3 py-1">
                       {s}
                     </span>
                   ))}

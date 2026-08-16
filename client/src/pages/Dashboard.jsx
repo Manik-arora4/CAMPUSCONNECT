@@ -234,7 +234,7 @@ export default function Dashboard() {
           ) : (
             <div className="space-y-2.5">
               {topOpportunities.map(({ opportunity: opp, score }) => (
-                <Link key={opp._id} to={`/opportunities/${opp._id}`} className="flex items-center gap-3 rounded-xl border border-slate-100 px-3.5 py-3 hover:border-slate-200 hover:bg-slate-50 transition">
+                <Link key={opp._id} to={`/opportunities/${opp._id}`} className="flex items-center gap-3 rounded-xl border border-slate-100 px-3.5 py-3 transition duration-300 hover:border-brand-200 hover:bg-brand-50/40 hover:shadow-lift hover:-translate-y-0.5">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-800 truncate">{opp.title}</p>
                     <p className="text-xs text-slate-500 truncate">

@@ -226,7 +226,7 @@ export default function AISkills() {
                   {p.skills?.length ? (
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {p.skills.map((s) => (
-                        <span key={s} className="text-[11px] bg-brand-50 text-brand-700 rounded-md px-2 py-0.5">
+                        <span key={s} className="skill-chip border-brand-200 bg-brand-50/50 text-brand-700 hover:border-brand-300">
                           {s}
                         </span>
                       ))}

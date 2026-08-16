@@ -33,7 +33,7 @@ export function PageLoader() {
 }
 
 export function Badge({ children, className = 'bg-slate-100 text-slate-700' }) {
-  return <span className={`chip ${className}`}>{children}</span>;
+  return <span className={`chip border border-slate-200/60 shadow-sm ${className}`}>{children}</span>;
 }
 
 export function Card({ children, className = '', ...rest }) {
