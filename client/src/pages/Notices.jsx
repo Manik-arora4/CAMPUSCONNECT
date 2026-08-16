@@ -66,7 +66,7 @@ export default function Notices() {
             key={c}
             onClick={() => setCategory(c)}
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium capitalize transition ${
-              category === c ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              category === c ? 'bg-brand-600 text-white' : 'bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:bg-white/80'
             }`}
           >
             {c}
@@ -105,7 +105,7 @@ export default function Notices() {
                       {n.aiSummary.importantDates?.length ? (
                         <div className="mt-2 flex flex-wrap gap-2">
                           {n.aiSummary.importantDates.map((d, i) => (
-                            <span key={i} className="text-xs bg-white rounded-lg px-2 py-1 text-violet-700 border border-violet-200">
+                            <span key={i} className="text-xs bg-white/70 backdrop-blur-md rounded-lg px-2 py-1 text-violet-700 border border-violet-200">
                               📅 {d}
                             </span>
                           ))}

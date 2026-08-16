@@ -53,7 +53,7 @@ export default function NotificationsPage() {
             key={c}
             onClick={() => setFilter(c)}
             className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition ${
-              filter === c ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              filter === c ? 'bg-brand-600 text-white' : 'bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:bg-white/80'
             }`}
           >
             {c}

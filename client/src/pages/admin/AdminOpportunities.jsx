@@ -43,10 +43,10 @@ export default function AdminOpportunities() {
       </div>
 
       <div className="flex gap-2">
-        <button onClick={() => setTab('pending')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${tab === 'pending' ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+        <button onClick={() => setTab('pending')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${tab === 'pending' ? 'bg-brand-600 text-white' : 'bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:bg-white/80'}`}>
           Pending review ({pending.length})
         </button>
-        <button onClick={() => setTab('all')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${tab === 'all' ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
+        <button onClick={() => setTab('all')} className={`rounded-xl px-4 py-2 text-sm font-medium transition ${tab === 'all' ? 'bg-brand-600 text-white' : 'bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:bg-white/80'}`}>
           All ({all.length})
         </button>
       </div>

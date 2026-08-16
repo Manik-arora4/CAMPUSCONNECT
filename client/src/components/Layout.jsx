@@ -148,7 +148,7 @@ function NotificationBell() {
       {open ? (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-lift border border-slate-200 z-40 overflow-hidden animate-fade-in">
+          <div className="absolute right-0 mt-2 w-80 bg-white/80 backdrop-blur-2xl rounded-2xl shadow-lift border border-white/60 z-40 overflow-hidden animate-fade-in">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
               <p className="text-sm font-semibold text-slate-800">Notifications</p>
               {count > 0 ? (
@@ -213,9 +213,10 @@ export default function Layout() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/60 to-violet-50/60 flex relative overflow-x-hidden">
       {/* Ambient background orbs */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-        <div className="absolute -top-24 right-1/4 h-96 w-96 rounded-full bg-brand-200/40 blur-3xl animate-float-slow" />
-        <div className="absolute top-1/3 -left-24 h-80 w-80 rounded-full bg-violet-200/40 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-0 right-10 h-96 w-96 rounded-full bg-fuchsia-200/30 blur-3xl animate-pulse-soft" />
+        <div className="absolute -top-24 right-1/4 h-96 w-96 rounded-full bg-brand-300/45 blur-3xl animate-float-slow" />
+        <div className="absolute top-1/3 -left-24 h-80 w-80 rounded-full bg-violet-300/45 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-0 right-10 h-96 w-96 rounded-full bg-fuchsia-300/40 blur-3xl animate-pulse-soft" />
+        <div className="absolute top-1/4 left-1/3 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl animate-float" style={{ animationDelay: '3.5s' }} />
       </div>
 
       {/* Sidebar (desktop) */}
@@ -243,7 +244,7 @@ export default function Layout() {
 
       {/* Main */}
       <div className="flex-1 lg:ml-64 flex flex-col min-w-0 relative z-10">
-        <header className="sticky top-0 z-30 bg-white/80 backdrop-blur border-b border-slate-200">
+        <header className="sticky top-0 z-30 bg-white/50 backdrop-blur-xl border-b border-white/60">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16">
             <div className="flex items-center gap-3">
               <button

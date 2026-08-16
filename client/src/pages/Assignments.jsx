@@ -56,7 +56,7 @@ export default function Assignments() {
               key={f}
               onClick={() => setFilter(f)}
               className={`rounded-xl px-3.5 py-2 text-sm font-medium capitalize transition ${
-                filter === f ? 'bg-brand-600 text-white' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                filter === f ? 'bg-brand-600 text-white' : 'bg-white/60 backdrop-blur-md text-slate-600 border border-white/60 hover:bg-white/80'
               }`}
             >
               {f}

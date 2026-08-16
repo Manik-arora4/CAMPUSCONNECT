@@ -28,7 +28,7 @@ export function Spinner({ size = 20, className = '' }) {
 
 export function LoadingScreen({ label = 'Loading…' }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-slate-100">
+    <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-gradient-to-br from-slate-50 via-indigo-50/60 to-violet-50/60">
       <Spinner size={32} />
       <p className="text-sm text-slate-500">{label}</p>
     </div>
@@ -99,7 +99,7 @@ export function Modal({ open, onClose, title, children, wide }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
       <div
-        className={`relative bg-white rounded-2xl shadow-lift w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto animate-fade-in`}
+        className={`relative bg-white/80 backdrop-blur-2xl border border-white/60 rounded-2xl shadow-lift w-full ${wide ? 'max-w-2xl' : 'max-w-lg'} max-h-[90vh] overflow-y-auto animate-fade-in`}
       >
         <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-slate-100">
           <h3 className="text-lg font-semibold text-slate-900">{title}</h3>

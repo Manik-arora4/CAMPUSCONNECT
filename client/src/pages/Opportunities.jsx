@@ -104,7 +104,7 @@ export default function Opportunities() {
                 className={`rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize transition duration-300 ${
                   active
                     ? 'bg-gradient-to-r from-brand-600 to-violet-600 text-white shadow-glow-sm scale-[1.04]'
-                    : 'bg-white border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-700 hover:bg-brand-50 hover:-translate-y-0.5'
+                    : 'bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:border-brand-300 hover:text-brand-700 hover:bg-white/80 hover:-translate-y-0.5'
                 }`}
               >
                 {c === 'all' ? '✨ All' : c}

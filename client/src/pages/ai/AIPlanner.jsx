@@ -94,7 +94,7 @@ export default function AIPlanner() {
           <button
             onClick={generate}
             disabled={generating}
-            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white text-brand-700 px-4 py-2.5 text-sm font-bold transition hover:bg-brand-50 hover:scale-[1.03] disabled:opacity-60 shrink-0 shadow-lift"
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-white/70 backdrop-blur-md text-brand-700 px-4 py-2.5 text-sm font-bold transition hover:bg-white/90 hover:scale-[1.03] disabled:opacity-60 shrink-0 shadow-lift"
           >
             <RefreshCw size={16} className={generating ? 'animate-spin' : ''} />
             {generating ? 'Generating…' : 'Regenerate plan'}
@@ -204,7 +204,7 @@ export default function AIPlanner() {
                           className={`flex-1 rounded-2xl border px-4 py-3.5 transition duration-300 ${
                             isDone
                               ? 'border-slate-100 bg-slate-50/70'
-                              : 'border-slate-100 bg-white hover:border-brand-200 hover:shadow-lift hover:-translate-y-0.5'
+                              : 'border-white/60 bg-white/60 backdrop-blur-md hover:border-brand-200 hover:shadow-lift hover:-translate-y-0.5'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-2">

@@ -91,7 +91,7 @@ export default function AIChat() {
               </div>
               <div
                 className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-                  m.role === 'user' ? 'bg-brand-600 text-white rounded-tr-sm' : 'bg-slate-100 text-slate-800 rounded-tl-sm'
+                  m.role === 'user' ? 'bg-brand-600 text-white rounded-tr-sm' : 'bg-white/70 backdrop-blur-md border border-white/60 text-slate-800 rounded-tl-sm'
                 }`}
               >
                 {m.content}
@@ -103,7 +103,7 @@ export default function AIChat() {
               <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-brand-600 text-white flex items-center justify-center shrink-0">
                 <Bot size={16} />
               </div>
-              <div className="bg-slate-100 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
+              <div className="bg-white/70 backdrop-blur-md border border-white/60 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" />
                 <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce [animation-delay:0.15s]" />
                 <span className="h-2 w-2 rounded-full bg-slate-400 animate-bounce [animation-delay:0.3s]" />
@@ -120,7 +120,7 @@ export default function AIChat() {
                 <button
                   key={s}
                   onClick={() => send(s)}
-                  className="text-xs bg-slate-50 border border-slate-200 text-slate-600 hover:border-brand-300 hover:text-brand-700 hover:bg-brand-50 rounded-full px-3 py-1.5 transition"
+                  className="text-xs bg-white/60 backdrop-blur-md border border-white/60 text-slate-600 hover:border-brand-300 hover:text-brand-700 hover:bg-white/80 rounded-full px-3 py-1.5 transition"
                 >
                   {s}
                 </button>
