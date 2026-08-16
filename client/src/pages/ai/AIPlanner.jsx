@@ -18,6 +18,7 @@ import {
 import { api } from '../../lib/api';
 import { PageLoader, Card, ProgressBar } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import InteractiveHoverButton from '../../components/InteractiveHoverButton';
 import { fmtTime } from '../../lib/format';
 
 const TYPE_META = {
@@ -111,9 +112,9 @@ export default function AIPlanner() {
           </div>
           <p className="text-lg font-bold text-slate-900">No plan yet</p>
           <p className="text-sm text-slate-500 mt-1 mb-5 max-w-sm mx-auto">Generate today's plan and your AI will sequence your classes, tasks and breaks.</p>
-          <button className="btn-primary" onClick={generate} disabled={generating}>
+          <InteractiveHoverButton onClick={generate} disabled={generating}>
             <Sparkles size={16} /> Generate today's plan
-          </button>
+          </InteractiveHoverButton>
         </Card>
       ) : (
         <div className="space-y-5">

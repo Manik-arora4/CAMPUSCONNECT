@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Spinner } from '../components/UI';
+import InteractiveHoverButton from '../components/InteractiveHoverButton';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -70,9 +71,9 @@ export default function ForgotPassword() {
                     <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@college.edu" className="w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/50 focus:shadow-glow-sm transition" />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full">
+                <InteractiveHoverButton type="submit" disabled={loading} className="w-full">
                   {loading ? <Spinner size={18} /> : 'Send reset link'}
-                </button>
+                </InteractiveHoverButton>
               </form>
             </>
           )}

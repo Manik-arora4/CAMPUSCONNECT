@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Sparkles, ArrowRight, Mail, Lock, AlertCircle, CalendarDays, Target, BrainCircuit, FileText } from 'lucide-react';
+import { GraduationCap, Sparkles, Mail, Lock, AlertCircle, CalendarDays, Target, BrainCircuit, FileText } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/UI';
+import InteractiveHoverButton from '../components/InteractiveHoverButton';
 
 const FEATURES = [
   { icon: CalendarDays, label: 'Smart timetable', color: 'text-sky-300' },
@@ -173,10 +174,9 @@ export default function Login() {
                   Forgot password?
                 </Link>
               </div>
-              <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
+              <InteractiveHoverButton type="submit" disabled={loading} className="w-full py-2.5">
                 {loading ? <Spinner size={18} /> : 'Log in'}
-                {!loading ? <ArrowRight size={16} /> : null}
-              </button>
+              </InteractiveHoverButton>
             </form>
 
             <div className="mt-6 pt-6 border-t border-white/15">

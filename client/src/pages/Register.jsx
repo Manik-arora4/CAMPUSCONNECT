@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, ArrowRight, AlertCircle, User, Mail, Lock, School } from 'lucide-react';
+import { GraduationCap, AlertCircle, User, Mail, Lock, School } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/UI';
+import InteractiveHoverButton from '../components/InteractiveHoverButton';
 
 const INPUT_CLS =
   'w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/50 focus:shadow-glow-sm transition';
@@ -115,10 +116,9 @@ export default function Register() {
                   ))}
                 </select>
               </div>
-              <button type="submit" disabled={loading} className="btn-primary w-full py-2.5">
+              <InteractiveHoverButton type="submit" disabled={loading} className="w-full py-2.5">
                 {loading ? <Spinner size={18} /> : 'Create account'}
-                {!loading ? <ArrowRight size={16} /> : null}
-              </button>
+              </InteractiveHoverButton>
             </form>
           </div>
 

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { Lock, CheckCircle2, AlertCircle } from 'lucide-react';
 import { api } from '../lib/api';
 import { Spinner } from '../components/UI';
+import InteractiveHoverButton from '../components/InteractiveHoverButton';
 
 export default function ResetPassword() {
   const [params] = useSearchParams();
@@ -89,9 +90,9 @@ export default function ResetPassword() {
                     <input type="password" required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="At least 6 characters" className="w-full rounded-xl border border-white/20 bg-white/10 backdrop-blur pl-10 pr-3.5 py-2.5 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/40 focus:border-white/50 focus:shadow-glow-sm transition" />
                   </div>
                 </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full">
+                <InteractiveHoverButton type="submit" disabled={loading} className="w-full">
                   {loading ? <Spinner size={18} /> : 'Update password'}
-                </button>
+                </InteractiveHoverButton>
               </form>
             </>
           )}
