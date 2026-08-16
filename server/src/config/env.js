@@ -10,7 +10,7 @@ export const env = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   JWT_SECRET: process.env.JWT_SECRET || 'super-secret-campusconnect-change-me',
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
-  MONGODB_URI: process.env.MONGODB_URI || '',
+  DATABASE_URL: process.env.DATABASE_URL || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   PUBLIC_URL: process.env.PUBLIC_URL || 'http://localhost:5173',
   DEMO_ADMINS: (process.env.DEMO_ADMINS || '')

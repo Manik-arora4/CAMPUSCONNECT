@@ -3,16 +3,16 @@ import { body } from 'express-validator';
 import { auth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { UserPreference } from '../models/UserPreference.js';
+import { prisma } from '../lib/prisma.js';
+import { toSafeUser } from '../utils/userUtils.js';
 import { profileStrength } from '../services/profileService.js';
-import { StudentProfile } from '../models/StudentProfile.js';
 
 const router = Router();
 router.use(auth);
 
 // GET /api/users/me
 router.get('/me', asyncHandler(async (req, res) => {
-  res.json({ user: req.user.toSafeJSON() });
+  res.json({ user: toSafeUser(req.user) });
 }));
 
 // PATCH /api/users/me
@@ -22,35 +22,41 @@ router.patch(
   validate,
   asyncHandler(async (req, res) => {
     const allowed = ['name', 'phone', 'avatar', 'bio', 'designation'];
+    const data = {};
     allowed.forEach((k) => {
-      if (req.body[k] !== undefined) req.user[k] = req.body[k];
+      if (req.body[k] !== undefined) data[k] = req.body[k];
     });
-    await req.user.save();
-    res.json({ user: req.user.toSafeJSON() });
+    const user = await prisma.user.update({ where: { id: req.user.id }, data });
+    res.json({ user: toSafeUser(user) });
   })
 );
 
 // GET /api/users/profile-strength
 router.get('/profile-strength', asyncHandler(async (req, res) => {
-  const profile = await StudentProfile.findOne({ user: req.user._id });
+  const profile = await prisma.studentProfile.findFirst({ where: { user: req.user.id } });
   if (!profile) return res.json({ score: 0, completed: [], missing: [] });
   res.json(profileStrength(profile));
 }));
 
 // GET /api/users/preferences
 router.get('/preferences', asyncHandler(async (req, res) => {
-  let pref = await UserPreference.findOne({ user: req.user._id });
-  if (!pref) pref = await UserPreference.create({ user: req.user._id });
+  let pref = await prisma.userPreference.findUnique({ where: { user: req.user.id } });
+  if (!pref) pref = await prisma.userPreference.create({ data: { user: req.user.id } });
   res.json(pref);
 }));
 
 // PATCH /api/users/preferences
 router.patch('/preferences', asyncHandler(async (req, res) => {
-  const pref = await UserPreference.findOneAndUpdate(
-    { user: req.user._id },
-    { $set: req.body },
-    { new: true, upsert: true }
-  );
+  const { notifications, defaultView, weeklyDigest } = req.body;
+  const data = {};
+  if (notifications !== undefined) data.notifications = notifications;
+  if (defaultView !== undefined) data.defaultView = defaultView;
+  if (weeklyDigest !== undefined) data.weeklyDigest = weeklyDigest;
+  const pref = await prisma.userPreference.upsert({
+    where: { user: req.user.id },
+    update: data,
+    create: { user: req.user.id, ...data },
+  });
   res.json(pref);
 }));
 

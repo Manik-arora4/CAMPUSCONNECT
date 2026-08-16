@@ -5,51 +5,55 @@ import { requireFaculty } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { Club } from '../models/Club.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
 router.use(auth);
 
 // GET /api/clubs
 router.get('/', asyncHandler(async (req, res) => {
-  const clubs = await Club.find({ college: req.user.college }).sort({ name: 1 });
-  const enriched = clubs.map((c) => {
-    const obj = c.toObject();
-    obj.isMember = c.members.some((m) => String(m) === String(req.user._id));
-    obj.isFollowing = c.followers.some((f) => String(f) === String(req.user._id));
-    return obj;
-  });
+  const clubs = await prisma.club.findMany({ where: { college: req.user.college }, orderBy: { name: 'asc' } });
+  const enriched = clubs.map((c) => ({
+    ...c,
+    isMember: (c.members || []).some((m) => String(m) === String(req.user.id)),
+    isFollowing: (c.followers || []).some((f) => String(f) === String(req.user.id)),
+  }));
   res.json({ clubs: enriched });
 }));
 
 // GET /api/clubs/:id
 router.get('/:id', asyncHandler(async (req, res) => {
-  const club = await Club.findOne({ _id: req.params.id, college: req.user.college });
+  const club = await prisma.club.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!club) throw ApiError.notFound('Club not found');
-  const obj = club.toObject();
-  obj.isMember = club.members.some((m) => String(m) === String(req.user._id));
-  obj.isFollowing = club.followers.some((f) => String(f) === String(req.user._id));
-  res.json({ club: obj });
+  res.json({
+    club: {
+      ...club,
+      isMember: (club.members || []).some((m) => String(m) === String(req.user.id)),
+      isFollowing: (club.followers || []).some((f) => String(f) === String(req.user.id)),
+    },
+  });
 }));
 
 // POST /api/clubs/:id/join
 router.post('/:id/join', asyncHandler(async (req, res) => {
-  const club = await Club.findOne({ _id: req.params.id, college: req.user.college });
+  const club = await prisma.club.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!club) throw ApiError.notFound('Club not found');
-  if (!club.members.some((m) => String(m) === String(req.user._id))) club.members.push(req.user._id);
-  await club.save();
-  res.json({ club, isMember: true });
+  const members = [...(club.members || [])];
+  if (!members.some((m) => String(m) === String(req.user.id))) members.push(req.user.id);
+  const updated = await prisma.club.update({ where: { id: club.id }, data: { members } });
+  res.json({ club: updated, isMember: true });
 }));
 
 // POST /api/clubs/:id/follow
 router.post('/:id/follow', asyncHandler(async (req, res) => {
-  const club = await Club.findOne({ _id: req.params.id, college: req.user.college });
+  const club = await prisma.club.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!club) throw ApiError.notFound('Club not found');
-  const idx = club.followers.findIndex((f) => String(f) === String(req.user._id));
-  if (idx === -1) club.followers.push(req.user._id);
-  else club.followers.splice(idx, 1);
-  await club.save();
-  res.json({ club, isFollowing: idx === -1 });
+  const followers = [...(club.followers || [])];
+  const idx = followers.findIndex((f) => String(f) === String(req.user.id));
+  if (idx === -1) followers.push(req.user.id);
+  else followers.splice(idx, 1);
+  const updated = await prisma.club.update({ where: { id: club.id }, data: { followers } });
+  res.json({ club: updated, isFollowing: idx === -1 });
 }));
 
 // POST /api/clubs — faculty/admin
@@ -60,13 +64,15 @@ router.post(
   validate,
   asyncHandler(async (req, res) => {
     const { name, description, category, logo, facultyAdvisor } = req.body;
-    const club = await Club.create({
-      college: req.user.college,
-      name: name.trim(),
-      description: description || '',
-      category: category || 'technical',
-      logo: logo || '',
-      facultyAdvisor: facultyAdvisor || '',
+    const club = await prisma.club.create({
+      data: {
+        college: req.user.college,
+        name: name.trim(),
+        description: description || '',
+        category: category || 'technical',
+        logo: logo || '',
+        facultyAdvisor: facultyAdvisor || '',
+      },
     });
     res.status(201).json({ club });
   })
@@ -74,12 +80,12 @@ router.post(
 
 // POST /api/clubs/:id/announcements
 router.post('/:id/announcements', requireFaculty, asyncHandler(async (req, res) => {
-  const club = await Club.findById(req.params.id);
+  const club = await prisma.club.findUnique({ where: { id: req.params.id } });
   if (!club) throw ApiError.notFound('Club not found');
   const { title, content } = req.body;
-  club.announcements.unshift({ title: title || 'Announcement', content: content || '', date: new Date() });
-  await club.save();
-  res.json({ club });
+  const announcements = [{ title: title || 'Announcement', content: content || '', date: new Date() }, ...(club.announcements || [])];
+  const updated = await prisma.club.update({ where: { id: club.id }, data: { announcements } });
+  res.json({ club: updated });
 }));
 
 export default router;

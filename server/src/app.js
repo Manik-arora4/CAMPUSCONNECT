@@ -35,6 +35,26 @@ app.set('trust proxy', 1);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json({ limit: '2mb' }));
 
+// Keep the legacy MongoDB response shape: every DB row exposes both `id` and `_id`,
+// so the frontend keeps working unchanged after the Postgres migration.
+function addIdAliases(value) {
+  if (Array.isArray(value)) {
+    for (const item of value) addIdAliases(item);
+    return value;
+  }
+  if (value && typeof value === 'object') {
+    if (typeof value.id === 'string' && value._id === undefined) value._id = value.id;
+    for (const v of Object.values(value)) addIdAliases(v);
+  }
+  return value;
+}
+
+app.use((req, res, next) => {
+  const original = res.json.bind(res);
+  res.json = (body) => original(addIdAliases(body));
+  next();
+});
+
 app.use(
   '/api',
   rateLimit({

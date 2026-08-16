@@ -5,23 +5,22 @@ import { requireFaculty } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { Event } from '../models/Event.js';
-import { createNotification } from '../services/notificationService.js';
+import { prisma } from '../lib/prisma.js';
 
 const router = Router();
 router.use(auth);
 
 // GET /api/events?upcoming=true
 router.get('/', asyncHandler(async (req, res) => {
-  const filter = { college: req.user.college };
-  if (req.query.upcoming === 'true') filter.date = { $gte: new Date() };
-  const events = await Event.find(filter).sort({ date: 1 }).limit(60);
+  const where = { college: req.user.college };
+  if (req.query.upcoming === 'true') where.date = { gte: new Date() };
+  const events = await prisma.event.findMany({ where, orderBy: { date: 'asc' }, take: 60 });
   res.json({ events });
 }));
 
 // GET /api/events/:id
 router.get('/:id', asyncHandler(async (req, res) => {
-  const event = await Event.findOne({ _id: req.params.id, college: req.user.college });
+  const event = await prisma.event.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!event) throw ApiError.notFound('Event not found');
   res.json({ event });
 }));
@@ -34,18 +33,20 @@ router.post(
   validate,
   asyncHandler(async (req, res) => {
     const { title, description, category, date, startTime, endTime, location, organizer, registrationLink } = req.body;
-    const event = await Event.create({
-      college: req.user.college,
-      title: title.trim(),
-      description: description || '',
-      category: category || 'general',
-      date: new Date(date),
-      startTime: startTime || '10:00',
-      endTime: endTime || '16:00',
-      location: location || '',
-      organizer: organizer || '',
-      registrationLink: registrationLink || '',
-      createdBy: req.user._id,
+    const event = await prisma.event.create({
+      data: {
+        college: req.user.college,
+        title: title.trim(),
+        description: description || '',
+        category: category || 'general',
+        date: new Date(date),
+        startTime: startTime || '10:00',
+        endTime: endTime || '16:00',
+        location: location || '',
+        organizer: organizer || '',
+        registrationLink: registrationLink || '',
+        createdBy: req.user.id,
+      },
     });
     res.status(201).json({ event });
   })
@@ -53,41 +54,44 @@ router.post(
 
 // POST /api/events/:id/register
 router.post('/:id/register', asyncHandler(async (req, res) => {
-  const event = await Event.findOne({ _id: req.params.id, college: req.user.college });
+  const event = await prisma.event.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!event) throw ApiError.notFound('Event not found');
-  if (!event.registeredStudents.some((s) => String(s) === String(req.user._id))) {
-    event.registeredStudents.push(req.user._id);
-    await event.save();
+  const registeredStudents = event.registeredStudents || [];
+  if (!registeredStudents.some((s) => String(s) === String(req.user.id))) {
+    registeredStudents.push(req.user.id);
   }
-  res.json({ event, registered: true });
+  const updated = await prisma.event.update({ where: { id: event.id }, data: { registeredStudents } });
+  res.json({ event: updated, registered: true });
 }));
 
 // POST /api/events/:id/save
 router.post('/:id/save', asyncHandler(async (req, res) => {
-  const event = await Event.findOne({ _id: req.params.id, college: req.user.college });
+  const event = await prisma.event.findFirst({ where: { id: req.params.id, college: req.user.college } });
   if (!event) throw ApiError.notFound('Event not found');
-  const idx = event.savedBy.findIndex((s) => String(s) === String(req.user._id));
-  if (idx === -1) event.savedBy.push(req.user._id);
-  else event.savedBy.splice(idx, 1);
-  await event.save();
-  res.json({ event, saved: idx === -1 });
+  const savedBy = [...(event.savedBy || [])];
+  const idx = savedBy.findIndex((s) => String(s) === String(req.user.id));
+  if (idx === -1) savedBy.push(req.user.id);
+  else savedBy.splice(idx, 1);
+  const updated = await prisma.event.update({ where: { id: event.id }, data: { savedBy } });
+  res.json({ event: updated, saved: idx === -1 });
 }));
 
 // PATCH /api/events/:id
 router.patch('/:id', requireFaculty, asyncHandler(async (req, res) => {
-  const event = await Event.findById(req.params.id);
+  const event = await prisma.event.findUnique({ where: { id: req.params.id } });
   if (!event) throw ApiError.notFound('Event not found');
   const allowed = ['title', 'description', 'category', 'date', 'startTime', 'endTime', 'location', 'organizer', 'registrationLink'];
+  const data = {};
   allowed.forEach((k) => {
-    if (req.body[k] !== undefined) event[k] = req.body[k];
+    if (req.body[k] !== undefined) data[k] = req.body[k];
   });
-  await event.save();
-  res.json({ event });
+  const updated = await prisma.event.update({ where: { id: event.id }, data });
+  res.json({ event: updated });
 }));
 
 // DELETE /api/events/:id
 router.delete('/:id', requireFaculty, asyncHandler(async (req, res) => {
-  await Event.findByIdAndDelete(req.params.id);
+  await prisma.event.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Event deleted' });
 }));
 

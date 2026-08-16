@@ -5,7 +5,7 @@ import { requireStudent } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { TimetableSlot } from '../models/TimetableSlot.js';
+import { prisma } from '../lib/prisma.js';
 import { timeToMinutes } from '../utils/helpers.js';
 
 const router = Router();
@@ -24,8 +24,8 @@ function detectConflicts(slots) {
         if (timeToMinutes(b.startTime) < timeToMinutes(a.endTime)) {
           conflicts.push({
             day: Number(day),
-            a: { id: a._id, subjectName: a.subjectName, startTime: a.startTime, endTime: a.endTime },
-            b: { id: b._id, subjectName: b.subjectName, startTime: b.startTime, endTime: b.endTime },
+            a: { id: a.id, subjectName: a.subjectName, startTime: a.startTime, endTime: a.endTime },
+            b: { id: b.id, subjectName: b.subjectName, startTime: b.startTime, endTime: b.endTime },
           });
         }
       }
@@ -36,13 +36,13 @@ function detectConflicts(slots) {
 
 // GET /api/timetable — weekly slots
 router.get('/', asyncHandler(async (req, res) => {
-  const slots = await TimetableSlot.find({ student: req.user._id }).sort({ day: 1, startTime: 1 });
+  const slots = await prisma.timetableSlot.findMany({ where: { student: req.user.id }, orderBy: [{ day: 'asc' }, { startTime: 'asc' }] });
   res.json({ slots, conflicts: detectConflicts(slots) });
 }));
 
 // GET /api/timetable/conflicts
 router.get('/conflicts', asyncHandler(async (req, res) => {
-  const slots = await TimetableSlot.find({ student: req.user._id });
+  const slots = await prisma.timetableSlot.findMany({ where: { student: req.user.id } });
   res.json({ conflicts: detectConflicts(slots) });
 }));
 
@@ -59,18 +59,20 @@ router.post(
   asyncHandler(async (req, res) => {
     const { subjectName, subject, teacherName, room, day, startTime, endTime, color, type = 'class' } = req.body;
     if (timeToMinutes(endTime) <= timeToMinutes(startTime)) throw ApiError.badRequest('End time must be after start time');
-    const slot = await TimetableSlot.create({
-      student: req.user._id,
-      college: req.user.college,
-      subject,
-      subjectName: subjectName.trim(),
-      teacherName,
-      room,
-      day,
-      startTime,
-      endTime,
-      color,
-      type,
+    const slot = await prisma.timetableSlot.create({
+      data: {
+        student: req.user.id,
+        college: req.user.college,
+        subject: subject || undefined,
+        subjectName: subjectName.trim(),
+        teacherName: teacherName || '',
+        room: room || '',
+        day: Number(day),
+        startTime,
+        endTime,
+        color: color || '#6366f1',
+        type,
+      },
     });
     res.status(201).json({ slot });
   })
@@ -78,43 +80,46 @@ router.post(
 
 // PATCH /api/timetable/:id
 router.patch('/:id', asyncHandler(async (req, res) => {
-  const slot = await TimetableSlot.findOne({ _id: req.params.id, student: req.user._id });
+  const slot = await prisma.timetableSlot.findFirst({ where: { id: req.params.id, student: req.user.id } });
   if (!slot) throw ApiError.notFound('Timetable slot not found');
   const allowed = ['subjectName', 'subject', 'teacherName', 'room', 'day', 'startTime', 'endTime', 'color', 'type'];
+  const data = {};
   allowed.forEach((k) => {
-    if (req.body[k] !== undefined) slot[k] = req.body[k];
+    if (req.body[k] !== undefined) data[k] = req.body[k];
   });
-  if (slot.endTime && slot.startTime && timeToMinutes(slot.endTime) <= timeToMinutes(slot.startTime)) {
+  if (data.endTime && data.startTime && timeToMinutes(data.endTime) <= timeToMinutes(data.startTime)) {
     throw ApiError.badRequest('End time must be after start time');
   }
-  await slot.save();
-  res.json({ slot });
+  const updated = await prisma.timetableSlot.update({ where: { id: slot.id }, data });
+  res.json({ slot: updated });
 }));
 
 // POST /api/timetable/:id/duplicate
 router.post('/:id/duplicate', asyncHandler(async (req, res) => {
-  const slot = await TimetableSlot.findOne({ _id: req.params.id, student: req.user._id });
+  const slot = await prisma.timetableSlot.findFirst({ where: { id: req.params.id, student: req.user.id } });
   if (!slot) throw ApiError.notFound('Timetable slot not found');
-  const copy = await TimetableSlot.create({
-    student: slot.student,
-    college: slot.college,
-    subject: slot.subject,
-    subjectName: slot.subjectName,
-    teacherName: slot.teacherName,
-    room: slot.room,
-    day: Number(req.body.day ?? slot.day),
-    startTime: slot.startTime,
-    endTime: slot.endTime,
-    color: slot.color,
-    type: slot.type,
+  const copy = await prisma.timetableSlot.create({
+    data: {
+      student: slot.student,
+      college: slot.college,
+      subject: slot.subject,
+      subjectName: slot.subjectName,
+      teacherName: slot.teacherName,
+      room: slot.room,
+      day: Number(req.body.day ?? slot.day),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      color: slot.color,
+      type: slot.type,
+    },
   });
   res.status(201).json({ slot: copy });
 }));
 
 // DELETE /api/timetable/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const slot = await TimetableSlot.findOneAndDelete({ _id: req.params.id, student: req.user._id });
-  if (!slot) throw ApiError.notFound('Timetable slot not found');
+  const res2 = await prisma.timetableSlot.deleteMany({ where: { id: req.params.id, student: req.user.id } });
+  if (!res2.count) throw ApiError.notFound('Timetable slot not found');
   res.json({ message: 'Slot deleted' });
 }));
 

@@ -5,17 +5,8 @@ import { requireAdmin } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { User } from '../models/User.js';
-import { College } from '../models/College.js';
-import { Department } from '../models/Department.js';
-import { Subject } from '../models/Subject.js';
-import { StudentProfile } from '../models/StudentProfile.js';
-import { Opportunity } from '../models/Opportunity.js';
-import { Application } from '../models/Application.js';
-import { Notice } from '../models/Notice.js';
-import { Event } from '../models/Event.js';
-import { Club } from '../models/Club.js';
-import { RecommendationEvent } from '../models/RecommendationEvent.js';
+import { prisma } from '../lib/prisma.js';
+import { hashPassword, toSafeUser } from '../utils/userUtils.js';
 import { createNotification } from '../services/notificationService.js';
 
 const router = Router();
@@ -25,26 +16,28 @@ router.use(auth, requireAdmin);
 router.get('/analytics', asyncHandler(async (req, res) => {
   const weekAgo = new Date(Date.now() - 7 * 86400000);
   const [students, faculty, colleges, opportunities, applications, notices, events, clubs, activeUsers, eventsWeek, applicationsWeek] = await Promise.all([
-    User.countDocuments({ role: 'student' }),
-    User.countDocuments({ role: 'faculty' }),
-    College.countDocuments(),
-    Opportunity.countDocuments(),
-    Application.countDocuments(),
-    Notice.countDocuments(),
-    Event.countDocuments(),
-    Club.countDocuments(),
-    User.countDocuments({ lastLoginAt: { $gte: weekAgo } }),
-    RecommendationEvent.countDocuments({ createdAt: { $gte: weekAgo } }),
-    Application.countDocuments({ updatedAt: { $gte: weekAgo } }),
+    prisma.user.count({ where: { role: 'student' } }),
+    prisma.user.count({ where: { role: 'faculty' } }),
+    prisma.college.count(),
+    prisma.opportunity.count(),
+    prisma.application.count(),
+    prisma.notice.count(),
+    prisma.event.count(),
+    prisma.club.count(),
+    prisma.user.count({ where: { lastLoginAt: { gte: weekAgo } } }),
+    prisma.recommendationEvent.count({ where: { createdAt: { gte: weekAgo } } }),
+    prisma.application.count({ where: { updatedAt: { gte: weekAgo } } }),
   ]);
-  const oppByStatus = await Opportunity.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
-  const appByStatus = await Application.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]);
-  const oppByCategory = await Opportunity.aggregate([{ $group: { _id: '$category', count: { $sum: 1 } } }]);
-  const engagementByDay = await RecommendationEvent.aggregate([
-    { $match: { createdAt: { $gte: weekAgo } } },
-    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 } } },
-    { $sort: { _id: 1 } },
-  ]);
+  const oppByStatus = (await prisma.opportunity.groupBy({ by: ['status'], _count: { _all: true } })).map((g) => ({ _id: g.status, count: g._count._all }));
+  const appByStatus = (await prisma.application.groupBy({ by: ['status'], _count: { _all: true } })).map((g) => ({ _id: g.status, count: g._count._all }));
+  const oppByCategory = (await prisma.opportunity.groupBy({ by: ['category'], _count: { _all: true } })).map((g) => ({ _id: g.category, count: g._count._all }));
+  const engagementEvents = await prisma.recommendationEvent.findMany({ where: { createdAt: { gte: weekAgo } }, select: { createdAt: true } });
+  const byDay = new Map();
+  for (const e of engagementEvents) {
+    const key = e.createdAt.toISOString().slice(0, 10);
+    byDay.set(key, (byDay.get(key) || 0) + 1);
+  }
+  const engagementByDay = [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0])).map(([day, count]) => ({ _id: day, count }));
   res.json({
     totals: { students, faculty, colleges, opportunities, notices, events, clubs, applications },
     engagement: { activeUsers, eventsWeek, applicationsWeek },
@@ -58,44 +51,60 @@ router.get('/analytics', asyncHandler(async (req, res) => {
 // ---------------- Students ----------------
 router.get('/students', asyncHandler(async (req, res) => {
   const { search, page = 1, limit = 15 } = req.query;
-  const filter = { role: 'student' };
-  if (search) filter.$or = [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }];
-  const total = await User.countDocuments(filter);
-  const users = await User.find(filter)
-    .populate('college', 'name')
-    .sort({ createdAt: -1 })
-    .skip((Number(page) - 1) * Number(limit))
-    .limit(Number(limit));
-  const userIds = users.map((u) => u._id);
-  const profiles = await StudentProfile.find({ user: { $in: userIds } });
-  const profileMap = new Map(profiles.map((p) => [String(p.user), p]));
+  const where = { role: 'student' };
+  if (search) {
+    where.OR = [{ name: { contains: search, mode: 'insensitive' } }, { email: { contains: search, mode: 'insensitive' } }];
+  }
+  const total = await prisma.user.count({ where });
+  const users = await prisma.user.findMany({
+    where,
+    orderBy: { createdAt: 'desc' },
+    skip: (Number(page) - 1) * Number(limit),
+    take: Number(limit),
+  });
+  const userIds = users.map((u) => u.id);
+  const profiles = await prisma.studentProfile.findMany({ where: { user: { in: userIds } } });
+  const profileMap = new Map(profiles.map((p) => [p.user, p]));
+  const collegeIds = [...new Set(users.map((u) => u.college).filter(Boolean))];
+  let collegeMap = new Map();
+  if (collegeIds.length) {
+    const colleges = await prisma.college.findMany({ where: { id: { in: collegeIds } }, select: { id: true, name: true } });
+    collegeMap = new Map(colleges.map((c) => [c.id, { _id: c.id, name: c.name }]));
+  }
   res.json({
-    students: users.map((u) => ({ ...u.toSafeJSON(), profile: profileMap.get(String(u._id)) })),
+    students: users.map((u) => ({ ...toSafeUser(u), college: collegeMap.get(u.college) || u.college, profile: profileMap.get(u.id) })),
     total,
     page: Number(page),
   });
 }));
 
 router.patch('/students/:id', asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) throw ApiError.notFound('Student not found');
-  if (req.body.active !== undefined) user.active = req.body.active;
-  if (req.body.role) user.role = req.body.role;
-  if (req.body.college) user.college = req.body.college;
-  await user.save();
-  res.json({ user: user.toSafeJSON() });
+  const data = {};
+  if (req.body.active !== undefined) data.active = req.body.active;
+  if (req.body.role) data.role = req.body.role;
+  if (req.body.college) data.college = req.body.college;
+  const updated = await prisma.user.update({ where: { id: user.id }, data });
+  res.json({ user: toSafeUser(updated) });
 }));
 
 router.delete('/students/:id', asyncHandler(async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
-  await StudentProfile.deleteOne({ user: req.params.id });
+  await prisma.user.deleteMany({ where: { id: req.params.id } });
+  await prisma.studentProfile.deleteMany({ where: { user: req.params.id } });
   res.json({ message: 'Student deleted' });
 }));
 
 // ---------------- Faculty ----------------
 router.get('/faculty', asyncHandler(async (req, res) => {
-  const faculty = await User.find({ role: 'faculty' }).populate('college', 'name').sort({ name: 1 });
-  res.json({ faculty: faculty.map((f) => f.toSafeJSON()) });
+  const faculty = await prisma.user.findMany({ where: { role: 'faculty' }, orderBy: { name: 'asc' } });
+  const collegeIds = [...new Set(faculty.map((f) => f.college).filter(Boolean))];
+  let collegeMap = new Map();
+  if (collegeIds.length) {
+    const colleges = await prisma.college.findMany({ where: { id: { in: collegeIds } }, select: { id: true, name: true } });
+    collegeMap = new Map(colleges.map((c) => [c.id, { _id: c.id, name: c.name }]));
+  }
+  res.json({ faculty: faculty.map((f) => ({ ...toSafeUser(f), college: collegeMap.get(f.college) || f.college })) });
 }));
 
 router.post(
@@ -104,94 +113,115 @@ router.post(
   validate,
   asyncHandler(async (req, res) => {
     const { name, email, password = 'faculty1234', designation, college } = req.body;
-    if (await User.findOne({ email: email.toLowerCase() })) throw ApiError.conflict('User with this email already exists');
-    const user = await User.create({ name: name.trim(), email: email.toLowerCase(), password, role: 'faculty', designation: designation || '', college: college || req.user.college });
-    res.status(201).json({ user: user.toSafeJSON() });
+    if (await prisma.user.findUnique({ where: { email: email.toLowerCase() } })) throw ApiError.conflict('User with this email already exists');
+    const user = await prisma.user.create({
+      data: { name: name.trim(), email: email.toLowerCase(), password: await hashPassword(password), role: 'faculty', designation: designation || '', college: college || req.user.college },
+    });
+    res.status(201).json({ user: toSafeUser(user) });
   })
 );
 
 router.patch('/faculty/:id', asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) throw ApiError.notFound('Faculty not found');
-  if (req.body.designation !== undefined) user.designation = req.body.designation;
-  if (req.body.name !== undefined) user.name = req.body.name;
-  if (req.body.active !== undefined) user.active = req.body.active;
-  await user.save();
-  res.json({ user: user.toSafeJSON() });
+  const data = {};
+  if (req.body.designation !== undefined) data.designation = req.body.designation;
+  if (req.body.name !== undefined) data.name = req.body.name;
+  if (req.body.active !== undefined) data.active = req.body.active;
+  const updated = await prisma.user.update({ where: { id: user.id }, data });
+  res.json({ user: toSafeUser(updated) });
 }));
 
 router.delete('/faculty/:id', asyncHandler(async (req, res) => {
-  await User.findByIdAndDelete(req.params.id);
+  await prisma.user.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Faculty deleted' });
 }));
 
 // ---------------- Departments ----------------
 router.get('/departments', asyncHandler(async (req, res) => {
-  const departments = await Department.find({ college: req.user.college }).populate('head', 'name');
+  const departments = await prisma.department.findMany({ where: { college: req.user.college } });
+  const headIds = [...new Set(departments.map((d) => d.head).filter(Boolean))];
+  if (headIds.length) {
+    const heads = await prisma.user.findMany({ where: { id: { in: headIds } }, select: { id: true, name: true } });
+    const map = new Map(heads.map((h) => [h.id, { _id: h.id, name: h.name }]));
+    for (const d of departments) {
+      if (map.has(d.head)) d.head = map.get(d.head);
+    }
+  }
   res.json({ departments });
 }));
 
 router.post('/departments', asyncHandler(async (req, res) => {
   const { name, code, head } = req.body;
-  const dep = await Department.create({ college: req.user.college, name, code, head });
+  const dep = await prisma.department.create({ data: { college: req.user.college, name, code, head } });
   res.status(201).json({ department: dep });
 }));
 
 router.patch('/departments/:id', asyncHandler(async (req, res) => {
-  const dep = await Department.findById(req.params.id);
+  const dep = await prisma.department.findUnique({ where: { id: req.params.id } });
   if (!dep) throw ApiError.notFound('Department not found');
-  if (req.body.name !== undefined) dep.name = req.body.name;
-  if (req.body.head !== undefined) dep.head = req.body.head;
-  await dep.save();
-  res.json({ department: dep });
+  const data = {};
+  if (req.body.name !== undefined) data.name = req.body.name;
+  if (req.body.head !== undefined) data.head = req.body.head;
+  const updated = await prisma.department.update({ where: { id: dep.id }, data });
+  res.json({ department: updated });
 }));
 
 router.delete('/departments/:id', asyncHandler(async (req, res) => {
-  await Department.findByIdAndDelete(req.params.id);
+  await prisma.department.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Department deleted' });
 }));
 
 // ---------------- Subjects ----------------
 router.get('/subjects', asyncHandler(async (req, res) => {
-  const subjects = await Subject.find({ college: req.user.college }).populate('faculty', 'name');
+  const subjects = await prisma.subject.findMany({ where: { college: req.user.college } });
+  const facIds = [...new Set(subjects.map((s) => s.faculty).filter(Boolean))];
+  if (facIds.length) {
+    const users = await prisma.user.findMany({ where: { id: { in: facIds } }, select: { id: true, name: true } });
+    const map = new Map(users.map((u) => [u.id, { _id: u.id, name: u.name }]));
+    for (const s of subjects) {
+      if (map.has(s.faculty)) s.faculty = map.get(s.faculty);
+    }
+  }
   res.json({ subjects });
 }));
 
 router.post('/subjects', asyncHandler(async (req, res) => {
   const { name, code, semester, faculty, department, credits } = req.body;
-  const subject = await Subject.create({ college: req.user.college, name, code, semester: Number(semester) || 1, faculty, department, credits });
+  const subject = await prisma.subject.create({ data: { college: req.user.college, name, code, semester: Number(semester) || 1, faculty, department, credits } });
   res.status(201).json({ subject });
 }));
 
 router.patch('/subjects/:id', asyncHandler(async (req, res) => {
-  const subject = await Subject.findById(req.params.id);
+  const subject = await prisma.subject.findUnique({ where: { id: req.params.id } });
   if (!subject) throw ApiError.notFound('Subject not found');
   const allowed = ['name', 'code', 'semester', 'faculty', 'department', 'credits'];
-  allowed.forEach((k) => { if (req.body[k] !== undefined) subject[k] = req.body[k]; });
-  await subject.save();
-  res.json({ subject });
+  const data = {};
+  allowed.forEach((k) => { if (req.body[k] !== undefined) data[k] = req.body[k]; });
+  const updated = await prisma.subject.update({ where: { id: subject.id }, data });
+  res.json({ subject: updated });
 }));
 
 router.delete('/subjects/:id', asyncHandler(async (req, res) => {
-  await Subject.findByIdAndDelete(req.params.id);
+  await prisma.subject.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Subject deleted' });
 }));
 
 // ---------------- Colleges ----------------
 router.get('/colleges', asyncHandler(async (req, res) => {
-  const colleges = await College.find().sort({ name: 1 });
+  const colleges = await prisma.college.findMany({ orderBy: { name: 'asc' } });
   res.json({ colleges });
 }));
 
 router.post('/colleges', asyncHandler(async (req, res) => {
   const { name, code, city, state, website, contactEmail, contactPhone } = req.body;
-  const college = await College.create({ name, code, city, state, website, contactEmail, contactPhone });
+  const college = await prisma.college.create({ data: { name, code, city, state, website, contactEmail, contactPhone } });
   res.status(201).json({ college });
 }));
 
 // ---------------- Opportunity moderation ----------------
 router.get('/pending-opportunities', asyncHandler(async (req, res) => {
-  const opportunities = await Opportunity.find({ status: 'pending' }).sort({ createdAt: -1 }).limit(50);
+  const opportunities = await prisma.opportunity.findMany({ where: { status: 'pending' }, orderBy: { createdAt: 'desc' }, take: 50 });
   res.json({ opportunities });
 }));
 
@@ -199,8 +229,8 @@ router.get('/pending-opportunities', asyncHandler(async (req, res) => {
 router.post('/broadcast', asyncHandler(async (req, res) => {
   const { title, message, category = 'college', link = '' } = req.body;
   if (!title || !message) throw ApiError.badRequest('title and message are required');
-  const students = await User.find({ role: 'student' }).distinct('_id');
-  await Promise.all(students.map((s) => createNotification(s, { category, title, message, link, icon: 'megaphone', priority: 'high' })));
+  const students = await prisma.user.findMany({ where: { role: 'student' }, select: { id: true } });
+  await Promise.all(students.map((s) => createNotification(s.id, { category, title, message, link, icon: 'megaphone', priority: 'high' })));
   res.json({ message: `Broadcast sent to ${students.length} students` });
 }));
 

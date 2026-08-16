@@ -5,18 +5,7 @@ import { requireStudent } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { StudentProfile } from '../models/StudentProfile.js';
-import { TimetableSlot } from '../models/TimetableSlot.js';
-import { Attendance } from '../models/Attendance.js';
-import { Task } from '../models/Task.js';
-import { Assignment } from '../models/Assignment.js';
-import { Exam } from '../models/Exam.js';
-import { Notice } from '../models/Notice.js';
-import { Event } from '../models/Event.js';
-import { Opportunity } from '../models/Opportunity.js';
-import { Application } from '../models/Application.js';
-import { RecommendationEvent } from '../models/RecommendationEvent.js';
-import { AIPlan } from '../models/AIPlan.js';
+import { prisma } from '../lib/prisma.js';
 import { buildAttendanceReport, forecastMessage } from '../services/attendanceService.js';
 import { computeMatch, rankOpportunities } from '../services/matchingEngine.js';
 import { groupDeadlines } from '../services/deadlineEngine.js';
@@ -26,57 +15,78 @@ import { relativeDay, timeToMinutes, daysBetween } from '../utils/helpers.js';
 const router = Router();
 router.use(auth, requireStudent);
 
-async function getProfile(userId) {
-  return StudentProfile.findOne({ user: userId });
+function getProfile(userId) {
+  return prisma.studentProfile.findFirst({ where: { user: userId } });
 }
 
 // GET /api/students/me/profile
 router.get('/me/profile', asyncHandler(async (req, res) => {
-  let profile = await getProfile(req.user._id).populate('resume');
+  let profile = await getProfile(req.user.id);
   if (!profile) {
-    profile = await StudentProfile.create({ user: req.user._id, college: req.user.college });
+    profile = await prisma.studentProfile.create({ data: { user: req.user.id, college: req.user.college } });
+  }
+  if (profile.resume) {
+    const resume = await prisma.resume.findUnique({ where: { id: profile.resume } });
+    if (resume) profile.resume = resume;
   }
   res.json(profile);
 }));
 
 // PATCH /api/students/me/profile — full onboarding + edits
 router.patch('/me/profile', asyncHandler(async (req, res) => {
-  const profile = await getProfile(req.user._id) || await StudentProfile.create({ user: req.user._id, college: req.user.college });
+  const existing = await getProfile(req.user.id);
+  let profile = existing;
   const allowed = [
     'college', 'course', 'semester', 'section', 'enrollmentNumber', 'bio', 'linkedin', 'github', 'portfolio',
     'skills', 'interests', 'careerGoal', 'preferredLocation', 'remotePreference', 'weeklyLearningHours',
     'preferredOpportunityTypes', 'experienceYears', 'roadmap',
   ];
+  const data = {};
   allowed.forEach((k) => {
-    if (req.body[k] !== undefined) profile[k] = req.body[k];
+    if (req.body[k] !== undefined) data[k] = req.body[k];
   });
-  await profile.save();
+  if (existing) {
+    profile = await prisma.studentProfile.update({ where: { id: existing.id }, data });
+  } else {
+    profile = await prisma.studentProfile.create({
+      data: { user: req.user.id, college: req.user.college, ...data },
+    });
+  }
   if (req.body.completeOnboarding) {
-    req.user.onboarded = true;
-    await req.user.save();
+    await prisma.user.update({ where: { id: req.user.id }, data: { onboarded: true } });
   }
   res.json(profile);
 }));
 
 // GET /api/students/dashboard — the personalized command center
 router.get('/dashboard', asyncHandler(async (req, res) => {
-  const profile = await getProfile(req.user._id);
+  const profile = await getProfile(req.user.id);
   if (!profile) throw ApiError.notFound('Student profile not found. Complete onboarding first.');
-  const userId = req.user._id;
+  const userId = req.user.id;
   const collegeId = req.user.college;
   const today = new Date();
   const dayIndex = today.getDay();
 
   const [slots, attendanceRecords, tasks, assignments, exams, notices, events, applications] = await Promise.all([
-    TimetableSlot.find({ student: userId }).sort({ startTime: 1 }),
-    Attendance.find({ student: userId }).sort({ date: 1 }),
-    Task.find({ user: userId }),
-    Assignment.find({ college: collegeId, semester: profile.semester }).sort({ dueDate: 1 }),
-    Exam.find({ college: collegeId, semester: profile.semester, date: { $gte: new Date(Date.now() - 86400000) } }).sort({ date: 1 }),
-    Notice.find({ college: collegeId }).sort({ date: -1 }).limit(5),
-    Event.find({ college: collegeId, date: { $gte: new Date() } }).sort({ date: 1 }).limit(5),
-    Application.find({ student: userId }).populate('opportunity'),
+    prisma.timetableSlot.findMany({ where: { student: userId }, orderBy: { startTime: 'asc' } }),
+    prisma.attendance.findMany({ where: { student: userId }, orderBy: { date: 'asc' } }),
+    prisma.task.findMany({ where: { user: userId } }),
+    prisma.assignment.findMany({ where: { college: collegeId, semester: profile.semester }, orderBy: { dueDate: 'asc' } }),
+    prisma.exam.findMany({ where: { college: collegeId, semester: profile.semester, date: { gte: new Date(Date.now() - 86400000) } }, orderBy: { date: 'asc' } }),
+    prisma.notice.findMany({ where: { college: collegeId }, orderBy: { date: 'desc' }, take: 5 }),
+    prisma.event.findMany({ where: { college: collegeId, date: { gte: new Date() } }, orderBy: { date: 'asc' }, take: 5 }),
+    prisma.application.findMany({ where: { student: userId } }),
   ]);
+
+  // Attach opportunity docs to applications (populate replacement)
+  const oppIds = [...new Set(applications.map((a) => a.opportunity).filter(Boolean))];
+  if (oppIds.length) {
+    const opps = await prisma.opportunity.findMany({ where: { id: { in: oppIds } } });
+    const oppMap = new Map(opps.map((o) => [o.id, o]));
+    for (const app of applications) {
+      if (oppMap.has(app.opportunity)) app.opportunity = oppMap.get(app.opportunity);
+    }
+  }
 
   // Attendance report
   const groups = {};
@@ -90,22 +100,22 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
   for (const a of assignments) {
     if (a.dueDate >= new Date(Date.now() - 86400000)) {
       const sub = a.submissions?.find((s) => String(s.student) === String(userId));
-      if (!sub || sub.status === 'pending') deadlineItems.push({ label: `Assignment: ${a.title}`, date: a.dueDate, ref: `assignment:${a._id}`, link: '/assignments', type: 'assignment' });
+      if (!sub || sub.status === 'pending') deadlineItems.push({ label: `Assignment: ${a.title}`, date: a.dueDate, ref: `assignment:${a.id}`, link: '/assignments', type: 'assignment' });
     }
   }
-  for (const e of exams) deadlineItems.push({ label: `Exam: ${e.title}`, date: e.date, ref: `exam:${e._id}`, link: '/college', type: 'exam' });
+  for (const e of exams) deadlineItems.push({ label: `Exam: ${e.title}`, date: e.date, ref: `exam:${e.id}`, link: '/college', type: 'exam' });
   for (const t of tasks) {
-    if (t.status !== 'done' && t.dueDate) deadlineItems.push({ label: `Task: ${t.title}`, date: t.dueDate, ref: `task:${t._id}`, link: '/tasks', type: 'task' });
+    if (t.status !== 'done' && t.dueDate) deadlineItems.push({ label: `Task: ${t.title}`, date: t.dueDate, ref: `task:${t.id}`, link: '/tasks', type: 'task' });
   }
   for (const app of applications) {
     if (app.opportunity?.deadline && app.status !== 'rejected' && app.status !== 'selected') {
-      deadlineItems.push({ label: `Application: ${app.opportunity.title}`, date: app.opportunity.deadline, ref: `opportunity:${app.opportunity._id}`, link: `/opportunities/${app.opportunity._id}`, type: 'opportunity' });
+      deadlineItems.push({ label: `Application: ${app.opportunity.title}`, date: app.opportunity.deadline, ref: `opportunity:${app.opportunity.id}`, link: `/opportunities/${app.opportunity.id}`, type: 'opportunity' });
     }
   }
   const deadlines = groupDeadlines(deadlineItems);
 
   // Opportunity matching
-  const verifiedOpps = await Opportunity.find({ status: 'verified', deadline: { $gte: new Date() } }).limit(80);
+  const verifiedOpps = await prisma.opportunity.findMany({ where: { status: 'verified', deadline: { gte: new Date() } }, take: 80 });
   const ranked = rankOpportunities(profile, verifiedOpps, 8);
   const topOpportunity = ranked[0];
 
@@ -117,7 +127,7 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
   if (deadlines.tomorrow.length) needsAttention.push({ severity: 'warning', title: `${deadlines.tomorrow.length} deadline${deadlines.tomorrow.length > 1 ? 's' : ''} tomorrow`, message: deadlines.tomorrow.map((d) => d.label).join(', '), link: '/tasks' });
   if (deadlines.today.length) needsAttention.push({ severity: 'critical', title: `${deadlines.today.length} deadline${deadlines.today.length > 1 ? 's' : ''} today`, message: deadlines.today.map((d) => d.label).join(', '), link: '/tasks' });
   if (topOpportunity && topOpportunity.score >= 80 && daysBetween(new Date(), topOpportunity.opportunity.deadline) <= 3) {
-    needsAttention.push({ severity: 'critical', title: `${topOpportunity.opportunity.title} closes in ${daysBetween(new Date(), topOpportunity.opportunity.deadline)} day(s)`, message: `You have a ${topOpportunity.score}% match — complete the application today.`, link: `/opportunities/${topOpportunity.opportunity._id}` });
+    needsAttention.push({ severity: 'critical', title: `${topOpportunity.opportunity.title} closes in ${daysBetween(new Date(), topOpportunity.opportunity.deadline)} day(s)`, message: `You have a ${topOpportunity.score}% match — complete the application today.`, link: `/opportunities/${topOpportunity.opportunity.id}` });
   }
   const importantNotice = notices.find((n) => n.important);
   if (importantNotice) needsAttention.push({ severity: 'info', title: importantNotice.title, message: 'New important college notice', link: '/college' });
@@ -163,13 +173,13 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
 
 // GET /api/students/weekly-review
 router.get('/weekly-review', asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
   const weekAgo = new Date(Date.now() - 7 * 86400000);
   const [records, tasks, applications, events] = await Promise.all([
-    Attendance.find({ student: userId, date: { $gte: weekAgo } }),
-    Task.find({ user: userId, updatedAt: { $gte: weekAgo } }),
-    Application.find({ student: userId, updatedAt: { $gte: weekAgo } }),
-    RecommendationEvent.find({ user: userId, createdAt: { $gte: weekAgo } }),
+    prisma.attendance.findMany({ where: { student: userId, date: { gte: weekAgo } } }),
+    prisma.task.findMany({ where: { user: userId, updatedAt: { gte: weekAgo } } }),
+    prisma.application.findMany({ where: { student: userId, updatedAt: { gte: weekAgo } } }),
+    prisma.recommendationEvent.findMany({ where: { user: userId, createdAt: { gte: weekAgo } } }),
   ]);
   const classesTotal = records.length;
   const classesAttended = records.filter((r) => r.status === 'present').length;
@@ -194,7 +204,7 @@ router.post('/recommendation-event', asyncHandler(async (req, res) => {
   if (!['viewed', 'saved', 'applied', 'dismissed', 'not-interested', 'searched', 'clicked'].includes(type)) {
     throw ApiError.badRequest('Invalid event type');
   }
-  await RecommendationEvent.create({ user: req.user._id, type, opportunity, category, metadata: metadata || {} });
+  await prisma.recommendationEvent.create({ data: { user: req.user.id, type, opportunity, category, metadata: metadata || {} } });
   res.status(201).json({ ok: true });
 }));
 
@@ -202,7 +212,7 @@ router.post('/recommendation-event', asyncHandler(async (req, res) => {
 router.get('/today-plan', asyncHandler(async (req, res) => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const plan = await AIPlan.findOne({ student: req.user._id, date: today });
+  const plan = await prisma.aIPlan.findFirst({ where: { student: req.user.id, date: today } });
   res.json({ plan });
 }));
 

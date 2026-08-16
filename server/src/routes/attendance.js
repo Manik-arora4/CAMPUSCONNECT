@@ -5,18 +5,16 @@ import { requireStudent } from '../middleware/roles.js';
 import { validate } from '../middleware/validate.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { ApiError } from '../utils/ApiError.js';
-import { Attendance } from '../models/Attendance.js';
-import { Subject } from '../models/Subject.js';
+import { prisma } from '../lib/prisma.js';
 import { buildAttendanceReport, forecastMessage } from '../services/attendanceService.js';
 import { aiService } from '../services/ai/index.js';
-import { StudentProfile } from '../models/StudentProfile.js';
 import { createNotification } from '../services/notificationService.js';
 
 const router = Router();
 router.use(auth, requireStudent);
 
 async function buildReport(userId) {
-  const records = await Attendance.find({ student: userId }).sort({ date: 1 });
+  const records = await prisma.attendance.findMany({ where: { student: userId }, orderBy: { date: 'asc' } });
   const groups = {};
   for (const r of records) (groups[r.subjectName] = groups[r.subjectName] || []).push(r);
   const report = buildAttendanceReport(groups);
@@ -25,14 +23,15 @@ async function buildReport(userId) {
 
 // GET /api/attendance — full intelligence report
 router.get('/', asyncHandler(async (req, res) => {
-  const { records, report } = await buildReport(req.user._id);
-  const subjects = await Subject.find({ college: req.user.college, semester: (await StudentProfile.findOne({ user: req.user._id }))?.semester || 1 });
+  const { records, report } = await buildReport(req.user.id);
+  const profile = await prisma.studentProfile.findFirst({ where: { user: req.user.id } });
+  const subjects = await prisma.subject.findMany({ where: { college: req.user.college, semester: profile?.semester || 1 } });
   res.json({ ...report, records, subjects });
 }));
 
 // GET /api/attendance/forecast
 router.get('/forecast', asyncHandler(async (req, res) => {
-  const { report } = await buildReport(req.user._id);
+  const { report } = await buildReport(req.user.id);
   res.json({
     overall: report.overall,
     forecast: report.overall.total ? report.overall.subjects || [] : [],
@@ -51,19 +50,21 @@ router.post(
   validate,
   asyncHandler(async (req, res) => {
     const { subjectName, subject, date, status } = req.body;
-    const existing = await Attendance.findOne({ student: req.user._id, subjectName, date: new Date(date) });
+    const dateObj = new Date(date);
+    const existing = await prisma.attendance.findFirst({ where: { student: req.user.id, subjectName, date: dateObj } });
     if (existing) {
-      existing.status = status;
-      await existing.save();
-      return res.json({ record: existing });
+      const record = await prisma.attendance.update({ where: { id: existing.id }, data: { status } });
+      return res.json({ record });
     }
-    const record = await Attendance.create({
-      student: req.user._id,
-      subject: subject || undefined,
-      subjectName: subjectName.trim(),
-      date: new Date(date),
-      status,
-      markedBy: req.user._id,
+    const record = await prisma.attendance.create({
+      data: {
+        student: req.user.id,
+        subject: subject || undefined,
+        subjectName: subjectName.trim(),
+        date: dateObj,
+        status,
+        markedBy: req.user.id,
+      },
     });
     res.status(201).json({ record });
   })
@@ -71,27 +72,28 @@ router.post(
 
 // PATCH /api/attendance/:id
 router.patch('/:id', asyncHandler(async (req, res) => {
-  const record = await Attendance.findOne({ _id: req.params.id, student: req.user._id });
+  const record = await prisma.attendance.findFirst({ where: { id: req.params.id, student: req.user.id } });
   if (!record) throw ApiError.notFound('Attendance record not found');
+  let data = {};
   if (req.body.status) {
     if (!['present', 'absent', 'holiday'].includes(req.body.status)) throw ApiError.badRequest('Invalid status');
-    record.status = req.body.status;
+    data = { status: req.body.status };
   }
-  await record.save();
-  res.json({ record });
+  const updated = await prisma.attendance.update({ where: { id: record.id }, data });
+  res.json({ record: updated });
 }));
 
 // DELETE /api/attendance/:id
 router.delete('/:id', asyncHandler(async (req, res) => {
-  const record = await Attendance.findOneAndDelete({ _id: req.params.id, student: req.user._id });
-  if (!record) throw ApiError.notFound('Attendance record not found');
+  const res2 = await prisma.attendance.deleteMany({ where: { id: req.params.id, student: req.user.id } });
+  if (!res2.count) throw ApiError.notFound('Attendance record not found');
   res.json({ message: 'Record deleted' });
 }));
 
 // POST /api/attendance/advice — AI explanation of attendance health
 router.post('/advice', asyncHandler(async (req, res) => {
-  const { report } = await buildReport(req.user._id);
-  const profile = await StudentProfile.findOne({ user: req.user._id });
+  const { report } = await buildReport(req.user.id);
+  const profile = await prisma.studentProfile.findFirst({ where: { user: req.user.id } });
   const gemini = await aiService.chat(`My attendance is ${report.overall.percentage}%. What should I do?`, {
     attendance: { overall: report.overall },
     student: profile,
@@ -101,7 +103,7 @@ router.post('/advice', asyncHandler(async (req, res) => {
 
 // POST /api/attendance/alert-if-low — internal helper to create notifications
 export async function checkAndAlertAttendance(userId) {
-  const records = await Attendance.find({ student: userId });
+  const records = await prisma.attendance.findMany({ where: { student: userId } });
   const groups = {};
   for (const r of records) (groups[r.subjectName] = groups[r.subjectName] || []).push(r);
   const report = buildAttendanceReport(groups);

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
-import { User } from '../models/User.js';
+import { prisma } from '../lib/prisma.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -16,7 +16,7 @@ export const auth = asyncHandler(async (req, res, next) => {
     throw ApiError.unauthorized('Session expired or invalid. Please log in again.');
   }
 
-  const user = await User.findById(payload.id);
+  const user = await prisma.user.findUnique({ where: { id: payload.id } });
   if (!user) throw ApiError.unauthorized('Account not found.');
   if (!user.active) throw ApiError.forbidden('This account has been deactivated.');
 
@@ -31,7 +31,7 @@ export const optionalAuth = asyncHandler(async (req, res, next) => {
   if (!token) return next();
   try {
     const payload = jwt.verify(token, env.JWT_SECRET);
-    const user = await User.findById(payload.id);
+    const user = await prisma.user.findUnique({ where: { id: payload.id } });
     if (user && user.active) req.user = user;
   } catch {
     /* ignore */

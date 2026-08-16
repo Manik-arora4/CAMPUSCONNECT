@@ -83,7 +83,7 @@ export function fallbackDailyPlan({ date, timetable, tasks, deadlines, topOpport
   if (hasMorning && schedule.length) push('08:00', 'Morning routine & review', 'free');
 
   for (const s of schedule) {
-    push(s.startTime, `${s.subjectName}${s.room ? ` (${s.room})` : ''}`, s.type === 'free' ? 'free' : 'class', `timetable:${s._id}`);
+    push(s.startTime, `${s.subjectName}${s.room ? ` (${s.room})` : ''}`, s.type === 'free' ? 'free' : 'class', `timetable:${s.id}`);
   }
 
   if (!schedule.length) push('09:00', 'Self-study block — no classes today', 'study');
@@ -96,11 +96,11 @@ export function fallbackDailyPlan({ date, timetable, tasks, deadlines, topOpport
     }
   }
   if (pending.length) {
-    push('15:30', `${pending[0].title}`, 'task', `task:${pending[0]._id}`);
-    if (pending[1]) push('16:30', `${pending[1].title}`, 'task', `task:${pending[1]._id}`);
+    push('15:30', `${pending[0].title}`, 'task', `task:${pending[0].id}`);
+    if (pending[1]) push('16:30', `${pending[1].title}`, 'task', `task:${pending[1].id}`);
   }
   if (topOpportunity) {
-    push('17:30', `Work on "${topOpportunity.title}" application (${topOpportunity.score}% match)`, 'career', `opportunity:${topOpportunity._id}`);
+    push('17:30', `Work on "${topOpportunity.title}" application (${topOpportunity.score}% match)`, 'career', `opportunity:${topOpportunity.id}`);
   }
   if (attendanceWarning) {
     push('18:30', 'Prepare for next class to recover attendance', 'study');
@@ -578,10 +578,10 @@ export function fallbackProactiveActions({ deadlines, topOpportunities, attendan
     }
   }
   for (const opp of (topOpportunities || []).slice(0, 3)) {
-    const applied = (applications || []).some((a) => String(a.opportunity) === String(opp._id));
+    const applied = (applications || []).some((a) => String(a.opportunity) === String(opp.id));
     const diff = daysBetween(new Date(), opp.deadline);
     if (!applied && opp.score >= 80 && diff >= 0 && diff <= 3) {
-      actions.push({ type: 'opportunity', priority: 'high', title: `High-match opportunity closing soon (${opp.score}% match)`, message: `You haven't applied to "${opp.title}" at ${opp.organization} — it closes ${relativeDay(opp.deadline)}.`, link: `/opportunities/${opp._id}` });
+      actions.push({ type: 'opportunity', priority: 'high', title: `High-match opportunity closing soon (${opp.score}% match)`, message: `You haven't applied to "${opp.title}" at ${opp.organization} — it closes ${relativeDay(opp.deadline)}.`, link: `/opportunities/${opp.id}` });
     }
   }
   if (attendance?.overall && attendance.overall.health !== 'safe' && attendance.overall.total > 0) {
