@@ -18,7 +18,7 @@ import {
 import { api } from '../../lib/api';
 import { PageLoader, Card, ProgressBar } from '../../components/UI';
 import { useAsync } from '../../components/UI';
-import InteractiveHoverButton from '../../components/InteractiveHoverButton';
+import PulsatingButton from '../../components/PulsatingButton';
 import { fmtTime } from '../../lib/format';
 
 const TYPE_META = {
@@ -112,9 +112,9 @@ export default function AIPlanner() {
           </div>
           <p className="text-lg font-bold text-slate-900">No plan yet</p>
           <p className="text-sm text-slate-500 mt-1 mb-5 max-w-sm mx-auto">Generate today's plan and your AI will sequence your classes, tasks and breaks.</p>
-          <InteractiveHoverButton onClick={generate} disabled={generating}>
+          <PulsatingButton onClick={generate} disabled={generating}>
             <Sparkles size={16} /> Generate today's plan
-          </InteractiveHoverButton>
+          </PulsatingButton>
         </Card>
       ) : (
         <div className="space-y-5">
@@ -159,9 +159,9 @@ export default function AIPlanner() {
           {plan.accepted === false ? (
             <Card className="flex flex-col sm:flex-row items-center justify-between gap-3 border-brand-200 bg-brand-50/60 animate-fade-up" style={{ animationDelay: '0.28s' }}>
               <p className="text-sm text-brand-900 font-medium">✨ This plan looks ready — accept it to lock it in for today.</p>
-              <button className="btn-primary shrink-0" onClick={accept}>
+              <PulsatingButton className="shrink-0" onClick={accept}>
                 <CheckCircle2 size={16} /> Accept plan
-              </button>
+              </PulsatingButton>
             </Card>
           ) : null}
 

@@ -3,6 +3,7 @@ import { FileText, Upload, Sparkles, Trash2, CheckCircle2, AlertTriangle } from 
 import { api, getToken } from '../lib/api';
 import { PageLoader, Card, Badge, EmptyState, ConfirmModal, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtDate, timeAgo, fmtTime } from '../lib/format';
 
 export default function Resumes() {
@@ -65,9 +66,9 @@ export default function Resumes() {
           <h1 className="page-title">Resumes</h1>
           <p className="page-subtitle">Upload your resume and let AI analyze it against opportunities.</p>
         </div>
-        <button className="btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
+        <PulsatingButton onClick={() => fileRef.current?.click()} disabled={uploading}>
           <Upload size={16} /> {uploading ? 'Uploading…' : 'Upload resume'}
-        </button>
+        </PulsatingButton>
         <input
           ref={fileRef}
           type="file"

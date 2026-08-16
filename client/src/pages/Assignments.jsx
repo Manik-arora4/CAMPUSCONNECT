@@ -3,6 +3,7 @@ import { ClipboardList, CheckCircle2, Clock, AlertTriangle } from 'lucide-react'
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtDate, relativeDay } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -63,9 +64,9 @@ export default function Assignments() {
             </button>
           ))}
           {canManage ? (
-            <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+            <PulsatingButton onClick={() => setCreateOpen(true)}>
               + New
-            </button>
+            </PulsatingButton>
           ) : null}
         </div>
       </div>

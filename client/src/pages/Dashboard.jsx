@@ -49,7 +49,7 @@ export default function Dashboard() {
             {new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })} · Here's your campus at a glance.
           </p>
         </div>
-        <Link to="/ai/chat" className="btn-primary shrink-0">
+        <Link to="/ai/chat" className="btn-primary btn-pulsating shrink-0">
           <Sparkles size={16} /> Ask your AI assistant
         </Link>
       </div>

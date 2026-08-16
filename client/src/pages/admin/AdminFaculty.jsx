@@ -3,6 +3,7 @@ import { Plus, Trash2, UserCircle2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, Badge, Avatar, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import PulsatingButton from '../../components/PulsatingButton';
 
 export default function AdminFaculty() {
   const { data, loading, reload } = useAsync(() => api.get('/admin/faculty'));
@@ -25,9 +26,9 @@ export default function AdminFaculty() {
           <h1 className="page-title">Faculty</h1>
           <p className="page-subtitle">Manage faculty accounts ({faculty.length}).</p>
         </div>
-        <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+        <PulsatingButton onClick={() => setCreateOpen(true)}>
           <Plus size={16} /> Add faculty
-        </button>
+        </PulsatingButton>
       </div>
 
       {faculty.length === 0 ? (

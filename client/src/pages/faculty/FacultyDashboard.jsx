@@ -3,6 +3,7 @@ import { BookOpen, ClipboardList, Megaphone, Users, Plus, CheckCircle2 } from 'l
 import { api } from '../../lib/api';
 import { PageLoader, Card, StatCard, Badge, Modal, Field, EmptyState, ErrorBanner, Tabs } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import PulsatingButton from '../../components/PulsatingButton';
 import { fmtDate, relativeDay } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
 
@@ -23,9 +24,9 @@ export default function FacultyDashboard() {
           <h1 className="page-title">Faculty Dashboard</h1>
           <p className="page-subtitle">Welcome back, {user?.name?.split(' ')[0]} — manage your classes and announcements.</p>
         </div>
-        <button className="btn-primary" onClick={() => setNoticeOpen(true)}>
+        <PulsatingButton onClick={() => setNoticeOpen(true)}>
           <Megaphone size={16} /> Announce
-        </button>
+        </PulsatingButton>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

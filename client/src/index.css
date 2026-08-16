@@ -196,6 +196,25 @@ svg.lucide {
   }
 }
 
+/* Pulsating glow ring (magic-ui PulsatingButton) */
+@keyframes pulsating {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--pulse-color, rgba(99, 102, 241, 0.45));
+  }
+  50% {
+    box-shadow: 0 0 0 8px var(--pulse-color, rgba(99, 102, 241, 0.28));
+  }
+}
+.animate-pulsating {
+  animation: pulsating var(--duration, 1.5s) ease-out infinite;
+}
+
+/* Pulse ring for links/buttons that keep btn-primary styling */
+.btn-pulsating {
+  animation: pulsating 1.5s ease-out infinite;
+}
+
 /* ── Sidebar icon tiles (animated) ── */
 .nav-icon-tile {
   display: inline-flex;

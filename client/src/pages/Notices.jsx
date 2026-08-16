@@ -3,6 +3,7 @@ import { Megaphone, Plus, Sparkles, Trash2, Paperclip } from 'lucide-react';
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtDate, timeAgo } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,9 +55,9 @@ export default function Notices() {
           <p className="page-subtitle">Official announcements from your college.</p>
         </div>
         {canManage ? (
-          <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+          <PulsatingButton onClick={() => setCreateOpen(true)}>
             <Plus size={16} /> Post notice
-          </button>
+          </PulsatingButton>
         ) : null}
       </div>
 

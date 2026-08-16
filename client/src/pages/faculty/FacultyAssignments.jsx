@@ -3,6 +3,7 @@ import { Plus, Trash2, ClipboardList } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import PulsatingButton from '../../components/PulsatingButton';
 import { relativeDay } from '../../lib/format';
 
 export default function FacultyAssignments() {
@@ -26,9 +27,9 @@ export default function FacultyAssignments() {
           <h1 className="page-title">Manage Assignments</h1>
           <p className="page-subtitle">Create and track assignments for your college.</p>
         </div>
-        <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+        <PulsatingButton onClick={() => setCreateOpen(true)}>
           <Plus size={16} /> New assignment
-        </button>
+        </PulsatingButton>
       </div>
 
       {assignments.length === 0 ? (

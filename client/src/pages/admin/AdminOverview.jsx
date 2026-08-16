@@ -3,6 +3,7 @@ import { Users, UserCircle2, Briefcase, Send, Megaphone, CalendarClock, Users2, 
 import { api } from '../../lib/api';
 import { PageLoader, Card, StatCard, Badge, Modal, Field, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import PulsatingButton from '../../components/PulsatingButton';
 import { categoryColor } from '../../lib/format';
 
 export default function AdminOverview() {
@@ -20,9 +21,9 @@ export default function AdminOverview() {
           <h1 className="page-title">Admin Overview</h1>
           <p className="page-subtitle">Campus-wide analytics at a glance.</p>
         </div>
-        <button className="btn-primary" onClick={() => setBroadcastOpen(true)}>
+        <PulsatingButton onClick={() => setBroadcastOpen(true)}>
           <MessageSquare size={16} /> Broadcast
-        </button>
+        </PulsatingButton>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

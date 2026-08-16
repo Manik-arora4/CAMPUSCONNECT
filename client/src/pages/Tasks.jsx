@@ -3,6 +3,7 @@ import { Plus, Trash2, CheckCircle2, Circle, Sparkles, CheckSquare } from 'lucid
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtDate, relativeDay } from '../lib/format';
 
 const PRIORITY_STYLE = {
@@ -63,9 +64,9 @@ export default function Tasks() {
             <Sparkles size={16} className="text-violet-600" />
             {aiLoading ? 'Prioritizing…' : 'AI prioritize'}
           </button>
-          <button className="btn-primary" onClick={() => setModalOpen(true)}>
+          <PulsatingButton onClick={() => setModalOpen(true)}>
             <Plus size={16} /> Add task
-          </button>
+          </PulsatingButton>
         </div>
       </div>
 

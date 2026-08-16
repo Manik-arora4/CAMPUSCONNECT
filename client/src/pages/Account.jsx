@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Save, UserCircle2, CheckCircle2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { Card, Field, ErrorBanner, Avatar } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
 
 export default function Account() {
@@ -63,9 +64,9 @@ export default function Account() {
             </Field>
           ) : null}
           <div className="flex items-center gap-3">
-            <button type="submit" className="btn-primary" disabled={saving}>
+            <PulsatingButton type="submit" disabled={saving}>
               <Save size={16} /> {saving ? 'Saving…' : 'Save changes'}
-            </button>
+            </PulsatingButton>
             {saved ? (
               <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">
                 <CheckCircle2 size={16} /> Saved!

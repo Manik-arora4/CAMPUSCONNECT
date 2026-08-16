@@ -3,6 +3,7 @@ import { Users, Megaphone, UserPlus, UserCheck, Bell, BellOff, Plus } from 'luci
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
 
 const CATEGORY_STYLE = {
@@ -40,9 +41,9 @@ export default function Clubs() {
           <p className="page-subtitle">Join communities, follow announcements, find your people.</p>
         </div>
         {canManage ? (
-          <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+          <PulsatingButton onClick={() => setCreateOpen(true)}>
             <Plus size={16} /> New club
-          </button>
+          </PulsatingButton>
         ) : null}
       </div>
 

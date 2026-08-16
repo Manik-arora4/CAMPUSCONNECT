@@ -3,6 +3,7 @@ import { CalendarClock, MapPin, Users, ExternalLink, Plus, CheckCircle2 } from '
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ErrorBanner } from '../components/UI';
 import { useAsync } from '../components/UI';
+import PulsatingButton from '../components/PulsatingButton';
 import { fmtDate, fmtTime, relativeDay } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -44,9 +45,9 @@ export default function Events() {
           <p className="page-subtitle">Workshops, hackathons, talks and fests on campus.</p>
         </div>
         {canManage ? (
-          <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+          <PulsatingButton onClick={() => setCreateOpen(true)}>
             <Plus size={16} /> Create event
-          </button>
+          </PulsatingButton>
         ) : null}
       </div>
 

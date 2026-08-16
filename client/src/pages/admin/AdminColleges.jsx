@@ -3,6 +3,7 @@ import { Plus, School, Trash2 } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import PulsatingButton from '../../components/PulsatingButton';
 
 export default function AdminColleges() {
   const { data, loading, reload } = useAsync(() => api.get('/admin/colleges'));
@@ -20,9 +21,9 @@ export default function AdminColleges() {
           <h1 className="page-title">Colleges</h1>
           <p className="page-subtitle">All institutions on the platform.</p>
         </div>
-        <button className="btn-primary" onClick={() => setCreateOpen(true)}>
+        <PulsatingButton onClick={() => setCreateOpen(true)}>
           <Plus size={16} /> Add college
-        </button>
+        </PulsatingButton>
       </div>
 
       {colleges.length === 0 ? (

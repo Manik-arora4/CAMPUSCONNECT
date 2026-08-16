@@ -126,7 +126,7 @@ export default function Applications() {
             title="No applications here"
             message="Save or apply to opportunities and track them here."
             action={
-              <Link to="/opportunities" className="btn-primary">
+              <Link to="/opportunities" className="btn-primary btn-pulsating">
                 Browse opportunities
               </Link>
             }
