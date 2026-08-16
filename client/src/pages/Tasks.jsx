@@ -140,7 +140,7 @@ function TaskRow({ t, onToggle, onDelete }) {
         </div>
       </div>
       <button onClick={onDelete} className="p-1 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition shrink-0" aria-label="Delete">
-        <Trash2 size={15} />
+        <Trash2 size={16} />
       </button>
     </div>
   );

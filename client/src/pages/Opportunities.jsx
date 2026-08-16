@@ -161,7 +161,7 @@ export default function Opportunities() {
                         className="p-1.5 rounded-lg text-slate-300 hover:text-brand-600 hover:bg-brand-50 transition"
                         title="Save"
                       >
-                        <Bookmark size={15} />
+                        <Bookmark size={16} />
                       </button>
                     ) : null}
                   </div>
@@ -183,10 +183,10 @@ export default function Opportunities() {
 
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
                   <span className="inline-flex items-center gap-1">
-                    <MapPin size={12} /> {opp.mode} · {opp.location}
+                    <MapPin size={14} /> {opp.mode} · {opp.location}
                   </span>
                   <span className="inline-flex items-center gap-1 font-medium">
-                    <Clock size={12} /> {relativeDay(opp.deadline)}
+                    <Clock size={14} /> {relativeDay(opp.deadline)}
                   </span>
                 </div>
 
@@ -198,7 +198,7 @@ export default function Opportunities() {
 
                 {isStudent ? (
                   <button onClick={(e) => apply(e, opp._id)} className="btn-primary w-full mt-3 !py-2 text-xs">
-                    <Send size={13} /> Apply
+                    <Send size={15} /> Apply
                   </button>
                 ) : null}
               </Link>

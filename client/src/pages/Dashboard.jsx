@@ -83,7 +83,7 @@ export default function Dashboard() {
               to={`/opportunities/${aiRecommendation.opportunity._id}`}
               className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold bg-white/15 hover:bg-white/25 rounded-xl px-4 py-2 transition"
             >
-              View opportunity <ArrowRight size={15} />
+              View opportunity <ArrowRight size={16} />
             </Link>
           ) : null}
         </Card>
@@ -110,7 +110,7 @@ export default function Dashboard() {
                   }`}
                 >
                   <p className={`text-sm font-semibold ${n.severity === 'critical' ? 'text-red-700' : n.severity === 'warning' ? 'text-amber-700' : 'text-slate-700'}`}>
-                    {n.severity === 'critical' ? <AlertTriangle size={13} className="inline -mt-0.5 mr-1" /> : <Info size={13} className="inline -mt-0.5 mr-1" />}
+                    {n.severity === 'critical' ? <AlertTriangle size={15} className="inline -mt-0.5 mr-1" /> : <Info size={15} className="inline -mt-0.5 mr-1" />}
                     {n.title}
                   </p>
                   <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</p>
@@ -212,7 +212,7 @@ export default function Dashboard() {
           />
           <p className="text-xs text-slate-500 mt-3">{attendance?.forecast}</p>
           <Link to="/attendance" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-brand-600 hover:text-brand-700">
-            Detailed report <ArrowRight size={14} />
+            Detailed report <ArrowRight size={15} />
           </Link>
         </Card>
       </div>

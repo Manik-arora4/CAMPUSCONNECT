@@ -112,7 +112,7 @@ export default function AISkills() {
             </h3>
             {!roadmap ? (
               <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => run('roadmap')} disabled={busy === 'roadmap'}>
-                <Sparkles size={13} /> {busy === 'roadmap' ? 'Generating…' : 'Generate'}
+                <Sparkles size={15} /> {busy === 'roadmap' ? 'Generating…' : 'Generate'}
               </button>
             ) : null}
           </div>
@@ -166,7 +166,7 @@ export default function AISkills() {
             </h3>
             {!gap ? (
               <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => run('gap')} disabled={busy === 'gap'}>
-                <Sparkles size={13} /> {busy === 'gap' ? 'Analyzing…' : 'Analyze'}
+                <Sparkles size={15} /> {busy === 'gap' ? 'Analyzing…' : 'Analyze'}
               </button>
             ) : null}
           </div>
@@ -213,7 +213,7 @@ export default function AISkills() {
             </h3>
             {!projects ? (
               <button className="btn-primary !py-1.5 !px-3 text-xs" onClick={() => run('projects')} disabled={busy === 'projects'}>
-                <Sparkles size={13} /> {busy === 'projects' ? 'Generating…' : 'Generate'}
+                <Sparkles size={15} /> {busy === 'projects' ? 'Generating…' : 'Generate'}
               </button>
             ) : null}
           </div>
@@ -248,7 +248,7 @@ export default function AISkills() {
             <Sparkles size={18} className="text-violet-600" /> Profile insights
           </h3>
           <button className="btn-secondary !py-1.5 !px-3 text-xs" onClick={() => run('insights')} disabled={busy === 'insights'}>
-            <Sparkles size={13} /> {busy === 'insights' ? 'Analyzing…' : insights ? 'Re-run' : 'Analyze profile'}
+            <Sparkles size={15} /> {busy === 'insights' ? 'Analyzing…' : insights ? 'Re-run' : 'Analyze profile'}
           </button>
         </div>
         {insights ? (
@@ -304,7 +304,7 @@ function GenerateCard({ icon: Icon, tone, title, desc, busy, onClick, active, on
       <p className="font-semibold text-slate-800 mt-3">{title}</p>
       <p className="text-sm text-slate-500 mt-0.5">{desc}</p>
       <button onClick={(e) => { e.stopPropagation(); onClick(); }} className="btn-primary w-full mt-3 !py-2 text-xs" disabled={busy}>
-        <Sparkles size={13} /> {busy ? 'Working…' : active ? 'Generate now' : 'Open'}
+        <Sparkles size={15} /> {busy ? 'Working…' : active ? 'Generate now' : 'Open'}
       </button>
     </Card>
   );

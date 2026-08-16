@@ -85,7 +85,7 @@ export default function AIPlanner() {
         <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur border border-white/20 px-3 py-1 text-xs font-semibold tracking-wide">
-              <Sparkles size={13} className="text-amber-300" />
+              <Sparkles size={15} className="text-amber-300" />
               AI DAILY PLANNER
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold mt-3 leading-tight">{dateStr || "Today's plan"}</h1>

@@ -128,7 +128,7 @@ export default function Notices() {
                     <div className="mt-2 flex flex-wrap gap-2">
                       {n.attachments.map((a, i) => (
                         <a key={i} href={a} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-brand-600 hover:text-brand-700 font-medium">
-                          <Paperclip size={12} /> Attachment
+                          <Paperclip size={14} /> Attachment
                         </a>
                       ))}
                     </div>
@@ -141,7 +141,7 @@ export default function Notices() {
                     <div className="flex items-center gap-2">
                       {canManage && !n.aiSummary?.summary ? (
                         <button onClick={() => summarize(n)} disabled={summarizing === n._id} className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700">
-                          <Sparkles size={12} /> {summarizing === n._id ? 'Summarizing…' : 'AI summarize'}
+                          <Sparkles size={14} /> {summarizing === n._id ? 'Summarizing…' : 'AI summarize'}
                         </button>
                       ) : null}
                       {canManage ? (

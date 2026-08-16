@@ -94,11 +94,11 @@ export default function Assignments() {
                 <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-1.5 text-sm">
                     {overdue ? (
-                      <AlertTriangle size={14} className="text-red-500" />
+                      <AlertTriangle size={16} className="text-red-500" />
                     ) : done ? (
-                      <CheckCircle2 size={14} className="text-emerald-500" />
+                      <CheckCircle2 size={16} className="text-emerald-500" />
                     ) : (
-                      <Clock size={14} className="text-slate-400" />
+                      <Clock size={16} className="text-slate-400" />
                     )}
                     <span className={overdue ? 'text-red-600 font-semibold' : done ? 'text-emerald-600 font-semibold' : 'text-slate-600'}>
                       {done ? 'Submitted' : relativeDay(a.dueDate)}

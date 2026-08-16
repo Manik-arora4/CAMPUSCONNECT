@@ -69,16 +69,16 @@ export default function Events() {
                 {e.description ? <p className="text-sm text-slate-600 mt-1.5 line-clamp-3 flex-1">{e.description}</p> : <div className="flex-1" />}
                 <div className="space-y-1 mt-3 text-xs text-slate-500">
                   <p className="flex items-center gap-1.5">
-                    <CalendarClock size={12} className="text-slate-400" /> {fmtDate(e.date)} · {fmtTime(e.startTime)}–{fmtTime(e.endTime)}
+                    <CalendarClock size={14} className="text-slate-400" /> {fmtDate(e.date)} · {fmtTime(e.startTime)}–{fmtTime(e.endTime)}
                   </p>
                   {e.location ? (
                     <p className="flex items-center gap-1.5">
-                      <MapPin size={12} className="text-slate-400" /> {e.location}
+                      <MapPin size={14} className="text-slate-400" /> {e.location}
                     </p>
                   ) : null}
                   {e.organizer ? (
                     <p className="flex items-center gap-1.5">
-                      <Users size={12} className="text-slate-400" /> {e.organizer}
+                      <Users size={14} className="text-slate-400" /> {e.organizer}
                     </p>
                   ) : null}
                 </div>
@@ -96,7 +96,7 @@ export default function Events() {
                   ) : null}
                   {e.registrationLink ? (
                     <a href={e.registrationLink} target="_blank" rel="noreferrer" className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-brand-600 hover:text-brand-700">
-                      Register link <ExternalLink size={12} />
+                      Register link <ExternalLink size={14} />
                     </a>
                   ) : null}
                 </div>

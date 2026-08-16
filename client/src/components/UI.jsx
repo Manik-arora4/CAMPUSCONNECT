@@ -2,16 +2,27 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 
 export function Spinner({ size = 20, className = '' }) {
+  // Spacious74-style 5-bar equalizer loader, scales with `size`
+  const s = Math.max(0.12, size / 100);
   return (
-    <svg
-      className={`animate-spin text-brand-600 ${className}`}
-      style={{ width: size, height: size }}
-      viewBox="0 0 24 24"
-      fill="none"
+    <div
+      className={`loading ${className}`}
+      role="status"
+      aria-label="Loading"
+      style={{
+        width: size,
+        height: size,
+        ['--gap']: `${6 * s}px`,
+        ['--bar-w']: `${Math.max(2, 4 * s)}px`,
+        ['--bar-h']: `${50 * s}px`,
+      }}
     >
-      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-    </svg>
+      <span />
+      <span />
+      <span />
+      <span />
+      <span />
+    </div>
   );
 }
 

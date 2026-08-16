@@ -42,7 +42,7 @@ export default function NotificationsPage() {
         </div>
         {notifications.some((n) => !n.read) ? (
           <button className="btn-secondary" onClick={markAll}>
-            <CheckCheck size={16} /> Mark all read
+            <CheckCheck size={18} /> Mark all read
           </button>
         ) : null}
       </div>
@@ -90,7 +90,7 @@ export default function NotificationsPage() {
                   </div>
                 </div>
                 <button onClick={() => remove(n._id)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition shrink-0" aria-label="Delete">
-                  <Trash2 size={14} />
+                  <Trash2 size={15} />
                 </button>
               </div>
             </Card>

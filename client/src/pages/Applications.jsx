@@ -172,10 +172,10 @@ export default function Applications() {
                       disabled={assisting === app._id}
                       className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 disabled:opacity-50"
                     >
-                      <Sparkles size={13} /> {assisting === app._id ? 'Generating…' : 'AI assist'}
+                      <Sparkles size={15} /> {assisting === app._id ? 'Generating…' : 'AI assist'}
                     </button>
                     <button onClick={() => setConfirm(app)} className="p-1 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition" aria-label="Delete">
-                      <Trash2 size={14} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </div>

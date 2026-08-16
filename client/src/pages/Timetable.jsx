@@ -106,10 +106,10 @@ export default function Timetable() {
                         </div>
                         <div className="flex items-center gap-0.5 shrink-0">
                           <button onClick={() => duplicate(s)} className="p-1 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-white transition" title="Copy to next day">
-                            <Copy size={13} />
+                            <Copy size={14} />
                           </button>
                           <button onClick={() => setConfirm(s)} className="p-1 rounded-lg text-slate-400 hover:text-red-600 hover:bg-white transition" title="Delete">
-                            <Trash2 size={13} />
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>

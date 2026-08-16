@@ -97,13 +97,13 @@ export default function OpportunityDetail() {
 
             <div className="flex flex-wrap gap-x-5 gap-y-2 mt-4 pt-4 border-t border-slate-100 text-sm text-slate-600">
               <span className="inline-flex items-center gap-1.5">
-                <MapPin size={14} className="text-slate-400" /> {opp.mode} · {opp.location}
+                <MapPin size={16} className="text-slate-400" /> {opp.mode} · {opp.location}
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <Clock size={14} className="text-slate-400" /> Deadline: <b className={diff <= 3 ? 'text-red-600' : ''}>{relativeDay(opp.deadline)}</b>
+                <Clock size={16} className="text-slate-400" /> Deadline: <b className={diff <= 3 ? 'text-red-600' : ''}>{relativeDay(opp.deadline)}</b>
               </span>
               <span className="inline-flex items-center gap-1.5">
-                <GraduationCap size={14} className="text-slate-400" /> {opp.experienceLevel || 'any'} level
+                <GraduationCap size={16} className="text-slate-400" /> {opp.experienceLevel || 'any'} level
               </span>
             </div>
 
@@ -257,7 +257,7 @@ export default function OpportunityDetail() {
               <h3 className="font-semibold text-slate-800 mb-3">Quick info</h3>
               <div className="space-y-2.5 text-sm text-slate-600">
                 <p className="flex items-center gap-2">
-                  <MapPin size={14} className="text-slate-400" /> {opp.mode} · {opp.location}
+                  <MapPin size={16} className="text-slate-400" /> {opp.mode} · {opp.location}
                 </p>
                 <p className="flex items-center gap-2">
                   <CalendarDays size={14} className="text-slate-400" /> Deadline {fmtDate(opp.deadline)}

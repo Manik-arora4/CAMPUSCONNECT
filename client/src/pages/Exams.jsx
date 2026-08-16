@@ -66,11 +66,11 @@ export default function Exams() {
                   </p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-500">
                     <span className="inline-flex items-center gap-1">
-                      <Clock size={12} /> {fmtTime(e.startTime)} – {fmtTime(e.endTime)}
+                      <Clock size={14} /> {fmtTime(e.startTime)} – {fmtTime(e.endTime)}
                     </span>
                     {e.room ? (
                       <span className="inline-flex items-center gap-1">
-                        <MapPin size={12} /> {e.room}
+                        <MapPin size={14} /> {e.room}
                       </span>
                     ) : null}
                     <span className="font-medium">{upcoming ? relativeDay(e.date) : `Was ${relativeDay(e.date)}`}</span>

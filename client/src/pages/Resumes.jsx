@@ -162,7 +162,7 @@ export default function Resumes() {
                     </a>
                     {!r.analysis ? (
                       <button onClick={() => analyze(r._id)} disabled={analyzing === r._id} className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 disabled:opacity-50">
-                        <Sparkles size={13} /> {analyzing === r._id ? 'Analyzing…' : 'Run AI analysis'}
+                        <Sparkles size={15} /> {analyzing === r._id ? 'Analyzing…' : 'Run AI analysis'}
                       </button>
                     ) : null}
                     <button onClick={() => setConfirm(r)} className="ml-auto p-1 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition" aria-label="Delete">

@@ -70,7 +70,7 @@ export default function Clubs() {
               {c.announcements?.length ? (
                 <div className="mt-3 rounded-xl bg-slate-50 border border-slate-100 px-3.5 py-2.5">
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400 flex items-center gap-1 mb-1">
-                    <Megaphone size={11} /> Latest announcement
+                    <Megaphone size={14} /> Latest announcement
                   </p>
                   <p className="text-xs text-slate-600 font-medium line-clamp-1">{c.announcements[0].title}</p>
                   <p className="text-xs text-slate-500 line-clamp-1">{c.announcements[0].content}</p>
