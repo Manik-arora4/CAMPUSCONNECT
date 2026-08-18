@@ -12,6 +12,9 @@ export const env = {
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || '7d',
   DATABASE_URL: process.env.DATABASE_URL || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
+  GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+  OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
+  OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2:1b',
   PUBLIC_URL: process.env.PUBLIC_URL || 'http://localhost:5173',
   DEMO_ADMINS: (process.env.DEMO_ADMINS || '')
     .split(',')
@@ -20,3 +23,5 @@ export const env = {
 };
 
 export const isGeminiEnabled = () => Boolean(env.GEMINI_API_KEY);
+export const isGroqEnabled = () => Boolean(env.GROQ_API_KEY);
+export const aiProvider = () => (env.GROQ_API_KEY ? 'groq' : env.GEMINI_API_KEY ? 'gemini' : 'ollama');
