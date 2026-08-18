@@ -27,6 +27,33 @@ export async function ensureSeed({ force = false } = {}) {
     }
   }
 
+  if (force) {
+    console.log('[seed] Force reseed — clearing existing data...');
+    await prisma.application.deleteMany();
+    await prisma.recommendationEvent.deleteMany();
+    await prisma.notification.deleteMany();
+    await prisma.aIPlan.deleteMany();
+    await prisma.resume.deleteMany();
+    await prisma.message.deleteMany();
+    await prisma.userPreference.deleteMany();
+    await prisma.facultyProfile.deleteMany();
+    await prisma.studentProfile.deleteMany();
+    await prisma.timetableSlot.deleteMany();
+    await prisma.attendance.deleteMany();
+    await prisma.assignment.deleteMany();
+    await prisma.task.deleteMany();
+    await prisma.exam.deleteMany();
+    await prisma.notice.deleteMany();
+    await prisma.event.deleteMany();
+    await prisma.club.deleteMany();
+    await prisma.opportunity.deleteMany();
+    await prisma.resource.deleteMany();
+    await prisma.subject.deleteMany();
+    await prisma.department.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.college.deleteMany();
+  }
+
   console.log('[seed] Seeding demo data...');
   const passwordHash = await hashPassword(DEMO_PASSWORD);
 
@@ -59,6 +86,7 @@ export async function ensureSeed({ force = false } = {}) {
       designation: 'College Administrator',
       emailVerified: true,
       onboarded: true,
+      approved: true,
     },
   });
 
@@ -72,6 +100,7 @@ export async function ensureSeed({ force = false } = {}) {
       designation: 'Assistant Professor, Computer Science',
       emailVerified: true,
       onboarded: true,
+      approved: true,
     },
   });
 
@@ -85,6 +114,7 @@ export async function ensureSeed({ force = false } = {}) {
       designation: 'Assistant Professor, AI & Data Science',
       emailVerified: true,
       onboarded: true,
+      approved: true,
     },
   });
 
@@ -119,8 +149,10 @@ export async function ensureSeed({ force = false } = {}) {
       {
         user: student.id,
         college: college.id,
-        course: 'BCA',
+        degree: 'BCA',
+        course: 'Computer Science',
         semester: 2,
+        year: 1,
         section: 'B',
         enrollmentNumber: 'BCA2025-042',
         bio: '2nd semester BCA student passionate about AI and building products that help students.',
@@ -155,8 +187,10 @@ export async function ensureSeed({ force = false } = {}) {
       {
         user: student2.id,
         college: college.id,
-        course: 'BCA',
+        degree: 'BCA',
+        course: 'Computer Science',
         semester: 2,
+        year: 1,
         section: 'A',
         skills: [{ name: 'Java', level: 'Intermediate' }, { name: 'SQL', level: 'Beginner' }, { name: 'C++', level: 'Beginner' }],
         interests: ['Cybersecurity', 'Web Development'],
@@ -169,6 +203,14 @@ export async function ensureSeed({ force = false } = {}) {
 
   await prisma.userPreference.createMany({
     data: [{ user: student.id }, { user: student2.id }, { user: faculty.id }, { user: admin.id }],
+  });
+
+  // Faculty profiles
+  await prisma.facultyProfile.createMany({
+    data: [
+      { user: faculty.id, college: college.id, employeeId: 'EMP-2024-001', department: 'Computer Science', designation: 'Assistant Professor', subjects: ['C Programming', 'DBMS', 'Data Structures'], classes: ['BCA Sem 2 Section A', 'BCA Sem 2 Section B'], bio: 'Teaching computer science for 8 years. Research interest in databases.' },
+      { user: faculty2.id, college: college.id, employeeId: 'EMP-2024-002', department: 'AI & Data Science', designation: 'Assistant Professor', subjects: ['Python Programming', 'Web Development', 'Machine Learning'], classes: ['BCA Sem 2 Section A', 'BCA Sem 2 Section B'], bio: 'Passionate about AI/ML education and web technologies.' },
+    ],
   });
 
   // ---------------------------------------------------------- Subjects
@@ -341,7 +383,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'National AI Hackathon 2026', organization: 'CodeVita & Partners', category: 'hackathon', status: 'verified',
       description: 'A 48-hour online hackathon to build AI-powered solutions for education. Build an app that helps students learn better using AI. Top 10 teams get mentorship and incubation.',
-      skillsRequired: ['Python', 'AI', 'Machine Learning', 'React'], eligibility: 'Open to all undergraduate students. BCA, B.Tech, BSc students welcome.',
+      skillsRequired: ['Python', 'AI', 'Machine Learning', 'React'],
+      eligibility: 'Open to all undergraduate students. BCA, B.Tech, BSc students welcome.',
+      degreeRestrictions: ['BCA', 'B.Tech', 'B.Sc'],
+      courseRestrictions: ['Computer Science', 'IT', 'AI'],
+      yearMin: 1, yearMax: 4, semesterMin: 1, semesterMax: 8,
+      mandatorySkills: ['Python'],
       mode: 'remote', location: 'Remote (India)', stipend: '', prize: '₹1,00,000 in prizes + incubation', deadline: daysFromNow(2, 23), applyLink: 'https://hackathon.example.com/ai-2026',
       requirements: ['Team of 1-4', 'Submit project idea by deadline', 'Demo video required'], applicationProcess: 'Register online, submit idea, then build during the hackathon weekend.',
       tags: ['ai', 'ml', 'education', 'hackathon'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
@@ -349,7 +396,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'Software Development Internship', organization: 'TechNova Solutions', category: 'internship', status: 'verified',
       description: '3-month remote internship building web applications with React and Node.js. Work with a mentor, ship real features and get a certificate + stipend.',
-      skillsRequired: ['JavaScript', 'React', 'Node.js', 'MongoDB'], eligibility: '2nd year and above. BCA/B.Tech students preferred.',
+      skillsRequired: ['JavaScript', 'React', 'Node.js', 'MongoDB'],
+      eligibility: '2nd year and above. BCA/B.Tech students preferred.',
+      degreeRestrictions: ['BCA', 'B.Tech'],
+      courseRestrictions: ['Computer Science', 'IT'],
+      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
+      mandatorySkills: ['JavaScript'],
       mode: 'remote', location: 'Remote', stipend: '₹8,000/month', prize: '', deadline: daysFromNow(9), applyLink: 'https://technova.example.com/intern',
       requirements: ['Resume', 'GitHub profile'], applicationProcess: 'Apply online, shortlisting followed by a technical interview.',
       tags: ['web', 'javascript', 'react', 'internship'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
@@ -357,7 +409,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'Data Science Internship', organization: 'Analytix Labs', category: 'internship', status: 'verified',
       description: 'Work on real datasets with our data science team. Learn pandas, visualization and basic ML. Hybrid role based in Bangalore.',
-      skillsRequired: ['Python', 'SQL', 'Data Science'], eligibility: 'BCA/BSc/B.Tech students with Python basics. Final year preferred.',
+      skillsRequired: ['Python', 'SQL', 'Data Science'],
+      eligibility: 'BCA/BSc/B.Tech students with Python basics. Final year preferred.',
+      degreeRestrictions: ['BCA', 'B.Sc', 'B.Tech'],
+      courseRestrictions: ['Computer Science', 'Mathematics', 'Statistics', 'AI'],
+      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
+      mandatorySkills: ['Python'],
       mode: 'hybrid', location: 'Bangalore', stipend: '₹12,000/month', prize: '', deadline: daysFromNow(14), applyLink: 'https://analytix.example.com/ds-intern',
       requirements: ['Resume', 'One sample analysis project'], applicationProcess: 'Online application → data challenge → interview.',
       tags: ['data', 'python', 'sql'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
@@ -365,7 +422,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'Frontend Developer (Junior)', organization: 'PixelForge Studio', category: 'job', status: 'verified',
       description: 'Entry-level frontend role. Build pixel-perfect interfaces with React and Tailwind. Strong portfolio required.',
-      skillsRequired: ['JavaScript', 'React', 'HTML', 'CSS'], eligibility: 'Freshers with portfolio projects. BCA/B.Tech.',
+      skillsRequired: ['JavaScript', 'React', 'HTML', 'CSS'],
+      eligibility: 'Freshers with portfolio projects. BCA/B.Tech.',
+      degreeRestrictions: ['BCA', 'B.Tech'],
+      courseRestrictions: ['Computer Science', 'IT'],
+      yearMin: 3, yearMax: 4, semesterMin: 5, semesterMax: 8,
+      mandatorySkills: ['JavaScript', 'React'],
       mode: 'remote', location: 'Remote', stipend: '', prize: '₹4.5 LPA', deadline: daysFromNow(12), applyLink: 'https://pixelforge.example.com/jobs/frontend',
       requirements: ['Portfolio', 'Resume'], applicationProcess: 'Portfolio review → take-home task → interview.',
       tags: ['frontend', 'react', 'job'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
@@ -405,7 +467,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'Research Assistant: NLP for Education', organization: 'Nova AI Lab', category: 'research', status: 'verified',
       description: 'Assist faculty research on NLP applications in education. Learn to work with LLMs, datasets and academic writing. Publication credit for contributors.',
-      skillsRequired: ['Python', 'AI', 'Machine Learning'], eligibility: 'Students with strong Python skills. GPA 7.5+ preferred.',
+      skillsRequired: ['Python', 'AI', 'Machine Learning'],
+      eligibility: 'Students with strong Python skills. GPA 7.5+ preferred.',
+      degreeRestrictions: ['BCA', 'B.Tech', 'B.Sc', 'MCA', 'M.Tech'],
+      courseRestrictions: ['Computer Science', 'AI', 'Data Science'],
+      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
+      mandatorySkills: ['Python', 'Machine Learning'],
       mode: 'onsite', location: 'Pune', stipend: '', prize: 'Publication credit', deadline: daysFromNow(15), applyLink: 'https://nova.edu/ai-lab/research',
       requirements: ['Resume', 'Statement of interest'], applicationProcess: 'Email your resume and a short statement of interest.',
       tags: ['research', 'nlp', 'ai'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
@@ -437,7 +504,12 @@ export async function ensureSeed({ force = false } = {}) {
     {
       title: 'Junior Data Analyst', organization: 'FinEdge Analytics', category: 'job', status: 'verified',
       description: 'Entry-level data analyst role: dashboards, SQL queries and Excel modelling for financial data.',
-      skillsRequired: ['SQL', 'Excel', 'Data Analysis'], eligibility: 'Freshers. BCA/BSc Mathematics/Statistics.',
+      skillsRequired: ['SQL', 'Excel', 'Data Analysis'],
+      eligibility: 'Freshers. BCA/BSc Mathematics/Statistics.',
+      degreeRestrictions: ['BCA', 'B.Sc', 'B.Tech'],
+      courseRestrictions: ['Computer Science', 'Mathematics', 'Statistics'],
+      yearMin: 3, yearMax: 4, semesterMin: 5, semesterMax: 8,
+      mandatorySkills: ['SQL'],
       mode: 'onsite', location: 'Mumbai', stipend: '', prize: '₹3.8 LPA', deadline: daysFromNow(16), applyLink: 'https://finedge.example.com/jobs/analyst',
       requirements: ['Resume'], applicationProcess: 'Apply → SQL test → interview.',
       tags: ['data', 'analyst', 'job'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
