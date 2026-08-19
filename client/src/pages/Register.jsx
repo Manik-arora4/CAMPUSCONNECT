@@ -91,7 +91,13 @@ export default function Register() {
       <div className="flex-1 flex items-center justify-center p-6 relative">
         <div className="w-full max-w-lg relative">
           <div className="flex items-center gap-2.5 justify-center mb-8 animate-fade-up">
-            <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+            <img
+              src="/campusconnect-logo.png"
+              alt="CampusConnect"
+              className="h-10 w-10 rounded-xl object-cover border border-white/20"
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            />
+            <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 items-center justify-center hidden">
               <GraduationCap size={22} className="text-white icon-glow" />
             </div>
             <span className="text-white font-bold text-lg tracking-tight drop-shadow">CAMPUSCONNECT</span>

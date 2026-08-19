@@ -62,7 +62,13 @@ export default function Login() {
       <div className="hidden lg:flex w-1/2 flex-col justify-between p-12 relative">
         <div className="relative animate-fade-up">
           <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-2xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center shadow-lift">
+            <img
+              src="/campusconnect-logo.png"
+              alt="CampusConnect"
+              className="h-11 w-11 rounded-2xl object-cover shadow-lift border border-white/20"
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            />
+            <div className="h-11 w-11 rounded-2xl bg-white/10 backdrop-blur border border-white/20 items-center justify-center shadow-lift hidden">
               <GraduationCap size={24} className="text-white icon-glow" />
             </div>
             <span className="text-white font-bold text-lg tracking-tight drop-shadow">CAMPUSCONNECT</span>
@@ -113,7 +119,13 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center p-6 relative">
         <div className="w-full max-w-md relative">
           <div className="lg:hidden flex items-center gap-2.5 justify-center mb-8 animate-fade-up">
-            <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 flex items-center justify-center">
+            <img
+              src="/campusconnect-logo.png"
+              alt="CampusConnect"
+              className="h-10 w-10 rounded-xl object-cover border border-white/20"
+              onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex'; }}
+            />
+            <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur border border-white/20 items-center justify-center hidden">
               <GraduationCap size={22} className="text-white" />
             </div>
             <span className="text-white font-bold text-lg tracking-tight drop-shadow">CAMPUSCONNECT</span>

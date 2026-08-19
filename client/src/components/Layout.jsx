@@ -300,11 +300,21 @@ export default function Layout() {
 }
 
 function Logo() {
+  const [imgError, setImgError] = useState(false);
   return (
     <div className="flex items-center gap-2.5">
-      <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-sm">
-        <GraduationCap size={22} className="text-white icon-glow" />
-      </div>
+      {!imgError ? (
+        <img
+          src="/campusconnect-logo.png"
+          alt="CampusConnect"
+          className="h-10 w-10 rounded-xl object-cover shadow-sm"
+          onError={() => setImgError(true)}
+        />
+      ) : (
+        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-brand-500 to-violet-600 flex items-center justify-center shadow-sm">
+          <GraduationCap size={22} className="text-white icon-glow" />
+        </div>
+      )}
       <div className="leading-tight">
         <p className="text-white font-bold text-sm tracking-tight">CAMPUSCONNECT</p>
         <p className="text-[10px] text-slate-400">College · Career · AI</p>

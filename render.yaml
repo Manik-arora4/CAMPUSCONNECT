@@ -12,7 +12,7 @@
 
 services:
   - type: web
-    name: campusconnect
+    name: campusconnect-api
     runtime: node
     plan: free
     buildCommand: npm run install:all && npm run db:push --prefix server && npm run build
@@ -20,16 +20,18 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      # Paste your Neon connection string here, e.g.
-      # postgresql://user:pass@ep-xxx.region.aws.neon.tech/campusconnect?sslmode=require
+      # Paste your Supabase connection string here
       - key: DATABASE_URL
         sync: false
       # Generate one with: openssl rand -hex 32
       - key: JWT_SECRET
         sync: false
-      # Optional — leave blank to use offline AI fallbacks
+      # Google Gemini AI — PRIMARY provider
       - key: GEMINI_API_KEY
         sync: false
-      # Your live URL, e.g. https://campusconnect.onrender.com
+      # Groq AI — FALLBACK provider
+      - key: GROQ_API_KEY
+        sync: false
+      # Your live URL, e.g. https://campusconnect-api.onrender.com
       - key: PUBLIC_URL
         sync: false
