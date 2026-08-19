@@ -24,4 +24,4 @@ export const env = {
 
 export const isGeminiEnabled = () => Boolean(env.GEMINI_API_KEY);
 export const isGroqEnabled = () => Boolean(env.GROQ_API_KEY);
-export const aiProvider = () => (env.GROQ_API_KEY ? 'groq' : env.GEMINI_API_KEY ? 'gemini' : 'ollama');
+export const aiProvider = () => (env.GEMINI_API_KEY ? 'gemini' : env.GROQ_API_KEY ? 'groq' : 'ollama');

@@ -1,14 +1,16 @@
-import { askGroq } from './groq.js';
 import { askGemini, parseJsonLoose } from './gemini.js';
+import { askGroq } from './groq.js';
 import * as fb from './fallbacks.js';
 import { aiProvider } from '../../config/env.js';
 
 const provider = aiProvider();
 export const aiMode = () => provider;
 
-// ── Unified AI caller: tries Groq first, falls back to Gemini ──
+// ── Unified AI caller: tries Gemini first, falls back to Groq ──
 async function askAI(systemPrompt, userPrompt, opts = {}) {
-  // askGroq internally falls back to askGemini → Ollama → null
+  // askGemini internally falls back to Ollama → null, then askGroq handles its own fallback
+  const geminiResult = await askGemini(systemPrompt, userPrompt, opts);
+  if (geminiResult) return geminiResult;
   return askGroq(systemPrompt, userPrompt, opts);
 }
 
