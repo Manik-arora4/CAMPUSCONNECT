@@ -68,7 +68,8 @@ router.post(
   validate,
   asyncHandler(async (req, res) => {
     const ctx = await gatherContext(req.user.id);
-    const result = await aiService.chat(req.body.message, ctx);
+    const history = Array.isArray(req.body.history) ? req.body.history : [];
+    const result = await aiService.chat(req.body.message, ctx, history);
     res.json(result);
   })
 );

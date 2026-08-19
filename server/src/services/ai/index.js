@@ -41,12 +41,53 @@ export const aiService = {
     return { ...fb.fallbackDailyPlan(ctx), fromAI: false };
   },
 
-  async chat(message, ctx) {
-    const result = await askAI(
-      'You are CAMPUSCONNECT\'s context-aware AI assistant for a college student. Use ONLY the provided context to answer. Be concise, friendly, specific, and actionable. If the context lacks the info, say so and suggest what to check.\nContext:\n' + JSON.stringify(ctx),
-      message,
-      { temperature: 0.7 }
-    );
+  async chat(message, ctx, history = []) {
+    // Build a rich, structured context string from the student's real data
+    const contextParts = [];
+    if (ctx.student) contextParts.push(`Student: ${ctx.student.name || 'Unknown'}, Course: ${ctx.student.course || 'N/A'}, Semester: ${ctx.student.semester || 'N/A'}`);
+    if (ctx.timetable?.length) {
+      const todaySlots = ctx.timetable.filter((s) => {
+        const today = new Date().getDay();
+        return s.day === today;
+      });
+      if (todaySlots.length) contextParts.push(`Today's classes: ${todaySlots.map((s) => `${s.startTime}-${s.endTime || ''} ${s.subjectName} in ${s.room || 'TBA'}`).join('; ')}`);
+    }
+    if (ctx.attendance?.overall) {
+      const o = ctx.attendance.overall;
+      contextParts.push(`Attendance: ${o.percentage}% (${o.attended}/${o.total} classes attended). Status: ${o.health}. ${o.needed > 0 ? `Need ${o.needed} more consecutive classes to reach ${o.target}%.` : 'Attendance is healthy.'}`);
+    }
+    if (ctx.deadlines?.length) contextParts.push(`Upcoming deadlines: ${ctx.deadlines.map((d) => `${d.label} — ${d.diff === 0 ? 'TODAY' : d.diff === 1 ? 'tomorrow' : `in ${d.diff} days`}`).join('; ')}`);
+    if (ctx.tasks?.length) contextParts.push(`Pending tasks: ${ctx.tasks.map((t) => t.title).join('; ')}`);
+    if (ctx.opportunities?.length) contextParts.push(`Top matching opportunities: ${ctx.opportunities.slice(0, 3).map((o) => `${o.opportunity?.title || o.title} at ${o.opportunity?.organization || o.organization} (${o.score}% match)`).join('; ')}`);
+    if (ctx.notices?.length) contextParts.push(`Recent notices: ${ctx.notices.map((n) => n.title).join('; ')}`);
+    if (ctx.events?.length) contextParts.push(`Upcoming events: ${ctx.events.map((e) => e.title).join('; ')}`);
+
+    const structuredContext = contextParts.join('\n');
+
+    // Build conversation history string
+    const historyStr = history.length
+      ? '\n\nRecent conversation:\n' + history.slice(-6).map((h) => `${h.role === 'user' ? 'Student' : 'Assistant'}: ${h.content}`).join('\n')
+      : '';
+
+    const systemPrompt = `You are CAMPUSCONNECT AI — a smart, friendly, context-aware assistant for college students in India.
+
+REAL STUDENT DATA (use this to give SPECIFIC answers):
+${structuredContext}
+${historyStr}
+
+RULES:
+1. ALWAYS use the student's REAL data above to answer. Reference specific classes, subjects, numbers, deadlines by name.
+2. Be conversational, warm, and motivating — like a helpful senior, not a robot.
+3. Give ACTIONABLE advice: what to do, when to do it, how to do it.
+4. For attendance questions: give specific numbers, calculations, and actionable steps.
+5. For timetable questions: list actual classes with times and rooms.
+6. For career/skills questions: reference their actual skills, course, semester, and goals.
+7. For general questions: relate the answer back to their campus life when possible.
+8. Use emojis sparingly but naturally.
+9. Keep responses concise (3-6 sentences) unless the question needs more detail.
+10. If you don't have enough info, say what specific info would help and where to find it in the app.`;
+
+    const result = await askAI(systemPrompt, message, { temperature: 0.7 });
     if (result) return { reply: result, intent: 'ai' };
     const intent = fb.detectIntent(message);
     return { reply: fb.fallbackChatReply(intent, ctx), intent };

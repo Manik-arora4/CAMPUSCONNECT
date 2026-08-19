@@ -6,11 +6,12 @@ import TypingAnimation from '../../components/TypingAnimation';
 import { useAuth } from '../../context/AuthContext';
 
 const SUGGESTIONS = [
-  'Plan my day based on my timetable',
-  'Which opportunity should I apply to first?',
-  'My attendance is low — what should I do?',
-  'What are my deadlines this week?',
-  'Suggest a project idea for my skills',
+  'What classes do I have today?',
+  'How is my attendance looking?',
+  'What should I focus on today?',
+  'Which opportunity matches me best?',
+  'What skills am I missing for my career goal?',
+  'Give me tips to improve my attendance',
 ];
 
 export default function AIChat() {
@@ -36,7 +37,12 @@ export default function AIChat() {
     setMessages((m) => [...m, { role: 'user', content: msg }]);
     setLoading(true);
     try {
-      const res = await api.post('/ai/chat', { message: msg });
+      // Send conversation history for context continuity
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-6) // last 6 messages for context
+        .map((m) => ({ role: m.role, content: m.content }));
+      const res = await api.post('/ai/chat', { message: msg, history });
       setMessages((m) => [...m, { role: 'assistant', content: res.reply || 'Hmm, I could not process that. Try rephrasing!' }]);
     } catch (err) {
       setMessages((m) => [...m, { role: 'assistant', content: `⚠️ ${err.message}` }]);
