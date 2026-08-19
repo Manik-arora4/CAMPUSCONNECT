@@ -1,6 +1,10 @@
 // Tiny typed fetch wrapper with auth header + JSON handling.
 
-const API_BASE = '/api';
+// In production (Vercel), VITE_API_URL points to the Render backend.
+// In development, it falls back to '/api' (Vite proxy handles it).
+const API_BASE = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : '/api';
 
 export function getToken() {
   return localStorage.getItem('cc_token') || '';

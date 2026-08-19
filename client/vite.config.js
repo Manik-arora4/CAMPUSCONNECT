@@ -10,4 +10,10 @@ export default defineConfig({
       '/uploads': 'http://localhost:5000',
     },
   },
+  // For production: upload files go to the backend
+  define: {
+    'import.meta.env.VITE_UPLOAD_URL': JSON.stringify(
+      process.env.VITE_API_URL ? `${process.env.VITE_API_URL}/uploads` : ''
+    ),
+  },
 });
