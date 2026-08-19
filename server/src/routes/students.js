@@ -37,7 +37,7 @@ router.patch('/me/profile', asyncHandler(async (req, res) => {
   const existing = await getProfile(req.user.id);
   let profile = existing;
   const allowed = [
-    'college', 'course', 'semester', 'section', 'enrollmentNumber', 'bio', 'linkedin', 'github', 'portfolio',
+    'college', 'degree', 'course', 'semester', 'year', 'section', 'enrollmentNumber', 'bio', 'linkedin', 'github', 'portfolio',
     'skills', 'interests', 'careerGoal', 'preferredLocation', 'remotePreference', 'weeklyLearningHours',
     'preferredOpportunityTypes', 'experienceYears', 'roadmap',
   ];

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
+import { NavLink, Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -22,6 +22,7 @@ import {
   X,
   ShieldCheck,
   School,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
@@ -36,6 +37,8 @@ const STUDENT_NAV = [
   { to: '/tasks', label: 'Tasks', icon: CheckSquare },
   { to: '/exams', label: 'Exams', icon: GraduationCap },
   { to: '/college', label: 'Notices', icon: Megaphone },
+  { to: '/college-info', label: 'My College', icon: School },
+  { to: '/messages', label: 'Messages', icon: MessageSquare },
   { to: '/events', label: 'Events', icon: CalendarClock },
   { to: '/clubs', label: 'Clubs', icon: Users },
   { to: '/opportunities', label: 'Opportunities', icon: Briefcase },
@@ -47,6 +50,8 @@ const FACULTY_NAV = [
   { to: '/faculty', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/faculty/assignments', label: 'Assignments', icon: ClipboardList },
   { to: '/college', label: 'Notices', icon: Megaphone },
+  { to: '/college-info', label: 'My College', icon: School },
+  { to: '/messages', label: 'Messages', icon: MessageSquare },
   { to: '/opportunities', label: 'Opportunities', icon: Briefcase },
 ];
 
@@ -192,6 +197,7 @@ export default function Layout() {
   const { user, isStudent, isFaculty, isAdmin, logout, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -211,12 +217,13 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50/60 to-violet-50/60 flex relative overflow-x-hidden">
-      {/* Ambient background orbs */}
+      {/* Ambient background orbs — rich colour so the glass blur has something to show */}
       <div className="pointer-events-none fixed inset-0 overflow-hidden z-0">
-        <div className="absolute -top-24 right-1/4 h-96 w-96 rounded-full bg-brand-300/45 blur-3xl animate-float-slow" />
-        <div className="absolute top-1/3 -left-24 h-80 w-80 rounded-full bg-violet-300/45 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
-        <div className="absolute bottom-0 right-10 h-96 w-96 rounded-full bg-fuchsia-300/40 blur-3xl animate-pulse-soft" />
-        <div className="absolute top-1/4 left-1/3 h-72 w-72 rounded-full bg-emerald-200/35 blur-3xl animate-float" style={{ animationDelay: '3.5s' }} />
+        <div className="absolute -top-24 right-1/4 h-[26rem] w-[26rem] rounded-full bg-brand-400/35 blur-3xl animate-float-slow" />
+        <div className="absolute top-1/3 -left-24 h-[22rem] w-[22rem] rounded-full bg-violet-400/35 blur-3xl animate-float" style={{ animationDelay: '2s' }} />
+        <div className="absolute bottom-0 right-10 h-[26rem] w-[26rem] rounded-full bg-fuchsia-400/30 blur-3xl animate-pulse-soft" />
+        <div className="absolute top-1/4 left-1/3 h-72 w-72 rounded-full bg-emerald-300/30 blur-3xl animate-float" style={{ animationDelay: '3.5s' }} />
+        <div className="absolute bottom-1/4 left-1/2 h-80 w-80 rounded-full bg-sky-300/25 blur-3xl animate-float-slow" style={{ animationDelay: '1s' }} />
       </div>
 
       {/* Sidebar (desktop) */}
@@ -279,7 +286,10 @@ export default function Layout() {
           </div>
         </header>
         <main className="flex-1 px-4 sm:px-6 py-6 max-w-7xl w-full mx-auto">
-          <Outlet />
+          {/* Keyed by pathname so each navigation replays the entrance */}
+          <div key={location.pathname} className="animate-route">
+            <Outlet />
+          </div>
         </main>
         <footer className="px-6 py-4 text-center text-xs text-slate-400">
           CAMPUSCONNECT — Your College. Your Career. Your AI Assistant.

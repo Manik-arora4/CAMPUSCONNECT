@@ -77,29 +77,45 @@ function eligibilityScore(student, opp) {
   let score = 0;
   const elig = normalizeText(opp.eligibility || '');
   const course = normalizeText(student.course || '');
+  const degree = normalizeText(student.degree || '');
   const career = normalizeText(student.careerGoal || '');
   const restrictions = normList(opp.courseRestrictions);
+  const degreeRestrictions = normList(opp.degreeRestrictions);
   const exp = student.experienceYears || 0;
+  const year = student.year || Math.ceil((student.semester || 1) / 2);
+  const semester = student.semester || 1;
 
-  if (!elig && !restrictions.length) score += 12; // open to all
+  if (!elig && !restrictions.length && !degreeRestrictions.length) score += 12; // open to all
 
+  // Degree check (structured)
+  if (degreeRestrictions.length) {
+    const match = degreeRestrictions.some((r) => r === degree || degree.includes(r) || r.includes(degree));
+    score += match ? 6 : 0;
+  }
+
+  // Course check (structured)
   if (restrictions.length) {
     const match = restrictions.some((r) => r === course || course.includes(r) || r.includes(course));
-    score += match ? 10 : 0;
+    score += match ? 6 : 0;
   } else if (elig) {
-    if (elig.includes(course) && course) score += 10;
-    if (elig.includes('all') || elig.includes('any course') || elig.includes('any branch')) score += 8;
-    if (career && elig.includes(career)) score += 6;
-    // semester gates like "2nd semester"
+    if (elig.includes(course) && course) score += 6;
+    if (elig.includes('all') || elig.includes('any course') || elig.includes('any branch')) score += 5;
+    if (career && elig.includes(career)) score += 4;
+  }
+
+  // Year/Semester check (structured)
+  if (opp.yearMin || opp.yearMax) {
+    if (year >= (opp.yearMin || 1) && year <= (opp.yearMax || 4)) score += 4;
+  } else {
     const semMatch = elig.match(/(\d+)(?:st|nd|rd|th)?\s*semester/);
-    if (semMatch && Number(semMatch[1]) <= (student.semester || 9)) score += 4;
+    if (semMatch && Number(semMatch[1]) <= semester) score += 3;
   }
 
   // experience fit
-  if (opp.experienceLevel === 'fresher' && exp <= 1) score += 8;
-  else if (opp.experienceLevel === 'junior' && exp <= 3) score += 8;
-  else if (opp.experienceLevel === 'mid' && exp >= 1) score += 6;
-  else if (!opp.experienceLevel || opp.experienceLevel === 'any') score += 6;
+  if (opp.experienceLevel === 'fresher' && exp <= 1) score += 4;
+  else if (opp.experienceLevel === 'junior' && exp <= 3) score += 4;
+  else if (opp.experienceLevel === 'mid' && exp >= 1) score += 3;
+  else if (!opp.experienceLevel || opp.experienceLevel === 'any') score += 3;
 
   return Math.min(20, score);
 }
@@ -157,9 +173,67 @@ function deadlineScore(opp) {
   return 5;
 }
 
+function computeEligibilityStatus(student, opp) {
+  const checks = [];
+  const degree = normalizeText(student.degree || '');
+  const course = normalizeText(student.course || '');
+  const year = student.year || Math.ceil((student.semester || 1) / 2);
+  const semester = student.semester || 1;
+  const studentSkills = (student.skills || []).map((s) => normalizeText(s.name));
+  const exp = student.experienceYears || 0;
+
+  // Degree check
+  const degreeRestrictions = normList(opp.degreeRestrictions);
+  if (degreeRestrictions.length) {
+    const match = degreeRestrictions.some((r) => r === degree || degree.includes(r) || r.includes(degree));
+    checks.push({ label: `${student.degree || 'Degree'} requirement`, status: match ? 'pass' : 'fail' });
+  }
+
+  // Course check
+  const courseRestrictions = normList(opp.courseRestrictions);
+  if (courseRestrictions.length) {
+    const match = courseRestrictions.some((r) => r === course || course.includes(r) || r.includes(course));
+    checks.push({ label: `${student.course || 'Course'} eligibility`, status: match ? 'pass' : 'fail' });
+  }
+
+  // Year check
+  if (opp.yearMin || opp.yearMax) {
+    const min = opp.yearMin || 1;
+    const max = opp.yearMax || 4;
+    const inRange = year >= min && year <= max;
+    checks.push({ label: `Year ${min}–${max} required`, status: inRange ? 'pass' : 'fail' });
+  }
+
+  // Mandatory skills check
+  const mandatory = normList(opp.mandatorySkills || []);
+  if (mandatory.length) {
+    const have = mandatory.filter((s) => studentSkills.some((sk) => sk.includes(s) || s.includes(sk)));
+    const missing = mandatory.filter((s) => !have.includes(s));
+    checks.push({ label: `Required skills: ${mandatory.join(', ')}`, status: missing.length === 0 ? 'pass' : missing.length <= 1 ? 'warn' : 'fail' });
+  }
+
+  // Experience check
+  if (opp.experienceLevel && opp.experienceLevel !== 'any') {
+    let expOk = false;
+    if (opp.experienceLevel === 'fresher') expOk = exp <= 1;
+    else if (opp.experienceLevel === 'junior') expOk = exp <= 3;
+    else if (opp.experienceLevel === 'mid') expOk = exp >= 1 && exp <= 5;
+    else if (opp.experienceLevel === 'senior') expOk = exp >= 3;
+    else expOk = true;
+    checks.push({ label: `${opp.experienceLevel} experience level`, status: expOk ? 'pass' : 'fail' });
+  }
+
+  // Determine overall status
+  const hasFail = checks.some((c) => c.status === 'fail');
+  const hasWarn = checks.some((c) => c.status === 'warn');
+  const status = hasFail ? 'not_eligible' : hasWarn ? 'partially_eligible' : 'eligible';
+
+  return { status, checks };
+}
+
 /**
  * Compute a deterministic match score between a student profile and an opportunity.
- * @returns {{score:number, breakdown:object, reasons:string[]}}
+ * @returns {{score:number, breakdown:object, reasons:string[], eligibility:{status,checks}}}
  */
 export function computeMatch(student, opp) {
   const breakdown = {
@@ -175,7 +249,10 @@ export function computeMatch(student, opp) {
     Object.entries(breakdown).reduce((acc, [k, v]) => acc + v, 0)
   );
   const reasons = buildReasons(student, opp, breakdown);
-  return { score: clamp(score, 0, 100), breakdown, reasons };
+  const eligibility = computeEligibilityStatus(student, opp);
+  // If not eligible (mandatory fail), cap the score
+  const finalScore = eligibility.status === 'not_eligible' ? Math.min(score, 45) : score;
+  return { score: clamp(finalScore, 0, 100), breakdown, reasons, eligibility };
 }
 
 function buildReasons(student, opp, b) {
@@ -188,10 +265,12 @@ function buildReasons(student, opp, b) {
   } else if (!required.length) {
     reasons.push(`this ${opp.category} has no strict skill requirements`);
   }
-  if (student.course) {
+  if (student.degree || student.course) {
     const restrictions = normList(opp.courseRestrictions || []);
-    const ok = !restrictions.length || restrictions.some((r) => r === normalizeText(student.course));
-    if (ok) reasons.push(`you are a ${student.course} student which fits the eligibility`);
+    const degreeRestrictions = normList(opp.degreeRestrictions || []);
+    const courseOk = !restrictions.length || restrictions.some((r) => r === normalizeText(student.course));
+    const degreeOk = !degreeRestrictions.length || degreeRestrictions.some((r) => r === normalizeText(student.degree));
+    if (courseOk && degreeOk) reasons.push(`you are a ${student.degree || student.course} student which fits the eligibility`);
   }
   if (student.careerGoal && b.career >= 10) {
     reasons.push(`your career goal (${student.careerGoal}) aligns with this opportunity`);

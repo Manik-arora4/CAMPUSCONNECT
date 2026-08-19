@@ -4,8 +4,23 @@ import { env } from './config/env.js';
 import { ensureSeed } from './services/seedService.js';
 import { startScheduledJobs } from './services/scheduler.js';
 
+// Supabase free-tier / IPv6 connections can blip — retry before giving up
+async function connectWithRetry(attempts = 8, delayMs = 4000) {
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      await connectDB();
+      return;
+    } catch (err) {
+      const msg = String(err?.message || err).split('\n')[0];
+      console.error(`[db] connection attempt ${i}/${attempts} failed: ${msg}`);
+      if (i === attempts) throw err;
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+  }
+}
+
 async function main() {
-  await connectDB();
+  await connectWithRetry();
   await ensureSeed();
   startScheduledJobs();
   app.listen(env.PORT, () => {

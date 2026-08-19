@@ -13,6 +13,7 @@ import {
   ExternalLink,
   GraduationCap,
   ListChecks,
+  AlertTriangle,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { PageLoader, Card, Badge, ProgressBar } from '../components/UI';
@@ -89,8 +90,15 @@ export default function OpportunityDetail() {
               </div>
               {match && isStudent ? (
                 <div className="text-right shrink-0">
-                  <p className={`text-3xl font-bold ${scoreColor(match.score)}`}>{Math.round(match.score)}%</p>
-                  <p className="text-xs text-slate-400">match score</p>
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-white font-bold text-2xl ${
+                    match.score >= 80 ? 'bg-gradient-to-r from-emerald-500 to-emerald-600' :
+                    match.score >= 60 ? 'bg-gradient-to-r from-amber-500 to-orange-500' :
+                    match.score >= 40 ? 'bg-gradient-to-r from-orange-500 to-red-500' :
+                    'bg-gradient-to-r from-slate-400 to-slate-500'
+                  }`}>
+                    🎯 {Math.round(match.score)}%
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">match score</p>
                 </div>
               ) : null}
             </div>
@@ -134,6 +142,39 @@ export default function OpportunityDetail() {
               </>
             ) : null}
 
+            {/* Structured eligibility info */}
+            {(opp.degreeRestrictions?.length > 0 || opp.courseRestrictions?.length > 0 || (opp.yearMin || opp.yearMax)) ? (
+              <div className="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-100">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase mb-2">Structured Requirements</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {opp.degreeRestrictions?.length > 0 ? (
+                    <div>
+                      <span className="text-slate-400 text-xs">Degree</span>
+                      <p className="font-medium text-slate-700">{opp.degreeRestrictions.join(', ')}</p>
+                    </div>
+                  ) : null}
+                  {opp.courseRestrictions?.length > 0 ? (
+                    <div>
+                      <span className="text-slate-400 text-xs">Course</span>
+                      <p className="font-medium text-slate-700">{opp.courseRestrictions.join(', ')}</p>
+                    </div>
+                  ) : null}
+                  {opp.yearMin || opp.yearMax ? (
+                    <div>
+                      <span className="text-slate-400 text-xs">Year</span>
+                      <p className="font-medium text-slate-700">{opp.yearMin || 1} – {opp.yearMax || 4}</p>
+                    </div>
+                  ) : null}
+                  {opp.semesterMin || opp.semesterMax ? (
+                    <div>
+                      <span className="text-slate-400 text-xs">Semester</span>
+                      <p className="font-medium text-slate-700">{opp.semesterMin || 1} – {opp.semesterMax || 8}</p>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ) : null}
+
             {opp.skillsRequired?.length ? (
               <>
                 <h3 className="font-semibold text-slate-800 mt-5 mb-2 text-sm">Skills required</h3>
@@ -172,6 +213,67 @@ export default function OpportunityDetail() {
             </div>
           </Card>
 
+          {/* Eligibility checklist */}
+          {isStudent && match?.eligibility ? (
+            <Card>
+              <h2 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
+                <ListChecks size={17} className="text-brand-600" /> Your Eligibility
+              </h2>
+
+              {/* Overall status badge */}
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold mb-4 ${
+                match.eligibility.status === 'eligible' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                match.eligibility.status === 'partially_eligible' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                'bg-red-100 text-red-700 border border-red-200'
+              }`}>
+                {match.eligibility.status === 'eligible' ? '🟢 You are Eligible!' :
+                 match.eligibility.status === 'partially_eligible' ? '🟡 Partially Eligible' :
+                 '🔴 Not Eligible'}
+              </div>
+
+              {/* Individual checks */}
+              <div className="space-y-2">
+                {match.eligibility.checks.map((check, i) => (
+                  <div key={i} className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition ${
+                    check.status === 'pass' ? 'border-emerald-200 bg-emerald-50/50' :
+                    check.status === 'warn' ? 'border-amber-200 bg-amber-50/50' :
+                    'border-red-200 bg-red-50/50'
+                  }`}>
+                    {check.status === 'pass' ? (
+                      <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+                    ) : check.status === 'warn' ? (
+                      <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+                    ) : (
+                      <span className="w-[18px] h-[18px] rounded-full bg-red-400 shrink-0 flex items-center justify-center text-white text-[10px] font-bold">✕</span>
+                    )}
+                    <span className="text-sm text-slate-700 flex-1">{check.label}</span>
+                    <span className={`text-xs font-bold ${
+                      check.status === 'pass' ? 'text-emerald-600' :
+                      check.status === 'warn' ? 'text-amber-600' : 'text-red-600'
+                    }`}>
+                      {check.status === 'pass' ? '✅ Eligible' :
+                       check.status === 'warn' ? '⚠️ Partial' : '❌ Not met'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Why you match reasons */}
+              {match.reasons?.length ? (
+                <div className="mt-4 p-4 rounded-xl bg-brand-50 border border-brand-100">
+                  <p className="text-xs font-semibold text-brand-700 mb-2">Why you match ({Math.round(match.score)}%)</p>
+                  <ul className="space-y-1.5">
+                    {match.reasons.map((r, i) => (
+                      <li key={i} className="text-sm text-brand-800 flex items-start gap-2">
+                        <span className="text-brand-500 mt-0.5">✓</span> {r}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </Card>
+          ) : null}
+
           {/* AI analysis */}
           {isStudent ? (
             <Card>
@@ -186,21 +288,30 @@ export default function OpportunityDetail() {
                 ) : null}
               </div>
               {ai ? (
-                <div className="space-y-3">
-                  {ai.explanation ? <p className="text-sm text-slate-600 leading-relaxed">{ai.explanation}</p> : null}
+                <div className="space-y-4">
+                  {/* AI explanation */}
+                  {ai.explanation ? (
+                    <div className="p-4 rounded-xl bg-gradient-to-r from-violet-50 to-brand-50 border border-violet-100">
+                      <p className="text-sm text-slate-700 leading-relaxed">{ai.explanation}</p>
+                    </div>
+                  ) : null}
+
+                  {/* Quick stats */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                     <MiniStat label="Match" value={`${ai.match?.score ?? 0}%`} />
                     <MiniStat label="Difficulty" value={ai.difficulty} />
                     <MiniStat label="Urgency" value={ai.urgency} />
                     <MiniStat label="Deadline" value={ai.deadlineInDays > 0 ? `in ${ai.deadlineInDays}d` : 'today'} />
                   </div>
+
+                  {/* Skill gaps */}
                   {ai.skillGaps?.length ? (
-                    <div>
-                      <p className="text-xs font-semibold text-slate-500 uppercase mb-1.5">Skill gaps to close</p>
+                    <div className="p-3 rounded-xl bg-red-50 border border-red-100">
+                      <p className="text-xs font-semibold text-red-600 uppercase mb-1.5">Skills to develop</p>
                       <div className="flex flex-wrap gap-2">
                         {ai.skillGaps.map((s) => (
-                          <span key={s} className="text-xs bg-red-50 text-red-700 border border-red-100 rounded-lg px-2.5 py-1">
-                            {s}
+                          <span key={s} className="text-xs bg-white text-red-700 border border-red-200 rounded-lg px-2.5 py-1 font-medium">
+                            📚 {s}
                           </span>
                         ))}
                       </div>
@@ -208,7 +319,10 @@ export default function OpportunityDetail() {
                   ) : null}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Get an AI breakdown of how well you fit, your skill gaps, and how urgent this is.</p>
+                <div className="text-center py-6">
+                  <Sparkles size={32} className="text-violet-300 mx-auto mb-3" />
+                  <p className="text-sm text-slate-500">Get an AI breakdown of how well you fit, your skill gaps, and how urgent this is.</p>
+                </div>
               )}
             </Card>
           ) : null}
@@ -219,6 +333,8 @@ export default function OpportunityDetail() {
           {isStudent ? (
             <Card className="sticky top-24">
               <h3 className="font-semibold text-slate-800 mb-3">Take action</h3>
+
+              {/* Match score bar */}
               {match ? (
                 <div className="mb-4">
                   <div className="flex justify-between text-sm mb-1">
@@ -228,6 +344,8 @@ export default function OpportunityDetail() {
                   <ProgressBar value={match.score} color={match.score >= 80 ? 'bg-emerald-500' : match.score >= 60 ? 'bg-amber-500' : 'bg-slate-400'} />
                 </div>
               ) : null}
+
+              {/* Action buttons */}
               <div className="space-y-2">
                 <button onClick={apply} disabled={application?.status === 'applied' || application?.status === 'shortlisted'} className="btn-primary w-full">
                   <Send size={16} />
@@ -243,6 +361,8 @@ export default function OpportunityDetail() {
                   </a>
                 ) : null}
               </div>
+
+              {/* Application status */}
               {application ? (
                 <div className="mt-4 pt-3 border-t border-slate-100">
                   <p className="text-xs text-slate-400 mb-2">Your status: <b className="text-slate-700 capitalize">{application.status}</b></p>

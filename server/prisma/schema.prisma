@@ -29,19 +29,24 @@ model User {
   lastLoginAt       DateTime?
   onboarded         Boolean   @default(false)
   designation       String    @default("")
+  inviteCode        String?   // for admin approval system
+  approved          Boolean   @default(false) // admin/faculty need approval
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
   @@index([college])
   @@index([role])
+  @@index([inviteCode])
 }
 
 model StudentProfile {
   id                       String   @id @default(cuid())
   user                      String   @unique
   college                   String?
+  degree                    String   @default("")  // BCA, B.Tech, BBA, etc.
   course                    String   @default("")
   semester                  Int      @default(1)
+  year                      Int      @default(1)    // academic year
   section                   String   @default("")
   enrollmentNumber          String   @default("")
   bio                       String   @default("")
@@ -282,6 +287,12 @@ model Opportunity {
   skillsRequired     String[] @default([])
   eligibility        String   @default("")
   courseRestrictions String[] @default([])
+  degreeRestrictions String[] @default([])  // BCA, B.Tech, BBA, etc.
+  yearMin            Int      @default(1)   // minimum year required
+  yearMax            Int      @default(4)   // maximum year allowed
+  semesterMin        Int      @default(1)
+  semesterMax        Int      @default(8)
+  mandatorySkills    String[] @default([])  // hard requirements
   experienceLevel    String   @default("any")
   location           String   @default("Remote")
   mode               String   @default("remote")
@@ -414,4 +425,34 @@ model UserPreference {
   weeklyDigest Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model FacultyProfile {
+  id              String   @id @default(cuid())
+  user            String   @unique
+  college         String?
+  employeeId      String   @default("")
+  department      String   @default("")
+  designation     String   @default("")  // Professor, Asst Professor, etc.
+  subjects        String[] @default([])
+  classes         String[] @default([])
+  bio             String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([college])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([senderId, receiverId])
 }

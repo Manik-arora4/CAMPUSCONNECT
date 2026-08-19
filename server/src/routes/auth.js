@@ -42,17 +42,38 @@ async function setupNewUser(user, extra) {
       create: {
         user: user.id,
         college: user.college,
+        degree: extra?.degree || '',
         course: extra?.course || '',
         semester: Number(extra?.semester) || 1,
+        year: Number(extra?.year) || 1,
         section: extra?.section || '',
+      },
+    });
+  }
+  if (user.role === 'faculty') {
+    await prisma.facultyProfile.upsert({
+      where: { user: user.id },
+      update: {},
+      create: {
+        user: user.id,
+        college: user.college,
+        employeeId: extra?.employeeId || '',
+        department: extra?.department || '',
+        designation: extra?.designation || '',
+        subjects: extra?.subjects || [],
+        classes: extra?.classes || [],
       },
     });
   }
   await createNotification(user.id, {
     category: 'system',
     title: `Welcome to CAMPUSCONNECT, ${user.name.split(' ')[0]}! 👋`,
-    message: 'Complete your profile and onboarding to unlock AI-powered recommendations.',
-    link: '/onboarding',
+    message: user.role === 'student'
+      ? 'Complete your profile and onboarding to unlock AI-powered recommendations.'
+      : user.role === 'faculty'
+        ? 'Set up your faculty profile to manage classes and assignments.'
+        : 'Admin access approved. Manage your campus from the dashboard.',
+    link: user.role === 'student' ? '/profile' : '/dashboard',
     icon: 'sparkles',
     priority: 'medium',
   });
@@ -65,12 +86,29 @@ router.post(
     body('name').trim().isLength({ min: 2 }).withMessage('Full name is required'),
     body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
     body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('role').isIn(['student', 'faculty', 'admin']).withMessage('Role must be student, faculty, or admin'),
   ],
   validate,
   asyncHandler(async (req, res) => {
-    const { name, email, password, college: collegeName, course, semester, section, role = 'student' } = req.body;
+    const {
+      name, email, password, college: collegeName, role = 'student',
+      // Student fields
+      degree, course, semester, year, section,
+      // Faculty fields
+      employeeId, department, designation, subjects, classes,
+      // Admin fields
+      inviteCode,
+    } = req.body;
     const exists = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
     if (exists) throw ApiError.conflict('An account with this email already exists. Please log in.');
+
+    // Admin registration requires a valid invite code
+    if (role === 'admin') {
+      const validCode = process.env.ADMIN_INVITE_CODE || 'CAMPUS-ADMIN-2026';
+      if (inviteCode !== validCode) {
+        throw ApiError.forbidden('Invalid admin invite code. Admin registration requires authorization.');
+      }
+    }
 
     const college = await ensureCollege(collegeName);
     const user = await prisma.user.create({
@@ -80,9 +118,10 @@ router.post(
         password: await hashPassword(password),
         role,
         college: college?.id,
+        approved: role === 'student' ? true : false, // students auto-approved, faculty/admin need approval
       },
     });
-    await setupNewUser(user, { course, semester, section });
+    await setupNewUser(user, { degree, course, semester, year, section, employeeId, department, designation, subjects, classes });
 
     const token = signToken(user);
     res.status(201).json({ token, user: toSafeUser(user), onboarded: false });
@@ -101,6 +140,9 @@ router.post(
       throw ApiError.unauthorized('Invalid email or password.');
     }
     if (!user.active) throw ApiError.forbidden('This account has been deactivated.');
+    if ((user.role === 'faculty' || user.role === 'admin') && !user.approved) {
+      throw ApiError.forbidden('Your account is pending admin approval. Please contact your college administrator.');
+    }
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
     const token = signToken(user);
     res.json({ token, user: toSafeUser(user), onboarded: user.onboarded });
@@ -196,6 +238,8 @@ router.get('/me', auth, asyncHandler(async (req, res) => {
       const resume = await prisma.resume.findUnique({ where: { id: profile.resume } });
       if (resume) profile.resume = resume;
     }
+  } else if (req.user.role === 'faculty') {
+    profile = await prisma.facultyProfile.findFirst({ where: { user: req.user.id } });
   }
   res.json({ user: toSafeUser(req.user), studentProfile: profile });
 }));

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { CountUp } from './motion';
 
 export function Spinner({ size = 20, className = '' }) {
   // Spacious74-style 5-bar equalizer loader, scales with `size`
@@ -64,13 +65,24 @@ export function StatCard({ icon: Icon, label, value, sub, tone = 'brand' }) {
     sky: 'bg-sky-50 text-sky-600',
     violet: 'bg-violet-50 text-violet-600',
   };
+  // Numeric values count up on view; strings (e.g. "87%", "safe") render as-is
+  const numeric = typeof value === 'number' && Number.isFinite(value);
+  const isPercent = typeof value === 'string' && /^[\d.]+%$/.test(value);
+  const countTarget = isPercent ? parseFloat(value) : value;
   return (
     <Card className="flex items-start gap-4">
       <div className={`rounded-xl p-2.5 ${tones[tone] || tones.brand}`}>
         <Icon size={22} />
       </div>
       <div className="min-w-0">
-        <p className="text-2xl font-bold text-slate-900 leading-tight">{value}</p>
+        <p className="text-2xl font-bold text-slate-900 leading-tight tabular-nums">
+          {numeric || isPercent ? (
+            <CountUp value={countTarget} decimals={isPercent && value.includes('.') ? 1 : 0} />
+          ) : (
+            value
+          )}
+          {isPercent ? <span>%</span> : null}
+        </p>
         <p className="text-sm font-medium text-slate-500">{label}</p>
         {sub ? <p className="text-xs text-slate-400 mt-0.5 truncate">{sub}</p> : null}
       </div>
@@ -137,11 +149,24 @@ export function ConfirmModal({ open, onClose, onConfirm, title = 'Are you sure?'
   );
 }
 
-export function ProgressBar({ value, max = 100, color = 'bg-brand-500' }) {
+export function ProgressBar({ value, max = 100, color = 'bg-brand-500', delay = 150 }) {
   const pct = max ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+  const [width, setWidth] = React.useState(0);
+  React.useEffect(() => {
+    // Animate from 0 to target once mounted (CSS transition handles easing)
+    const t = setTimeout(() => setWidth(pct), delay);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pct, delay]);
   return (
     <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
-      <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
+      <div
+        className={`h-full rounded-full ${color}`}
+        style={{
+          width: `${width}%`,
+          transition: `width 0.9s cubic-bezier(0.16, 1, 0.3, 1) ${delay}ms`,
+        }}
+      />
     </div>
   );
 }

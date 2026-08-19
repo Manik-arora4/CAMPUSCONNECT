@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Send, Bot, User as UserIcon, RefreshCw } from 'lucide-react';
 import { api } from '../../lib/api';
 import { Card } from '../../components/UI';
+import TypingAnimation from '../../components/TypingAnimation';
 import { useAuth } from '../../context/AuthContext';
 
 const SUGGESTIONS = [
@@ -22,15 +23,7 @@ export default function AIChat() {
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [aiMode, setAiMode] = useState(null);
   const bottomRef = useRef(null);
-
-  useEffect(() => {
-    api
-      .get('/ai/status')
-      .then((d) => setAiMode(d.mode))
-      .catch(() => {});
-  }, []);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -66,12 +59,7 @@ export default function AIChat() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-title">AI Assistant</h1>
-          <p className="page-subtitle">
-            Context-aware copilot ·{' '}
-            <span className={aiMode === 'gemini' ? 'text-emerald-600 font-medium' : 'text-amber-600 font-medium'}>
-              {aiMode === 'gemini' ? '✨ Gemini live' : 'offline fallback'}
-            </span>
-          </p>
+          <p className="page-subtitle">Context-aware copilot</p>
         </div>
         <button onClick={reset} className="btn-ghost !p-2" title="Reset conversation">
           <RefreshCw size={16} />
@@ -94,7 +82,7 @@ export default function AIChat() {
                   m.role === 'user' ? 'bg-brand-600 text-white rounded-tr-sm' : 'bg-white/70 backdrop-blur-md border border-white/60 text-slate-800 rounded-tl-sm'
                 }`}
               >
-                {m.content}
+                <TypingAnimation children={m.content} duration={m.role === 'user' ? 40 : 22} startOnView={false} />
               </div>
             </div>
           ))}

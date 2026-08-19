@@ -15,12 +15,14 @@ import Assignments from './pages/Assignments';
 import Tasks from './pages/Tasks';
 import Exams from './pages/Exams';
 import Notices from './pages/Notices';
+import College from './pages/College';
 import Events from './pages/Events';
 import Clubs from './pages/Clubs';
 import Opportunities from './pages/Opportunities';
 import OpportunityDetail from './pages/OpportunityDetail';
 import Applications from './pages/Applications';
 import Resumes from './pages/Resumes';
+import Messages from './pages/Messages';
 import Profile from './pages/Profile';
 import Account from './pages/Account';
 import NotificationsPage from './pages/Notifications';
@@ -82,12 +84,14 @@ export default function App() {
         <Route path="/tasks" element={<RoleGate role="student"><Tasks /></RoleGate>} />
         <Route path="/exams" element={<RoleGate role="student"><Exams /></RoleGate>} />
         <Route path="/college" element={<Notices />} />
+        <Route path="/college-info" element={<College />} />
         <Route path="/events" element={<RoleGate role="student"><Events /></RoleGate>} />
         <Route path="/clubs" element={<RoleGate role="student"><Clubs /></RoleGate>} />
         <Route path="/opportunities" element={<Opportunities />} />
         <Route path="/opportunities/:id" element={<OpportunityDetail />} />
         <Route path="/applications" element={<RoleGate role="student"><Applications /></RoleGate>} />
         <Route path="/resumes" element={<RoleGate role="student"><Resumes /></RoleGate>} />
+        <Route path="/messages" element={<Messages />} />
         <Route path="/profile" element={<RoleGate role="student"><Profile /></RoleGate>} />
 
         {/* AI */}

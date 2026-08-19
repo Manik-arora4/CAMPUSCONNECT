@@ -115,7 +115,7 @@ router.post(
     const { name, email, password = 'faculty1234', designation, college } = req.body;
     if (await prisma.user.findUnique({ where: { email: email.toLowerCase() } })) throw ApiError.conflict('User with this email already exists');
     const user = await prisma.user.create({
-      data: { name: name.trim(), email: email.toLowerCase(), password: await hashPassword(password), role: 'faculty', designation: designation || '', college: college || req.user.college },
+      data: { name: name.trim(), email: email.toLowerCase(), password: await hashPassword(password), role: 'faculty', designation: designation || '', college: college || req.user.college, approved: true },
     });
     res.status(201).json({ user: toSafeUser(user) });
   })
@@ -223,6 +223,37 @@ router.post('/colleges', asyncHandler(async (req, res) => {
 router.get('/pending-opportunities', asyncHandler(async (req, res) => {
   const opportunities = await prisma.opportunity.findMany({ where: { status: 'pending' }, orderBy: { createdAt: 'desc' }, take: 50 });
   res.json({ opportunities });
+}));
+
+// ---------------- Pending approvals ----------------
+router.get('/pending-users', asyncHandler(async (req, res) => {
+  const users = await prisma.user.findMany({ where: { approved: false, role: { in: ['faculty', 'admin'] } }, orderBy: { createdAt: 'desc' } });
+  const userIds = users.map((u) => u.id);
+  const profiles = await prisma.facultyProfile.findMany({ where: { user: { in: userIds } } });
+  const profileMap = new Map(profiles.map((p) => [p.user, p]));
+  res.json({ users: users.map((u) => ({ ...toSafeUser(u), facultyProfile: profileMap.get(u.id) })) });
+}));
+
+router.post('/approve-user/:id', asyncHandler(async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) throw ApiError.notFound('User not found');
+  const updated = await prisma.user.update({ where: { id: user.id }, data: { approved: true } });
+  await createNotification(user.id, {
+    category: 'system',
+    title: 'Account Approved! 🎉',
+    message: 'Your account has been approved. You can now access all features.',
+    link: '/dashboard',
+    icon: 'check-circle',
+    priority: 'high',
+  });
+  res.json({ user: toSafeUser(updated) });
+}));
+
+router.post('/reject-user/:id', asyncHandler(async (req, res) => {
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) throw ApiError.notFound('User not found');
+  await prisma.user.delete({ where: { id: user.id } });
+  res.json({ message: 'User rejected and removed' });
 }));
 
 // ---------------- Engagement broadcast ----------------

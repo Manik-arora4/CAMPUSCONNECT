@@ -6,6 +6,7 @@ import { useAsync } from '../components/UI';
 import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
 
+const DEGREES = ['BCA', 'B.Tech', 'BBA', 'B.Sc', 'B.Com', 'BA', 'MCA', 'M.Tech', 'MBA', 'M.Sc', 'MA', 'M.Com', 'PhD', 'Other'];
 const SKILLS = ['Python', 'JavaScript', 'Java', 'C', 'C++', 'SQL', 'React', 'Node.js', 'Machine Learning', 'AI', 'Data Science', 'HTML', 'CSS', 'Flutter', 'UI/UX', 'Cloud', 'Docker', 'Cybersecurity'];
 const INTERESTS = ['AI/ML', 'Web Development', 'Data Science', 'Cybersecurity', 'Mobile Development', 'Cloud', 'Blockchain', 'UI/UX Design', 'Competitive Programming', 'Robotics'];
 const OPP_TYPES = ['internship', 'hackathon', 'training', 'scholarship', 'job', 'workshop', 'competition', 'fellowship', 'research', 'conference'];
@@ -22,8 +23,10 @@ export default function Profile() {
   useEffect(() => {
     if (data) {
       setForm({
+        degree: data.degree || '',
         course: data.course || '',
         semester: data.semester || 1,
+        year: data.year || Math.ceil((data.semester || 1) / 2),
         section: data.section || '',
         enrollmentNumber: data.enrollmentNumber || '',
         bio: data.bio || '',
@@ -94,21 +97,31 @@ export default function Profile() {
           <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <UserCircle2 size={18} className="text-brand-600" /> Basic details
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Field label="Course">
-              <input className="input" value={form.course} onChange={set('course')} placeholder="BCA" />
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Field label="Degree">
+              <select className="input" value={form.degree} onChange={set('degree')}>
+                <option value="">Select degree</option>
+                {DEGREES.map((d) => (
+                  <option key={d} value={d}>{d}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Course / Branch">
+              <input className="input" value={form.course} onChange={set('course')} placeholder="e.g. Computer Science" />
+            </Field>
+            <Field label="Year">
+              <select className="input" value={form.year} onChange={set('year')}>
+                {[1, 2, 3, 4, 5].map((y) => (
+                  <option key={y} value={y}>Year {y}</option>
+                ))}
+              </select>
             </Field>
             <Field label="Semester">
               <select className="input" value={form.semester} onChange={set('semester')}>
                 {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>Sem {s}</option>
                 ))}
               </select>
-            </Field>
-            <Field label="Section">
-              <input className="input" value={form.section} onChange={set('section')} placeholder="A / B" />
             </Field>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">

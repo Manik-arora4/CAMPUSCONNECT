@@ -3,6 +3,7 @@ import { Users, UserCircle2, Briefcase, Send, Megaphone, CalendarClock, Users2, 
 import { api } from '../../lib/api';
 import { PageLoader, Card, StatCard, Badge, Modal, Field, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
+import { Reveal, Stagger } from '../../components/motion';
 import PulsatingButton from '../../components/PulsatingButton';
 import { categoryColor } from '../../lib/format';
 
@@ -26,20 +27,21 @@ export default function AdminOverview() {
         </PulsatingButton>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <Stagger step={80} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={Users} label="Students" value={totals.students} tone="brand" />
         <StatCard icon={UserCircle2} label="Faculty" value={totals.faculty} tone="violet" />
         <StatCard icon={Briefcase} label="Opportunities" value={totals.opportunities} tone="emerald" />
         <StatCard icon={Send} label="Applications" value={totals.applications} tone="sky" />
-      </div>
+      </Stagger>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <Stagger step={80} startDelay={120} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={Megaphone} label="Notices" value={totals.notices} tone="amber" />
         <StatCard icon={CalendarClock} label="Events" value={totals.events} tone="pink" />
         <StatCard icon={Users2} label="Clubs" value={totals.clubs} tone="teal" />
         <StatCard icon={Activity} label="Active this week" value={engagement.activeUsers} tone="red" />
-      </div>
+      </Stagger>
 
+      <Reveal delay={160}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Opportunity status */}
         <Card>
@@ -120,6 +122,7 @@ export default function AdminOverview() {
           ) : null}
         </Card>
       </div>
+      </Reveal>
 
       <BroadcastModal open={broadcastOpen} onClose={() => setBroadcastOpen(false)} onSent={reload} />
     </div>

@@ -17,6 +17,7 @@ import {
 import { api } from '../lib/api';
 import { PageLoader, Card, StatCard, Badge, ProgressBar } from '../components/UI';
 import { useAsync } from '../components/UI';
+import { Reveal, Stagger } from '../components/motion';
 import { fmtTime, relativeDay, categoryColor, scoreColor } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 
@@ -54,15 +55,16 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats — stagger in, numbers count up */}
+      <Stagger step={90} className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatCard icon={BookOpen} label="Classes today" value={stats.todayClasses} tone="brand" />
         <StatCard icon={UserCheck} label="Attendance" value={`${stats.attendancePercentage}%`} sub={stats.attendanceHealth} tone={stats.attendanceHealth === 'safe' ? 'emerald' : stats.attendanceHealth === 'warning' ? 'amber' : 'red'} />
         <StatCard icon={CheckSquare} label="Pending tasks" value={stats.pendingTasks} tone="sky" />
         <StatCard icon={Target} label="Opportunity matches" value={stats.opportunityMatches} sub={`${stats.activeApplications} active apps`} tone="violet" />
-      </div>
+      </Stagger>
 
       {/* AI recommendation + needs attention */}
+      <Reveal delay={120}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <Card className="lg:col-span-2 bg-gradient-to-br from-brand-600 to-violet-700 border-0 text-white relative overflow-hidden">
           <div className="absolute -top-10 -right-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
@@ -120,7 +122,9 @@ export default function Dashboard() {
           )}
         </Card>
       </div>
+      </Reveal>
 
+      <Reveal delay={160}>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Today's schedule */}
         <Card>
@@ -216,7 +220,9 @@ export default function Dashboard() {
           </Link>
         </Card>
       </div>
+      </Reveal>
 
+      <Reveal delay={200}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top opportunities */}
         <Card>
@@ -285,6 +291,7 @@ export default function Dashboard() {
           </div>
         </Card>
       </div>
+      </Reveal>
     </div>
   );
 }

@@ -100,4 +100,28 @@ router.get('/resources', asyncHandler(async (req, res) => {
   res.json({ resources });
 }));
 
+// GET /api/faculty/me/profile
+router.get('/me/profile', asyncHandler(async (req, res) => {
+  let profile = await prisma.facultyProfile.findFirst({ where: { user: req.user.id } });
+  if (!profile) {
+    profile = await prisma.facultyProfile.create({ data: { user: req.user.id, college: req.user.college } });
+  }
+  res.json(profile);
+}));
+
+// PATCH /api/faculty/me/profile
+router.patch('/me/profile', asyncHandler(async (req, res) => {
+  const existing = await prisma.facultyProfile.findFirst({ where: { user: req.user.id } });
+  const allowed = ['employeeId', 'department', 'designation', 'subjects', 'classes', 'bio'];
+  const data = {};
+  allowed.forEach((k) => { if (req.body[k] !== undefined) data[k] = req.body[k]; });
+  if (existing) {
+    const profile = await prisma.facultyProfile.update({ where: { id: existing.id }, data });
+    res.json(profile);
+  } else {
+    const profile = await prisma.facultyProfile.create({ data: { user: req.user.id, college: req.user.college, ...data } });
+    res.json(profile);
+  }
+}));
+
 export default router;

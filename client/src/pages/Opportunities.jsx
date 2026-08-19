@@ -147,13 +147,23 @@ export default function Opportunities() {
           {list.map((item) => {
             const opp = item.opportunity || item;
             const score = item.score;
+            const eligibility = item.eligibility;
             return (
               <Link key={opp._id} to={`/opportunities/${opp._id}`} className="card card-hover group p-5 hover:border-brand-200">
+                {/* Top row: category + match badge */}
                 <div className="flex items-start justify-between gap-2">
                   <Badge className={categoryColor(opp.category)}>{opp.category}</Badge>
-                  <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1.5">
+                    {/* Prominent match score badge */}
                     {score !== undefined && isStudent ? (
-                      <span className={`text-sm font-bold ${scoreColor(score)}`}>{Math.round(score)}%</span>
+                      <span className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full ${
+                        score >= 80 ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                        score >= 60 ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                        score >= 40 ? 'bg-orange-100 text-orange-700 border border-orange-200' :
+                        'bg-slate-100 text-slate-500 border border-slate-200'
+                      }`}>
+                        🎯 {Math.round(score)}% Match
+                      </span>
                     ) : null}
                     {isStudent ? (
                       <button
@@ -166,10 +176,39 @@ export default function Opportunities() {
                     ) : null}
                   </div>
                 </div>
+
                 <h3 className="font-semibold text-slate-900 mt-2.5 group-hover:text-brand-700 transition leading-snug">{opp.title}</h3>
                 <p className="text-sm text-slate-500 mt-0.5">{opp.organization}</p>
                 <p className="text-sm text-slate-600 mt-2 line-clamp-2">{opp.description}</p>
 
+                {/* Eligibility info row */}
+                {isStudent && eligibility ? (
+                  <div className="flex items-center gap-2 mt-3">
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${
+                      eligibility.status === 'eligible' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                      eligibility.status === 'partially_eligible' ? 'bg-amber-100 text-amber-700 border border-amber-200' :
+                      'bg-red-100 text-red-700 border border-red-200'
+                    }`}>
+                      {eligibility.status === 'eligible' ? '🟢 Eligible' :
+                       eligibility.status === 'partially_eligible' ? '🟡 Partially eligible' :
+                       '🔴 Not eligible'}
+                    </span>
+                  </div>
+                ) : null}
+
+                {/* Degree + year restrictions */}
+                {isStudent && (opp.degreeRestrictions?.length > 0 || (opp.yearMin || opp.yearMax)) ? (
+                  <div className="flex flex-wrap items-center gap-2 mt-2 text-[11px] text-slate-500">
+                    {opp.degreeRestrictions?.length > 0 ? (
+                      <span>{opp.degreeRestrictions.join(' · ')}</span>
+                    ) : null}
+                    {opp.yearMin || opp.yearMax ? (
+                      <span>Year {opp.yearMin || 1}–{opp.yearMax || 4}</span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* Skills */}
                 <div className="flex flex-wrap gap-1.5 mt-3">
                   {(opp.skillsRequired || []).slice(0, 3).map((s) => (
                     <span
@@ -179,8 +218,12 @@ export default function Opportunities() {
                       {s}
                     </span>
                   ))}
+                  {(opp.skillsRequired || []).length > 3 ? (
+                    <span className="text-[11px] text-slate-400">+{opp.skillsRequired.length - 3} more</span>
+                  ) : null}
                 </div>
 
+                {/* Bottom row: location + deadline + stipend/prize */}
                 <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
                   <span className="inline-flex items-center gap-1">
                     <MapPin size={14} /> {opp.mode} · {opp.location}
@@ -196,10 +239,16 @@ export default function Opportunities() {
                   </p>
                 ) : null}
 
+                {/* Action buttons */}
                 {isStudent ? (
-                  <button onClick={(e) => apply(e, opp._id)} className="btn-primary w-full mt-3 !py-2 text-xs">
-                    <Send size={15} /> Apply
-                  </button>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={(e) => apply(e, opp._id)} className="btn-primary flex-1 !py-2 text-xs">
+                      <Send size={14} /> Apply
+                    </button>
+                    <button onClick={(e) => save(e, opp._id)} className="btn-secondary !py-2 text-xs">
+                      <Bookmark size={14} /> Save
+                    </button>
+                  </div>
                 ) : null}
               </Link>
             );

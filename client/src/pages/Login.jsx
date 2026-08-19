@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { GraduationCap, Sparkles, Mail, Lock, AlertCircle, CalendarDays, Target, BrainCircuit, FileText } from 'lucide-react';
+import { GraduationCap, Mail, Lock, AlertCircle, CalendarDays, Target, BrainCircuit, FileText, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Spinner } from '../components/UI';
 import InteractiveHoverButton from '../components/InteractiveHoverButton';
@@ -11,12 +11,6 @@ const FEATURES = [
   { icon: Target, label: 'Opportunity matching', color: 'text-emerald-300' },
   { icon: BrainCircuit, label: 'AI daily planner', color: 'text-violet-300' },
   { icon: FileText, label: 'Resume analysis', color: 'text-amber-300' },
-];
-
-const DEMO_ROLES = [
-  { role: 'student', label: '🎓 Student', active: 'border-brand-300/60 bg-brand-400/20 text-brand-100' },
-  { role: 'faculty', label: '👨‍🏫 Faculty', active: 'border-violet-300/60 bg-violet-400/20 text-violet-100' },
-  { role: 'admin', label: '🛡️ Admin', active: 'border-emerald-300/60 bg-emerald-400/20 text-emerald-100' },
 ];
 
 export default function Login() {
@@ -40,16 +34,6 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const fillDemo = (role) => {
-    const demos = {
-      student: ['student@demo.campusconnect', 'demo1234'],
-      faculty: ['faculty@demo.campusconnect', 'demo1234'],
-      admin: ['admin@demo.campusconnect', 'demo1234'],
-    };
-    setEmail(demos[role][0]);
-    setPassword(demos[role][1]);
   };
 
   return (
@@ -188,21 +172,10 @@ export default function Login() {
             </form>
 
             <div className="mt-6 pt-6 border-t border-white/15">
-              <p className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">Demo accounts</p>
-              <div className="grid grid-cols-3 gap-2">
-                {DEMO_ROLES.map(({ role, label, active }) => (
-                  <button
-                    key={role}
-                    onClick={() => fillDemo(role)}
-                    className={`rounded-xl border border-white/15 bg-white/10 backdrop-blur px-2 py-2 text-xs font-medium text-white/80 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-white/20 hover:shadow-glow-sm ${active}`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[11px] text-white/50 mt-2">
-                Click to fill credentials — password is <code className="font-mono text-white/80">demo1234</code>
-              </p>
+              <p className="text-xs font-semibold uppercase tracking-wider text-white/60 mb-3">New here?</p>
+              <Link to="/register" className="block w-full rounded-xl border border-white/15 bg-white/10 backdrop-blur px-2 py-3 text-xs font-medium text-white/80 transition duration-300 hover:-translate-y-0.5 hover:scale-[1.03] hover:bg-white/20 hover:shadow-glow-sm text-center">
+                Create an account →
+              </Link>
             </div>
           </div>
 
