@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { Briefcase, Search, Sparkles, Bookmark, Send, MapPin, Clock } from 'lucide-react';
 import { api } from '../lib/api';
@@ -16,7 +16,7 @@ const SORTS = [
 ];
 
 export default function Opportunities() {
-  const { isStudent } = useAuth();
+  const { isStudent, profileVersion } = useAuth();
   const [category, setCategory] = useState('all');
   const [mode, setMode] = useState('all');
   const [search, setSearch] = useState('');
@@ -25,11 +25,21 @@ export default function Opportunities() {
   const [aiResults, setAiResults] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiInfo, setAiInfo] = useState('');
+  const prevProfileVersion = useRef(profileVersion);
 
   const { data, loading, reload } = useAsync(
     () => api.get('/opportunities', { category, mode, search, sort, limit: 24 }),
-    [category, mode, search, sort]
+    [category, mode, search, sort, profileVersion]
   );
+
+  // Clear stale AI search results whenever profile changes
+  useEffect(() => {
+    if (profileVersion !== prevProfileVersion.current) {
+      prevProfileVersion.current = profileVersion;
+      setAiResults(null);
+      setAiInfo('');
+    }
+  }, [profileVersion]);
 
   const save = async (e, id) => {
     e.preventDefault();

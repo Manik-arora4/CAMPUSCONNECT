@@ -23,9 +23,9 @@ import { useAuth } from '../context/AuthContext';
 
 export default function OpportunityDetail() {
   const { id } = useParams();
-  const { isStudent, user } = useAuth();
+  const { isStudent, user, profileVersion } = useAuth();
   const navigate = useNavigate();
-  const { data, loading, error, reload } = useAsync(() => api.get(`/opportunities/${id}`));
+  const { data, loading, error, reload } = useAsync(() => api.get(`/opportunities/${id}`), [id, profileVersion]);
   const [ai, setAi] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
 

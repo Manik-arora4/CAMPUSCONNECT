@@ -7,6 +7,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [studentProfile, setStudentProfile] = useState(null);
+  const [profileVersion, setProfileVersion] = useState(0);
 
   // Restore session on load
   useEffect(() => {
@@ -56,6 +57,8 @@ export function AuthProvider({ children }) {
     const data = await api.get('/auth/me');
     setUser(data.user);
     setStudentProfile(data.studentProfile);
+    // Bump profileVersion so pages that depend on it re-fetch
+    setProfileVersion((v) => v + 1);
     return data;
   }, []);
 
@@ -73,6 +76,7 @@ export function AuthProvider({ children }) {
         refreshMe,
         updateUser,
         setStudentProfile,
+        profileVersion,
         isStudent: user?.role === 'student',
         isFaculty: user?.role === 'faculty',
         isAdmin: user?.role === 'admin',

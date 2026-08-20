@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookOpen,
@@ -15,15 +16,28 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { api } from '../lib/api';
-import { PageLoader, Card, StatCard, Badge, ProgressBar } from '../components/UI';
+import { PageLoader, Spinner, Card, StatCard, Badge, ProgressBar } from '../components/UI';
 import { useAsync } from '../components/UI';
 import { Reveal, Stagger } from '../components/motion';
 import { fmtTime, relativeDay, categoryColor, scoreColor } from '../lib/format';
 import { useAuth } from '../context/AuthContext';
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const { data, loading, error } = useAsync(() => api.get('/students/dashboard'));
+  const { user, profileVersion } = useAuth();
+  const { data, loading, error } = useAsync(() => api.get('/students/dashboard'), [profileVersion]);
+  const [aiExplanation, setAiExplanation] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  // Lazy-load AI explanation after dashboard renders
+  useEffect(() => {
+    if (data?.aiRecommendation?.opportunity && !aiExplanation && !aiLoading) {
+      setAiLoading(true);
+      api.get('/students/ai-explanation')
+        .then((res) => setAiExplanation(res))
+        .catch(() => {}) // silently fail — fallback already shown
+        .finally(() => setAiLoading(false));
+    }
+  }, [data, aiExplanation, aiLoading]);
 
   if (loading) return <PageLoader />;
   if (error)
@@ -34,6 +48,8 @@ export default function Dashboard() {
     );
 
   const { stats, todaySchedule, needsAttention, aiRecommendation, topOpportunities, recentNotices, upcomingEvents, attendance, deadlines } = data;
+  // Use lazy AI explanation if available, otherwise use fast fallback
+  const activeAiRec = aiExplanation || aiRecommendation;
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -79,10 +95,13 @@ export default function Dashboard() {
               </p>
             </div>
           </div>
-          <p className="text-sm leading-relaxed text-white/90">{aiRecommendation.text}</p>
-          {aiRecommendation.opportunity ? (
+          <p className="text-sm leading-relaxed text-white/90">
+            {activeAiRec.text}
+            {aiLoading && <span className="inline-flex items-center gap-1.5 ml-2 text-xs text-white/50"><Spinner size={12} /> Enhancing…</span>}
+          </p>
+          {activeAiRec.opportunity ? (
             <Link
-              to={`/opportunities/${aiRecommendation.opportunity._id}`}
+              to={`/opportunities/${activeAiRec.opportunity._id || activeAiRec.opportunity.id}`}
               className="inline-flex items-center gap-1.5 mt-4 text-sm font-semibold bg-white/15 hover:bg-white/25 rounded-xl px-4 py-2 transition"
             >
               View opportunity <ArrowRight size={16} />
