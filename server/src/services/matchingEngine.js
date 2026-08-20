@@ -60,17 +60,32 @@ function overlap(studentList, oppList) {
 
 function skillsScore(student, opp) {
   const required = normList(opp.skillsRequired);
-  if (!required.length) return 35; // no skills required → full marks
   const studentSkills = student.skills || [];
-  let earned = 0;
-  for (const req of required) {
-    const match = studentSkills.find((s) => {
-      const n = normalizeText(s.name);
-      return n === req || n.includes(req) || req.includes(n);
-    });
-    if (match) earned += LEVEL_WEIGHT[match.level] || 0.75;
+  const studentSkillNames = normList(studentSkills.map((s) => s.name));
+  
+  // If opportunity lists required skills, check overlap strictly
+  if (required.length && studentSkillNames.length) {
+    let earned = 0;
+    for (const req of required) {
+      const match = studentSkills.find((s) => {
+        const n = normalizeText(s.name);
+        return n === req || n.includes(req) || req.includes(n);
+      });
+      if (match) earned += LEVEL_WEIGHT[match.level] || 0.75;
+    }
+    const ratio = earned / required.length;
+    // If no skills match at all, heavily penalize
+    if (ratio === 0) return 2;
+    // Partial matches get proportional score
+    return Math.round(Math.min(35, ratio * 35));
   }
-  return Math.min(35, (earned / required.length) * 35);
+  
+  // If opportunity has no skill requirements AND student has defined skills,
+  // give LOW score — generic opportunities shouldn't outrank skill-specific ones
+  if (!required.length && studentSkillNames.length) return 5;
+  
+  // Neither has skills specified → neutral
+  return 18;
 }
 
 function eligibilityScore(student, opp) {
@@ -124,23 +139,35 @@ function careerScore(student, opp) {
   const career = normalizeText(student.careerGoal || '');
   if (!career) return 6; // neutral
   const keywords = CAREER_KEYWORDS[student.careerGoal] || [];
-  const text = normalizeText([opp.title, opp.description, opp.eligibility, opp.tags?.join(' ')].filter(Boolean).join(' '));
+  const text = normalizeText([opp.title, opp.description, opp.eligibility, opp.tags?.join(' '), opp.skillsRequired?.join(' ')].filter(Boolean).join(' '));
   const matchCount = keywords.filter((k) => text.includes(k)).length;
   const ratio = keywords.length ? matchCount / keywords.length : 0;
-  // also direct title/category hits
-  const bonus = text.includes(career) || normalizeText(opp.category) === career ? 1 : 0;
-  return Math.min(15, 6 + ratio * 7 + bonus * 2);
+  // Also check direct career goal match in opportunity text
+  const directMatch = text.includes(career);
+  const bonus = directMatch || normalizeText(opp.category) === career ? 1 : 0;
+  // If no keywords match at all AND no direct match, penalize
+  if (ratio === 0 && !directMatch) return 2;
+  return Math.min(15, 4 + ratio * 8 + bonus * 3);
 }
 
 function interestsScore(student, opp) {
   const interests = normList(student.interests || []);
   if (!interests.length) return 5;
-  const catTerms = CATEGORY_INTERESTS[opp.category] || [];
-  const oppText = normList([...opp.tags, ...opp.skillsRequired]);
-  const all = [...catTerms, ...oppText];
-  if (!all.length) return 5;
-  const matched = all.filter((t) => interests.some((i) => i.includes(t) || t.includes(i))).length;
-  return Math.min(10, 4 + (matched / all.length) * 6);
+  // Build opp relevance text from title, description, tags, skills, category
+  const oppText = normList([
+    opp.title, opp.description, opp.organization,
+    ...(opp.tags || []), ...(opp.skillsRequired || []), opp.category,
+  ].filter(Boolean));
+  if (!oppText.length) return 3;
+  // Check how many of the student's interests appear in the opportunity
+  const matched = interests.filter((interest) =>
+    oppText.some((t) => t.includes(interest) || interest.includes(t))
+  ).length;
+  const ratio = matched / interests.length;
+  // If NONE of the student's interests match, penalize
+  if (ratio === 0) return 1;
+  // Strong match if most interests align
+  return Math.round(Math.min(10, 3 + ratio * 7));
 }
 
 function courseScore(student, opp) {
@@ -286,11 +313,24 @@ function buildReasons(student, opp, b) {
 
 /**
  * Rank a list of opportunities for a student, highest match first.
+ * When student has skills/interests defined, filter out low-relevance results
+ * so they only see opportunities matching their profile.
  */
 export function rankOpportunities(student, opportunities, limit = 12) {
-  const ranked = opportunities
+  const hasSkills = (student.skills || []).length > 0;
+  const hasInterests = (student.interests || []).length > 0;
+  const hasProfile = hasSkills || hasInterests || student.careerGoal;
+  
+  let ranked = opportunities
     .map((opp) => ({ ...computeMatch(student, opp), opportunity: opp }))
     .sort((a, b) => b.score - a.score);
+  
+  // If student has a defined profile, filter out low-relevance opportunities
+  // so they only see what matches their skills/interests/career
+  if (hasProfile) {
+    ranked = ranked.filter((r) => r.score >= 20);
+  }
+  
   return limit ? ranked.slice(0, limit) : ranked;
 }
 

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Save, UserCircle2, CheckCircle2 } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Save, UserCircle2, CheckCircle2, Camera } from 'lucide-react';
 import { api } from '../lib/api';
 import { Card, Field, ErrorBanner, Avatar } from '../components/UI';
 import PulsatingButton from '../components/PulsatingButton';
@@ -11,6 +11,26 @@ export default function Account() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      await api.postForm('/users/avatar', formData);
+      await refreshMe();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
@@ -38,11 +58,23 @@ export default function Account() {
       </div>
 
       <Card className="flex items-center gap-4">
-        <Avatar name={user?.name} size="lg" />
+        <div className="relative group">
+          <Avatar name={user?.name} size="lg" src={user?.avatar} />
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+            disabled={uploadingAvatar}
+          >
+            <Camera size={22} className="text-white" />
+          </button>
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+        </div>
         <div>
           <p className="font-semibold text-slate-900">{user?.name}</p>
           <p className="text-sm text-slate-500">{user?.email}</p>
           <p className="text-xs text-slate-400 capitalize mt-0.5">{user?.role} · {user?.designation || 'Member'}</p>
+          <p className="text-xs text-slate-400 mt-1">{uploadingAvatar ? 'Uploading…' : 'Hover to change photo'}</p>
         </div>
       </Card>
 

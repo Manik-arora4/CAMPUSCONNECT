@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, AlertCircle, CalendarDays, Target, BrainCircuit, FileText, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import CinematicTransition from '../components/CinematicTransition';
 import { Spinner } from '../components/UI';
 import InteractiveHoverButton from '../components/InteractiveHoverButton';
 import TypingAnimation from '../components/TypingAnimation';
@@ -20,6 +21,12 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showTransition, setShowTransition] = useState(false);
+  const [pendingRole, setPendingRole] = useState(null);
+
+  const handleTransitionComplete = useCallback(() => {
+    navigate(pendingRole === 'student' ? '/dashboard' : pendingRole === 'faculty' ? '/faculty' : '/admin', { replace: true });
+  }, [pendingRole, navigate]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -28,7 +35,8 @@ export default function Login() {
     try {
       const data = await login(email, password);
       const role = data.user?.role;
-      navigate(role === 'student' ? '/dashboard' : role === 'faculty' ? '/faculty' : '/admin', { replace: true });
+      setPendingRole(role);
+      setShowTransition(true);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -199,6 +207,7 @@ export default function Login() {
           </p>
         </div>
       </div>
+      {showTransition && <CinematicTransition onComplete={handleTransitionComplete} />}
     </div>
   );
 }

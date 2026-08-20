@@ -275,8 +275,8 @@ export default function Layout() {
               <NotificationBell />
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
                 <NavLink to={isStudent ? '/profile' : '/account'} className="flex items-center gap-2 hover:opacity-80 transition">
-                  <Avatar name={user?.name} size="sm" />
-                  <span className="hidden md:block text-sm font-medium text-slate-700 max-w-[120px] truncate">{user?.name?.split(' ')[0]}</span>
+              <Avatar name={user?.name} size="sm" src={user?.avatar} />
+              <span className="hidden md:block text-sm font-medium text-slate-700 max-w-[120px] truncate">{user?.name?.split(' ')[0]}</span>
                 </NavLink>
                 <button onClick={handleLogout} className="rounded-xl p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 transition" aria-label="Logout" title="Logout">
                   <LogOut size={20} />
@@ -365,7 +365,7 @@ function SidebarContent({ nav, showAI, user, onLogout, isStudent }) {
       </nav>
       <div className="p-3 border-t border-slate-800">
         <div className="flex items-center gap-3 rounded-xl px-3 py-2.5 bg-slate-800/60">
-          <Avatar name={user?.name} size="sm" />
+          <Avatar name={user?.name} size="sm" src={user?.avatar} />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-white truncate">{user?.name}</p>
             <p className="text-[11px] text-slate-400 capitalize truncate">{user?.role}</p>

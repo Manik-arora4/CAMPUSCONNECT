@@ -56,12 +56,16 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
 
   const profile = await studentContext(req.user?.id);
   if (profile) {
-    const ranked = opportunities.map((o) => ({ ...computeMatch(profile, o), opportunity: o }));
-    opportunities = ranked.sort((a, b) => {
+    const hasProfile = (profile.skills || []).length > 0 || (profile.interests || []).length > 0 || profile.careerGoal;
+    let ranked = opportunities.map((o) => ({ ...computeMatch(profile, o), opportunity: o }));
+    ranked.sort((a, b) => {
       if (sort === 'deadline') return new Date(a.opportunity.deadline) - new Date(b.opportunity.deadline);
       if (sort === 'newest') return new Date(b.opportunity.postedDate) - new Date(a.opportunity.postedDate);
       return b.score - a.score;
     });
+    // Filter low-relevance when student has a defined profile
+    if (hasProfile) ranked = ranked.filter((r) => r.score >= 15);
+    opportunities = ranked;
     res.json({ opportunities, total, page: Number(page), limit: Number(limit), profile });
   } else {
     res.json({ opportunities, total, page: Number(page), limit: Number(limit) });

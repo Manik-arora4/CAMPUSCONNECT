@@ -6,6 +6,10 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { prisma } from '../lib/prisma.js';
 import { toSafeUser } from '../utils/userUtils.js';
 import { profileStrength } from '../services/profileService.js';
+import { upload } from '../utils/upload.js';
+import fs from 'fs';
+import path from 'path';
+import { uploadsDirPath } from '../utils/upload.js';
 
 const router = Router();
 router.use(auth);
@@ -30,6 +34,18 @@ router.patch(
     res.json({ user: toSafeUser(user) });
   })
 );
+
+// POST /api/users/avatar — upload profile picture
+router.post('/avatar', upload.single('avatar'), asyncHandler(async (req, res) => {
+  if (!req.file) throw new Error('No file uploaded');
+  // Delete old avatar file if exists
+  if (req.user.avatar) {
+    const oldPath = path.join(uploadsDirPath, req.user.avatar);
+    try { fs.unlinkSync(oldPath); } catch { /* ignore */ }
+  }
+  const user = await prisma.user.update({ where: { id: req.user.id }, data: { avatar: req.file.filename } });
+  res.json({ user: toSafeUser(user), avatar: req.file.filename });
+}));
 
 // GET /api/users/profile-strength
 router.get('/profile-strength', asyncHandler(async (req, res) => {

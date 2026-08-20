@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { Sparkles, Save, UserCircle2, GraduationCap, MapPin, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Sparkles, Save, UserCircle2, GraduationCap, MapPin, CheckCircle2, Camera } from 'lucide-react';
 import { api } from '../lib/api';
-import { PageLoader, Card, Field, Badge, ErrorBanner } from '../components/UI';
+import { PageLoader, Card, Field, Badge, ErrorBanner, Avatar } from '../components/UI';
 import { useAsync } from '../components/UI';
 import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +19,8 @@ export default function Profile() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     if (data) {
@@ -74,12 +76,52 @@ export default function Profile() {
     }
   };
 
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const result = await api.postForm('/users/avatar', formData);
+      await refreshMe();
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
       <div>
         <h1 className="page-title">Your profile</h1>
         <p className="page-subtitle">A complete profile unlocks match scores, AI recommendations and smarter planning.</p>
       </div>
+
+      {/* Profile Picture */}
+      <Card>
+        <div className="flex items-center gap-5">
+          <div className="relative group">
+            <Avatar name={user?.name} size="lg" src={user?.avatar} />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center"
+              disabled={uploadingAvatar}
+            >
+              <Camera size={22} className="text-white" />
+            </button>
+            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+          </div>
+          <div>
+            <p className="font-semibold text-slate-800">Profile picture</p>
+            <p className="text-sm text-slate-500">{uploadingAvatar ? 'Uploading…' : 'Click the photo to upload a new picture'}</p>
+          </div>
+        </div>
+      </Card>
 
       {!user?.onboarded ? (
         <Card className="bg-gradient-to-r from-brand-600 to-violet-700 border-0 text-white">

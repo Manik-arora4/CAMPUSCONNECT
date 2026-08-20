@@ -210,14 +210,27 @@ export function ErrorBanner({ error }) {
   );
 }
 
-export function Avatar({ name = '', size = 'md' }) {
+export function Avatar({ name = '', size = 'md', src = '' }) {
   const sizes = { sm: 'h-8 w-8 text-xs', md: 'h-10 w-10 text-sm', lg: 'h-14 w-14 text-lg' };
+  const imgSizes = { sm: 'h-8 w-8', md: 'h-10 w-10', lg: 'h-14 w-14' };
   const initials = name
     .split(' ')
     .filter(Boolean)
     .slice(0, 2)
     .map((p) => p[0]?.toUpperCase())
     .join('');
+  const [imgError, setImgError] = React.useState(false);
+  const avatarUrl = src ? (src.startsWith('http') ? src : `/uploads/${src}`) : '';
+  if (avatarUrl && !imgError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name || 'Avatar'}
+        className={`${imgSizes[size] || imgSizes.md} rounded-full object-cover shrink-0 ring-2 ring-white shadow-sm`}
+        onError={() => setImgError(true)}
+      />
+    );
+  }
   return (
     <div
       className={`${sizes[size] || sizes.md} rounded-full bg-gradient-to-br from-brand-500 to-violet-600 text-white flex items-center justify-center font-semibold shrink-0`}

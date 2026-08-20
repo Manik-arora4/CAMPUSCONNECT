@@ -15,6 +15,17 @@ import { relativeDay, timeToMinutes, daysBetween } from '../utils/helpers.js';
 const router = Router();
 router.use(auth, requireStudent);
 
+// ── Simple in-memory cache (30s TTL) ──
+const cache = new Map();
+function cached(key, ttlMs = 30000) {
+  const hit = cache.get(key);
+  if (hit && Date.now() - hit.ts < ttlMs) return hit.data;
+  return null;
+}
+function setCache(key, data) {
+  cache.set(key, { data, ts: Date.now() });
+}
+
 function getProfile(userId) {
   return prisma.studentProfile.findFirst({ where: { user: userId } });
 }
@@ -55,11 +66,18 @@ router.patch('/me/profile', asyncHandler(async (req, res) => {
   if (req.body.completeOnboarding) {
     await prisma.user.update({ where: { id: req.user.id }, data: { onboarded: true } });
   }
+  // Invalidate dashboard + opportunity caches so recommendations recalculate with new profile
+  cache.delete(`dashboard:${req.user.id}`);
   res.json(profile);
 }));
 
-// GET /api/students/dashboard — the personalized command center
+// GET /api/students/dashboard — the personalized command center (fast path: no AI call)
 router.get('/dashboard', asyncHandler(async (req, res) => {
+  // Check cache first
+  const cacheKey = `dashboard:${req.user.id}`;
+  const cachedData = cached(cacheKey, 20000);
+  if (cachedData) return res.json(cachedData);
+
   const profile = await getProfile(req.user.id);
   if (!profile) throw ApiError.notFound('Student profile not found. Complete onboarding first.');
   const userId = req.user.id;
@@ -135,10 +153,14 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
     needsAttention.push({ severity: 'info', title: 'All caught up! 🎉', message: 'No urgent issues. A good day to learn a new skill or apply to an opportunity.', link: '/opportunities' });
   }
 
-  // AI recommendation
+  // AI recommendation — use fast fallback text (no external API call on dashboard load)
   let aiRecommendation = { text: '', opportunity: null };
   if (topOpportunity && topOpportunity.score >= 70) {
-    const explanation = await aiService.matchExplanation(profile, topOpportunity.opportunity, topOpportunity);
+    // Fast fallback: build explanation locally instead of calling AI API
+    const reasons = topOpportunity.reasons || [];
+    const explanation = reasons.length
+      ? reasons.map((r) => `- ${r}`).join('\n') + `\n\nMatch score: ${topOpportunity.score}% — a strong fit for your profile!`
+      : `This ${topOpportunity.opportunity.category} matches your profile with a ${topOpportunity.score}% score. Check it out before the deadline!`;
     aiRecommendation = { text: explanation, opportunity: topOpportunity.opportunity, score: topOpportunity.score };
   } else {
     aiRecommendation.text = `No high-match opportunities right now. ${attendance.overall.total ? `Keep attendance above ${attendance.overall.target}% ` : ''}and complete pending tasks — I'll alert you when something relevant opens up.`;
@@ -149,7 +171,7 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
   const pendingTasks = tasks.filter((t) => t.status !== 'done');
   const activeApplications = applications.filter((a) => ['applied', 'shortlisted', 'interview'].includes(a.status));
 
-  res.json({
+  const result = {
     profile,
     todaySchedule: slots.filter((s) => s.day === dayIndex).sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime)),
     stats: {
@@ -168,7 +190,24 @@ router.get('/dashboard', asyncHandler(async (req, res) => {
     topOpportunities: ranked.slice(0, 3),
     recentNotices: notices,
     upcomingEvents: events,
-  });
+  };
+
+  setCache(cacheKey, result);
+  res.json(result);
+}));
+
+// GET /api/students/ai-explanation — lazy-loaded AI match explanation
+router.get('/ai-explanation', asyncHandler(async (req, res) => {
+  const profile = await getProfile(req.user.id);
+  if (!profile) throw ApiError.notFound('Student profile not found.');
+  const verifiedOpps = await prisma.opportunity.findMany({ where: { status: 'verified', deadline: { gte: new Date() } }, take: 80 });
+  const ranked = rankOpportunities(profile, verifiedOpps, 8);
+  const top = ranked[0];
+  if (!top || top.score < 70) {
+    return res.json({ text: 'No high-match opportunities right now.', opportunity: null, score: 0 });
+  }
+  const explanation = await aiService.matchExplanation(profile, top.opportunity, top);
+  res.json({ text: explanation, opportunity: top.opportunity, score: top.score });
 }));
 
 // GET /api/students/weekly-review
