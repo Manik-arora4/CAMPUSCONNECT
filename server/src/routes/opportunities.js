@@ -47,27 +47,47 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
 
   const skip = (Number(page) - 1) * Number(limit);
   const total = await prisma.opportunity.count({ where });
-  let opportunities = await prisma.opportunity.findMany({
-    where,
-    orderBy: { postedDate: 'desc' },
-    skip,
-    take: Number(limit),
-  });
-
   const profile = await studentContext(req.user?.id);
+
   if (profile) {
+    // Students: fetch ALL opportunities for scoring, then paginate the ranked results.
+    // This ensures the best matches are never missed due to DB limit applied before scoring.
+    const allOpps = await prisma.opportunity.findMany({ where, orderBy: { postedDate: 'desc' }, take: 200 });
     const hasProfile = (profile.skills || []).length > 0 || (profile.interests || []).length > 0 || profile.careerGoal;
-    let ranked = opportunities.map((o) => ({ ...computeMatch(profile, o), opportunity: o }));
+    let ranked = allOpps.map((o) => ({ ...computeMatch(profile, o), opportunity: o }));
     ranked.sort((a, b) => {
       if (sort === 'deadline') return new Date(a.opportunity.deadline) - new Date(b.opportunity.deadline);
       if (sort === 'newest') return new Date(b.opportunity.postedDate) - new Date(a.opportunity.postedDate);
       return b.score - a.score;
     });
-    // Filter low-relevance when student has a defined profile
-    if (hasProfile) ranked = ranked.filter((r) => r.score >= 15);
-    opportunities = ranked;
-    res.json({ opportunities, total, page: Number(page), limit: Number(limit), profile });
+    // Filter out irrelevant opportunities when student has a defined profile:
+    // 1. Score must be >= 15 (baseline relevance)
+    // 2. If both student AND opportunity have skills defined, at least one skill must overlap
+    //    (prevents showing ML/Python/Dev opportunities to a Cybersecurity-only student)
+    if (hasProfile) {
+      ranked = ranked.filter((r) => {
+        if (r.score < 15) return false;
+        const studentSkillNames = (profile.skills || []).map((s) => s.name.toLowerCase());
+        const oppRequired = (r.opportunity.skillsRequired || []).map((s) => s.toLowerCase());
+        // If opportunity requires specific skills AND student has skills,
+        // require at least one skill overlap (or at least one interest match)
+        if (studentSkillNames.length && oppRequired.length) {
+          const skillOverlap = oppRequired.some((s) => studentSkillNames.some((st) => st.includes(s) || s.includes(st)));
+          const studentInterests = (profile.interests || []).map((i) => i.toLowerCase());
+          const oppText = [r.opportunity.title, r.opportunity.description, r.opportunity.category, ...(r.opportunity.tags || [])].join(' ').toLowerCase();
+          const interestOverlap = studentInterests.some((i) => oppText.includes(i.toLowerCase()));
+          const careerMatch = profile.careerGoal && oppText.includes(profile.careerGoal.toLowerCase());
+          return skillOverlap || interestOverlap || careerMatch;
+        }
+        return true; // No strict skill requirements → keep it
+      });
+    }
+    // Paginate AFTER scoring
+    const paginated = ranked.slice(skip, skip + Number(limit));
+    res.json({ opportunities: paginated, total: ranked.length, page: Number(page), limit: Number(limit), profile });
   } else {
+    // Non-students: simple DB pagination (no scoring needed)
+    const opportunities = await prisma.opportunity.findMany({ where, orderBy: { postedDate: 'desc' }, skip, take: Number(limit) });
     res.json({ opportunities, total, page: Number(page), limit: Number(limit) });
   }
 }));

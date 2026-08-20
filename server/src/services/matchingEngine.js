@@ -325,10 +325,28 @@ export function rankOpportunities(student, opportunities, limit = 12) {
     .map((opp) => ({ ...computeMatch(student, opp), opportunity: opp }))
     .sort((a, b) => b.score - a.score);
   
-  // If student has a defined profile, filter out low-relevance opportunities
-  // so they only see what matches their skills/interests/career
+  // Filter out low-relevance opportunities when student has a defined profile:
+  // 1. Score must be >= 20 (baseline relevance)
+  // 2. If both student AND opportunity have skills, require at least one overlap
+  //    OR an interest/career match (prevents irrelevant opportunities from showing)
   if (hasProfile) {
-    ranked = ranked.filter((r) => r.score >= 20);
+    const studentSkillNames = (student.skills || []).map((s) => normalizeText(s.name));
+    const studentInterests = normList(student.interests || []);
+    const careerGoal = normalizeText(student.careerGoal || '');
+    
+    ranked = ranked.filter((r) => {
+      if (r.score < 20) return false;
+      const oppRequired = normList(r.opportunity.skillsRequired || []);
+      // If opportunity requires specific skills AND student has skills, check overlap
+      if (studentSkillNames.length && oppRequired.length) {
+        const skillOverlap = oppRequired.some((s) => studentSkillNames.some((st) => st.includes(s) || s.includes(st)));
+        const oppText = [r.opportunity.title, r.opportunity.description, r.opportunity.category, ...(r.opportunity.tags || [])].join(' ').toLowerCase();
+        const interestOverlap = studentInterests.some((i) => oppText.includes(i));
+        const careerMatch = careerGoal && oppText.includes(careerGoal);
+        return skillOverlap || interestOverlap || careerMatch;
+      }
+      return true;
+    });
   }
   
   return limit ? ranked.slice(0, limit) : ranked;
