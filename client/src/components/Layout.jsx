@@ -23,6 +23,7 @@ import {
   ShieldCheck,
   School,
   MessageSquare,
+  LifeBuoy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
@@ -44,6 +45,7 @@ const STUDENT_NAV = [
   { to: '/opportunities', label: 'Opportunities', icon: Briefcase },
   { to: '/applications', label: 'Applications', icon: Send },
   { to: '/resumes', label: 'Resumes', icon: FileText },
+  { to: '/support', label: 'Help & Support', icon: LifeBuoy },
 ];
 
 const FACULTY_NAV = [
@@ -53,6 +55,7 @@ const FACULTY_NAV = [
   { to: '/college-info', label: 'My College', icon: School },
   { to: '/messages', label: 'Messages', icon: MessageSquare },
   { to: '/opportunities', label: 'Opportunities', icon: Briefcase },
+  { to: '/support', label: 'Help & Support', icon: LifeBuoy },
 ];
 
 const ADMIN_NAV = [
@@ -61,6 +64,8 @@ const ADMIN_NAV = [
   { to: '/admin/faculty', label: 'Faculty', icon: UserCircle2 },
   { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase },
   { to: '/admin/colleges', label: 'Colleges', icon: School },
+  { to: '/admin/support', label: 'Support', icon: LifeBuoy },
+  { to: '/support', label: 'Help Center', icon: LifeBuoy },
 ];
 
 const AI_NAV = [
@@ -291,8 +296,15 @@ export default function Layout() {
             <Outlet />
           </div>
         </main>
-        <footer className="px-6 py-4 text-center text-xs text-slate-400">
-          CAMPUSCONNECT — Your College. Your Career. Your AI Assistant.
+        <footer className="px-6 py-4 text-center text-xs text-slate-400 space-y-1">
+          <p>CAMPUSCONNECT — Your College. Your Career. Your AI Assistant.</p>
+          <div className="flex items-center justify-center gap-3">
+            <NavLink to="/support" className="hover:text-brand-600 transition">Help & Support</NavLink>
+            <span>·</span>
+            <a href={`mailto:${'campusconnect.ia@gmail.com'}?subject=Problem%20Report`} className="hover:text-brand-600 transition">Report a Problem</a>
+            <span>·</span>
+            <a href={`mailto:${'campusconnect.ia@gmail.com'}`} className="hover:text-brand-600 transition">Contact Us</a>
+          </div>
         </footer>
       </div>
     </div>

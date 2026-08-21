@@ -456,3 +456,40 @@ model Message {
   @@index([receiverId])
   @@index([senderId, receiverId])
 }
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  user        String
+  subject     String
+  category    String   @default("general")
+  description String
+  priority    String   @default("medium")
+  attachment  String   @default("")
+  userRole    String   @default("student")
+  status      String   @default("open") // open | in_progress | resolved | closed
+  assignedTo  String?
+  response    String   @default("")
+  responseAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([user])
+  @@index([status])
+  @@index([user, status])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+model FAQ {
+  id         String   @id @default(cuid())
+  question   String
+  answer     String
+  category   String   @default("general")
+  order      Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([category])
+  @@index([active])
+}

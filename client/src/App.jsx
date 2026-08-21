@@ -38,6 +38,9 @@ import AdminStudents from './pages/admin/AdminStudents';
 import AdminFaculty from './pages/admin/AdminFaculty';
 import AdminOpportunities from './pages/admin/AdminOpportunities';
 import AdminColleges from './pages/admin/AdminColleges';
+import AdminSupport from './pages/admin/AdminSupport';
+import Support from './pages/Support';
+import SupportTicketDetail from './pages/SupportTicketDetail';
 
 function Protected({ children }) {
   const { user, loading } = useAuth();
@@ -92,6 +95,8 @@ export default function App() {
         <Route path="/applications" element={<RoleGate role="student"><Applications /></RoleGate>} />
         <Route path="/resumes" element={<RoleGate role="student"><Resumes /></RoleGate>} />
         <Route path="/messages" element={<Messages />} />
+        <Route path="/support" element={<Support />} />
+        <Route path="/support/tickets/:id" element={<SupportTicketDetail />} />
         <Route path="/profile" element={<RoleGate role="student"><Profile /></RoleGate>} />
 
         {/* AI */}
@@ -109,6 +114,7 @@ export default function App() {
         <Route path="/admin/faculty" element={<RoleGate role="admin"><AdminFaculty /></RoleGate>} />
         <Route path="/admin/opportunities" element={<RoleGate role="admin"><AdminOpportunities /></RoleGate>} />
         <Route path="/admin/colleges" element={<RoleGate role="admin"><AdminColleges /></RoleGate>} />
+        <Route path="/admin/support" element={<RoleGate role="admin"><AdminSupport /></RoleGate>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
