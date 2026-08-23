@@ -1,22 +1,12 @@
-# Render Blueprint — one-click deploy for CAMPUSCONNECT
-# Docs: https://render.com/docs/blueprint-spec
-#
-# How to use:
-#   1. Push this repo to GitHub (git push)
-#   2. On render.com → New → Blueprint → pick this repo
-#   3. Fill in the env vars it asks for (DATABASE_URL, JWT_SECRET, …)
-#   4. Deploy — every future `git push` auto-redeploys the app
-#
-# The build installs all deps, builds the React client,
-# on start it pushes DB schema then runs the server on one port.
+# Render Blueprint — CAMPUSCONNECT
 
 services:
   - type: web
     name: campusconnect-api
     runtime: node
     plan: free
-    buildCommand: npm run install:all && npm run build
-    startCommand: npx prisma db push --prefix server && npm start
+    buildCommand: cd server && npm install && cd ../client && npm install && cd .. && npm run build
+    startCommand: cd server && node_modules/.bin/prisma db push && cd .. && npm start
     envVars:
       - key: NODE_ENV
         value: production
@@ -24,15 +14,13 @@ services:
         value: "20"
       - key: DATABASE_URL
         sync: false
-      # Generate one with: openssl rand -hex 32
       - key: JWT_SECRET
         sync: false
-      # Google Gemini AI — PRIMARY provider
       - key: GEMINI_API_KEY
         sync: false
-      # Groq AI — FALLBACK provider
       - key: GROQ_API_KEY
         sync: false
-      # Your live URL, e.g. https://campusconnect-api.onrender.com
+      - key: NVIDIA_API_KEY
+        sync: false
       - key: PUBLIC_URL
         sync: false
