@@ -9,7 +9,8 @@
     "start": "node src/index.js",
     "seed": "node scripts/seed.js",
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
