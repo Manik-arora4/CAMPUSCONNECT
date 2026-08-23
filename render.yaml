@@ -2,11 +2,11 @@
 
 services:
   - type: web
-    name: campusconnect-api
+    name: campusconnect
     runtime: node
     plan: free
     buildCommand: cd server && npm install && cd ../client && npm install && cd .. && npm run build
-    startCommand: cd server && node_modules/.bin/prisma db push && cd .. && npm start
+    startCommand: cd server && node_modules/.bin/prisma generate && node_modules/.bin/prisma db push && node src/index.js
     envVars:
       - key: NODE_ENV
         value: production
