@@ -16,6 +16,9 @@ export const env = {
   NVIDIA_API_KEY: process.env.NVIDIA_API_KEY || '',
   OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
   OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2:1b',
+  VAPID_PUBLIC_KEY: process.env.VAPID_PUBLIC_KEY || '',
+  VAPID_PRIVATE_KEY: process.env.VAPID_PRIVATE_KEY || '',
+  VAPID_EMAIL: process.env.VAPID_EMAIL || 'mailto:campusconnect.ia@gmail.com',
   PUBLIC_URL: process.env.PUBLIC_URL || 'http://localhost:5173',
   DEMO_ADMINS: (process.env.DEMO_ADMINS || '')
     .split(',')

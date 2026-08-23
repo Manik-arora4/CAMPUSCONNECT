@@ -417,6 +417,22 @@ model Resource {
   @@index([faculty])
 }
 
+model PushSubscription {
+  id          String   @id @default(cuid())
+  user        String
+  endpoint    String
+  p256dh      String
+  auth        String
+  userAgent   String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([user, endpoint])
+  @@index([user])
+  @@index([user, active])
+}
+
 model UserPreference {
   id          String   @id @default(cuid())
   user         String   @unique

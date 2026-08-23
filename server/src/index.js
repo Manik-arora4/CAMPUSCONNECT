@@ -3,6 +3,7 @@ import { connectDB } from './config/db.js';
 import { env } from './config/env.js';
 import { ensureSeed } from './services/seedService.js';
 import { startScheduledJobs } from './services/scheduler.js';
+import { startNotificationScheduler } from './services/notificationScheduler.js';
 
 // Supabase free-tier / IPv6 connections can blip — retry before giving up
 async function connectWithRetry(attempts = 8, delayMs = 4000) {
@@ -23,6 +24,7 @@ async function main() {
   await connectWithRetry();
   await ensureSeed();
   startScheduledJobs();
+  startNotificationScheduler();
   app.listen(env.PORT, () => {
     console.log(`\n🚀 CAMPUSCONNECT server running at http://localhost:${env.PORT}`);
     console.log(`   API: http://localhost:${env.PORT}/api`);

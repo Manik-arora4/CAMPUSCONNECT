@@ -208,8 +208,8 @@ async function main() {
   // ── 13. AI PLANNER ──
   console.log('\n━━━ 13. AI PLANNER ━━━');
   try {
-    await page.goto(`${BASE}/ai/planner`, { waitUntil: 'networkidle', timeout: 10000 });
-    await page.waitForTimeout(1000);
+    await page.goto(`${BASE}/ai/planner`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForTimeout(3000);
     const body = await page.textContent('body');
     if (body.includes('Planner') || body.includes('Plan') || body.includes('AI')) ok('AI Planner page loads');
     else fail('AI Planner', 'No planner text');

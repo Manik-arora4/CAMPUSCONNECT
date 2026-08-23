@@ -29,6 +29,7 @@ import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import facultyRoutes from './routes/faculty.js';
 import supportRoutes from './routes/support.js';
+import pushRoutes from './routes/push.js';
 import { ApiError } from './utils/ApiError.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -109,6 +110,7 @@ const routes = {
   '/api/admin': adminRoutes,
   '/api/faculty': facultyRoutes,
   '/api/support': supportRoutes,
+  '/api/push': pushRoutes,
 };
 for (const [prefix, router] of Object.entries(routes)) app.use(prefix, router);
 

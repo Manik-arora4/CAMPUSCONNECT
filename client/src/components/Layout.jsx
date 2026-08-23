@@ -26,6 +26,7 @@ import {
   LifeBuoy,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import NotificationPermissionPrompt from './NotificationPermissionPrompt';
 import { api } from '../lib/api';
 import { Avatar, Spinner } from './UI';
 import { initials } from '../lib/format';
@@ -278,6 +279,7 @@ export default function Layout() {
                 </NavLink>
               ) : null}
               <NotificationBell />
+              <NotificationPermissionPrompt />
               <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
                 <NavLink to={isStudent ? '/profile' : '/account'} className="flex items-center gap-2 hover:opacity-80 transition">
               <Avatar name={user?.name} size="sm" src={user?.avatar} />

@@ -3,6 +3,7 @@ import { Save, UserCircle2, CheckCircle2, Camera } from 'lucide-react';
 import { api } from '../lib/api';
 import { Card, Field, ErrorBanner, Avatar } from '../components/UI';
 import PulsatingButton from '../components/PulsatingButton';
+import PushNotificationSettings from '../components/PushNotificationSettings';
 import { useAuth } from '../context/AuthContext';
 
 export default function Account() {
@@ -107,6 +108,7 @@ export default function Account() {
           </div>
         </form>
       </Card>
+      <PushNotificationSettings />
     </div>
   );
 }

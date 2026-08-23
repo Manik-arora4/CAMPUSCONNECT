@@ -8,6 +8,10 @@ export default defineConfig({
     proxy: {
       '/api': 'http://localhost:5000',
       '/uploads': 'http://localhost:5000',
+      '/sw.js': {
+        target: 'http://localhost:5173',
+        skipNormalize: true,
+      },
     },
   },
   // For production: upload files go to the backend
