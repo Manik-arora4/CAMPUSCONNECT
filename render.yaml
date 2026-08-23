@@ -7,20 +7,21 @@
 #   3. Fill in the env vars it asks for (DATABASE_URL, JWT_SECRET, …)
 #   4. Deploy — every future `git push` auto-redeploys the app
 #
-# The build installs all deps, creates the DB tables (prisma db push),
-# builds the React client, and the server serves API + client on one port.
+# The build installs all deps, builds the React client,
+# on start it pushes DB schema then runs the server on one port.
 
 services:
   - type: web
     name: campusconnect-api
     runtime: node
     plan: free
-    buildCommand: npm run install:all && npm run db:push --prefix server && npm run build
-    startCommand: npm start
+    buildCommand: npm run install:all && npm run build
+    startCommand: npx prisma db push --prefix server && npm start
     envVars:
       - key: NODE_ENV
         value: production
-      # Paste your Supabase connection string here
+      - key: NODE_VERSION
+        value: "20"
       - key: DATABASE_URL
         sync: false
       # Generate one with: openssl rand -hex 32
