@@ -9,7 +9,7 @@ function client() {
   return _client;
 }
 
-const MODEL = 'gemini-flash-latest';
+const MODEL = 'gemini-3.6-flash';
 
 const OLLAMA_URL = env.OLLAMA_URL;
 const OLLAMA_MODEL = env.OLLAMA_MODEL;

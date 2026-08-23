@@ -13,6 +13,7 @@ export const env = {
   DATABASE_URL: process.env.DATABASE_URL || '',
   GEMINI_API_KEY: process.env.GEMINI_API_KEY || '',
   GROQ_API_KEY: process.env.GROQ_API_KEY || '',
+  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY || '',
   OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
   OLLAMA_MODEL: process.env.OLLAMA_MODEL || 'llama3.2:1b',
   PUBLIC_URL: process.env.PUBLIC_URL || 'http://localhost:5173',
@@ -24,4 +25,8 @@ export const env = {
 
 export const isGeminiEnabled = () => Boolean(env.GEMINI_API_KEY);
 export const isGroqEnabled = () => Boolean(env.GROQ_API_KEY);
-export const aiProvider = () => (env.GEMINI_API_KEY ? 'gemini' : env.GROQ_API_KEY ? 'groq' : 'ollama');
+export const isNvidiaEnabled = () => Boolean(env.NVIDIA_API_KEY);
+export const aiProvider = () =>
+  env.NVIDIA_API_KEY ? 'nvidia (Llama 3.1 8B)' :
+  env.GEMINI_API_KEY ? 'gemini' :
+  env.GROQ_API_KEY ? 'groq' : 'ollama';

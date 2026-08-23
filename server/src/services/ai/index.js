@@ -1,14 +1,18 @@
 import { askGemini, parseJsonLoose } from './gemini.js';
 import { askGroq } from './groq.js';
+import { askNvidia } from './nvidia.js';
 import * as fb from './fallbacks.js';
 import { aiProvider } from '../../config/env.js';
 
 const provider = aiProvider();
 export const aiMode = () => provider;
 
-// ── Unified AI caller: tries Gemini first, falls back to Groq ──
+// ── Unified AI caller: NVIDIA → Gemini → Groq → Ollama → fallbacks ──
 async function askAI(systemPrompt, userPrompt, opts = {}) {
-  // askGemini internally falls back to Ollama → null, then askGroq handles its own fallback
+  // Try NVIDIA DeepSeek V4 Flash first (fastest + smartest)
+  const nvidiaResult = await askNvidia(systemPrompt, userPrompt, opts);
+  if (nvidiaResult) return nvidiaResult;
+  // Fallback chain: Gemini → Groq → Ollama → deterministic fallbacks
   const geminiResult = await askGemini(systemPrompt, userPrompt, opts);
   if (geminiResult) return geminiResult;
   return askGroq(systemPrompt, userPrompt, opts);

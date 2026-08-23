@@ -26,7 +26,7 @@ async function main() {
   app.listen(env.PORT, () => {
     console.log(`\n🚀 CAMPUSCONNECT server running at http://localhost:${env.PORT}`);
     console.log(`   API: http://localhost:${env.PORT}/api`);
-    console.log(`   AI mode: ${env.GROQ_API_KEY ? 'Groq / GPT-OSS 20B (live)' : env.GEMINI_API_KEY ? 'Gemini (live)' : 'offline fallbacks (set GROQ_API_KEY or GEMINI_API_KEY)'}\n`);
+    console.log(`   AI mode: ${env.NVIDIA_API_KEY ? 'NVIDIA / Llama 3.1 8B (live)' : env.GROQ_API_KEY ? 'Groq / GPT-OSS 20B (live)' : env.GEMINI_API_KEY ? 'Gemini (live)' : 'offline fallbacks (set NVIDIA_API_KEY, GROQ_API_KEY, or GEMINI_API_KEY)'}\n`);
   });
 }
 
