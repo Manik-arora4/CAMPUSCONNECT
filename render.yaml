@@ -6,7 +6,7 @@ services:
     runtime: node
     plan: free
     buildCommand: cd server && npm install && cd ../client && npm install && cd .. && npm run build
-    startCommand: cd server && node_modules/.bin/prisma generate && node_modules/.bin/prisma db push && node src/index.js
+    startCommand: cd server && npx prisma generate && npx prisma db push && node src/index.js
     envVars:
       - key: NODE_ENV
         value: production
