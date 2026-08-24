@@ -18,6 +18,15 @@ server/uploads/*
 *.log
 npm-debug.log*
 
+# Screenshots (not needed in repo)
+screenshots/
+campusconnect/screenshots/
+
+# Debug/test files
+demo-login.mjs
+test-screenshot.mjs
+e2e-test.mjs
+
 # OS / editor
 .DS_Store
 Thumbs.db
