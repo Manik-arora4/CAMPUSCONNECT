@@ -1,0 +1,16 @@
+node_modules/
+server/node_modules/
+client/node_modules/
+screenshots/
+campusconnect/screenshots/
+*.log
+.git/
+.github/
+railway.json
+Procfile
+render.yaml
+start.sh
+build.sh
+demo-login.mjs
+test-screenshot.mjs
+e2e-test.mjs

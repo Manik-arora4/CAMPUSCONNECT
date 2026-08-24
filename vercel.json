@@ -1,21 +1,21 @@
 {
   "version": 2,
+  "installCommand": "npm install --prefix server && npm install --prefix client",
+  "buildCommand": "cd server && npx prisma generate && cd ../client && npm run build",
+  "outputDirectory": "client/dist",
   "builds": [
     {
-      "src": "client/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "src": "api/index.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://campusconnect-api.onrender.com/api/$1"
+      "dest": "/api/index.js"
     },
     {
-      "src": "/(.*)",
+      "src": "/((?!api/).*)",
       "dest": "/client/$1"
     }
   ]
