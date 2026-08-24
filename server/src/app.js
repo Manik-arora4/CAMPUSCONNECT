@@ -4,7 +4,6 @@ import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
-import { fileURLToPath } from 'url';
 import { rateLimit } from 'express-rate-limit';
 import { env } from './config/env.js';
 
@@ -32,7 +31,8 @@ import supportRoutes from './routes/support.js';
 import pushRoutes from './routes/push.js';
 import { ApiError } from './utils/ApiError.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+let __dirname;
+try { __dirname = path.dirname(new URL(import.meta.url).pathname); } catch { __dirname = '/tmp'; }
 const app = express();
 
 app.set('trust proxy', 1);

@@ -2,8 +2,14 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+// In CJS bundles (esbuild), import.meta.url is undefined.
+// On Vercel, env vars are set via the dashboard — no .env file needed.
+try {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  dotenv.config({ path: path.resolve(__dirname, '../../.env') });
+} catch {
+  // Bundled CJS — import.meta.url unavailable, skip dotenv
+}
 
 export const env = {
   PORT: Number(process.env.PORT || 5000),
