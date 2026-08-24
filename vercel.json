@@ -1,16 +1,6 @@
 {
   "version": 2,
-  "installCommand": "cd server && npm install && npx prisma generate && cd .. && cd api && npm install && npx prisma generate",
+  "installCommand": "npm install && cd server && npm install && npx prisma generate && cd ../api && npm install && npx prisma generate",
   "buildCommand": "cd client && npm install && npm run build",
-  "outputDirectory": "client/dist",
-  "rewrites": [
-    {
-      "source": "/api/test",
-      "destination": "/api/test.js"
-    },
-    {
-      "source": "/api/:path+",
-      "destination": "/api/index.js"
-    }
-  ]
+  "outputDirectory": "client/dist"
 }
