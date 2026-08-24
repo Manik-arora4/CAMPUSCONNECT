@@ -1,4 +1,4 @@
-// Vercel Serverless Function — entry point for Express app
+// Vercel Serverless Function — Express app handler
 const mod = require('./_app.cjs');
 const app = mod.default || mod;
 
