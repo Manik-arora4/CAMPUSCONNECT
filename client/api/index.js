@@ -1,5 +1,6 @@
 // Vercel Serverless Function — Express app handler
-// Lazy-require the bundle to avoid crash if prisma generate hasn't run
+// Loads the pre-bundled Express server and forwards all requests to it.
+
 let _app;
 
 function getApp() {
