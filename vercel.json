@@ -1,18 +1,30 @@
 {
   "version": 2,
-  "installCommand": "npm install && cd server && npm install && cd .. && cd client && npm install && cd .. && cd server && npx prisma generate",
-  "buildCommand": "cd client && npm run build",
+  "installCommand": "npm install && cd server && npm install && cd .. && cd server && npx prisma generate",
+  "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
   "builds": [
     {
-      "src": "api/index.js",
+      "src": "api/index.mjs",
       "use": "@vercel/node",
       "config": {
+        "maxDuration": 30,
         "includeFiles": [
-          "server/src/**",
-          "server/package.json",
-          "server/prisma/**",
-          "node_modules/**"
+          "server/**",
+          "node_modules/express/**",
+          "node_modules/cors/**",
+          "node_modules/helmet/**",
+          "node_modules/jsonwebtoken/**",
+          "node_modules/bcryptjs/**",
+          "node_modules/dotenv/**",
+          "node_modules/multer/**",
+          "node_modules/web-push/**",
+          "node_modules/pdf-parse/**",
+          "node_modules/express-rate-limit/**",
+          "node_modules/express-validator/**",
+          "node_modules/groq-sdk/**",
+          "node_modules/@google/**",
+          "node_modules/@prisma/**"
         ]
       }
     }
@@ -20,7 +32,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/index.js"
+      "dest": "/api/index.mjs"
     },
     {
       "src": "/((?!api/).*)",
