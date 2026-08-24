@@ -3,10 +3,15 @@
   "installCommand": "npm install && cd server && npm install && npx prisma generate && cd .. && cd api && npm install && npx prisma generate",
   "buildCommand": "cd client && npm install && npm run build",
   "outputDirectory": "client/dist",
-  "routes": [
+  "functions": {
+    "api/index.js": {
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index"
+      "source": "/api/:path+",
+      "destination": "/api/index.js"
     }
   ]
 }
