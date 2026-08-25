@@ -54579,8 +54579,8 @@ var require_client = __commonJS({
       rootEnvPath: config.relativeEnvPaths.rootEnvPath && path7.resolve(config.dirname, config.relativeEnvPaths.rootEnvPath),
       schemaEnvPath: config.relativeEnvPaths.schemaEnvPath && path7.resolve(config.dirname, config.relativeEnvPaths.schemaEnvPath)
     });
-    var PrismaClient = getPrismaClient2(config);
-    exports2.PrismaClient = PrismaClient;
+    var PrismaClient2 = getPrismaClient2(config);
+    exports2.PrismaClient = PrismaClient2;
     Object.assign(exports2, Prisma);
     path7.join(__dirname, "query_engine-windows.dll.node");
     path7.join(process.cwd(), "node_modules/.prisma/client/query_engine-windows.dll.node");
@@ -54606,29 +54606,15 @@ var require_default2 = __commonJS({
 });
 
 // src/lib/prisma.js
-function createClientSync() {
-  try {
-    const { PrismaClient } = require_default2();
-    return new PrismaClient();
-  } catch {
-    return null;
-  }
-}
-function getPrisma() {
-  if (!_prisma) {
-    _prisma = createClientSync();
-  }
-  return _prisma;
-}
-var _prisma, prisma;
+var import_client, globalForPrisma, prisma;
 var init_prisma = __esm({
   "src/lib/prisma.js"() {
-    prisma = new Proxy({}, {
-      get(_, prop) {
-        const client3 = getPrisma();
-        return client3 ? client3[prop] : void 0;
-      }
+    import_client = __toESM(require_default2(), 1);
+    globalForPrisma = globalThis;
+    prisma = globalForPrisma.__prisma ?? new import_client.PrismaClient({
+      log: true ? ["error"] : ["warn", "error"]
     });
+    if (false) globalForPrisma.__prisma = prisma;
   }
 });
 
