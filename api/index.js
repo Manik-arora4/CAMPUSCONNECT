@@ -314301,7 +314301,7 @@ app.use((err, req, res, next) => {
   if (isMulter) return res.status(400).json({ error: err.message });
   const status = err.statusCode || 500;
   const message = err.isOperational ? err.message : "Something went wrong on the server.";
-  if (status >= 500) console.error("[error]", err);
+  console.error("[error]", err?.message || err, err?.stack?.substring(0, 300));
   res.status(status).json({ error: message, details: err.details || void 0 });
 });
 var app_default = app;
