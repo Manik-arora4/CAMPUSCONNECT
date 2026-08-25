@@ -134,16 +134,12 @@ export default function Opportunities() {
     fetchOpportunities(null, true);
   };
 
-  const apply = async (e, id, opp) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // The apply URL is always the original source website
+  // Get the best apply URL for an opportunity (applyUrl > applyLink > sourceUrl)
+  const getApplyUrl = (opp) => {
     const url = opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-      // Record the click in background (non-blocking)
-      api.post(`/opportunities/${id}/apply`).catch(() => {});
-    }
+    // Only return valid HTTP/HTTPS URLs
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) return url;
+    return '';
   };
 
   const aiSearch = async (e) => {
@@ -439,10 +435,27 @@ export default function Opportunities() {
 
                   {/* Action buttons */}
                   {isStudent ? (
-                    <div className="flex gap-2 mt-3">
-                      <button onClick={(e) => apply(e, opp._id || opp.id, opp)} className="btn-primary flex-1 !py-2 text-xs">
-                        <ExternalLink size={14} /> {directUrl ? 'Apply on Source' : 'Apply'}
-                      </button>
+                    <div className="flex gap-2 mt-3" onClick={(e) => e.stopPropagation()}>
+                      {(() => {
+                        const url = getApplyUrl(opp);
+                        return url ? (
+                          <a
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-primary flex-1 !py-2 text-xs text-center"
+                          >
+                            <ExternalLink size={14} /> Apply on Source
+                          </a>
+                        ) : (
+                          <Link
+                            to={`/opportunities/${opp._id || opp.id}`}
+                            className="btn-primary flex-1 !py-2 text-xs text-center"
+                          >
+                            View Details
+                          </Link>
+                        );
+                      })()}
                       <button onClick={(e) => save(e, opp._id || opp.id)} className="btn-secondary !py-2 text-xs">
                         <Bookmark size={14} /> Save
                       </button>

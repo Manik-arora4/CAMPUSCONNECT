@@ -484,6 +484,13 @@ export async function ensureSampleOpportunities() {
   });
   if (deleted.count > 0) console.log(`[seed] Cleaned ${deleted.count} dummy opportunities with example.com links`);
 
+  // Step 1b: Remove old broken opportunities with empty applyUrl from old seed
+  const brokenTitles = ['Research Assistant: NLP for Education', 'CodeSprint 48: Competitive Programming Contest', 'Merit Scholarship 2026'];
+  const broken = await prisma.opportunity.deleteMany({
+    where: { title: { in: brokenTitles }, applyUrl: '' },
+  });
+  if (broken.count > 0) console.log(`[seed] Cleaned ${broken.count} broken opportunities with empty applyUrl`);
+
   // Step 2: Insert 40+ real opportunities from verified sources
   const samples = [
     // ─── GOOGLE / BIG TECH ───

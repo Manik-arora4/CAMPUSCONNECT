@@ -274,7 +274,7 @@ router.post('/:id/apply', auth, asyncHandler(async (req, res) => {
 router.patch('/:id', requireAdmin, asyncHandler(async (req, res) => {
   const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } });
   if (!opp) throw ApiError.notFound('Opportunity not found');
-  const allowed = ['title', 'organization', 'category', 'description', 'skillsRequired', 'eligibility', 'courseRestrictions', 'experienceLevel', 'location', 'mode', 'stipend', 'prize', 'deadline', 'applyLink', 'requirements', 'applicationProcess', 'tags', 'status'];
+  const allowed = ['title', 'organization', 'category', 'description', 'skillsRequired', 'eligibility', 'courseRestrictions', 'experienceLevel', 'location', 'mode', 'stipend', 'prize', 'deadline', 'applyLink', 'applyUrl', 'sourceUrl', 'requirements', 'applicationProcess', 'tags', 'status'];
   const data = {};
   allowed.forEach((k) => {
     if (req.body[k] !== undefined) data[k] = req.body[k];
@@ -304,6 +304,46 @@ router.post('/:id/reject', requireAdmin, asyncHandler(async (req, res) => {
 router.delete('/:id', requireAdmin, asyncHandler(async (req, res) => {
   await prisma.opportunity.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Opportunity deleted' });
+}));
+
+// POST /api/opportunities/validate-urls — fix broken applyUrls in database
+router.post('/validate-urls', auth, requireAdmin, asyncHandler(async (req, res) => {
+  const opportunities = await prisma.opportunity.findMany({
+    where: { status: 'verified' },
+    select: { id: true, title: true, applyUrl: true, applyLink: true, sourceUrl: true },
+  });
+  
+  let fixed = 0;
+  let removed = 0;
+  
+  for (const opp of opportunities) {
+    let bestUrl = '';
+    
+    // Priority: applyUrl > applyLink > sourceUrl
+    for (const url of [opp.applyUrl, opp.applyLink, opp.sourceUrl]) {
+      if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+        bestUrl = url;
+        break;
+      }
+    }
+    
+    if (bestUrl && bestUrl !== opp.applyUrl) {
+      await prisma.opportunity.update({
+        where: { id: opp.id },
+        data: { applyUrl: bestUrl, sourceUrl: bestUrl },
+      });
+      fixed++;
+    } else if (!bestUrl) {
+      // No valid URL at all — mark as needing review
+      await prisma.opportunity.update({
+        where: { id: opp.id },
+        data: { status: 'pending' },
+      });
+      removed++;
+    }
+  }
+  
+  res.json({ message: `Fixed ${fixed} URLs, ${removed} marked as pending`, fixed, removed });
 }));
 
 export default router;

@@ -61,15 +61,13 @@ export default function OpportunityDetail() {
     reload();
   };
 
-  const apply = async () => {
-    // Open the original source URL directly
+  // Get the best apply URL (applyUrl > applyLink > sourceUrl)
+  const getApplyUrl = () => {
     const url = opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
-    if (url) {
-      window.open(url, '_blank', 'noopener,noreferrer');
-      // Record click in background
-      api.post(`/opportunities/${id}/apply`).catch(() => {});
-    }
+    if (url && (url.startsWith('http://') || url.startsWith('https://'))) return url;
+    return '';
   };
+  const applyUrl = getApplyUrl();
 
   const statusBadge = application?.status;
 
@@ -352,16 +350,21 @@ export default function OpportunityDetail() {
 
               {/* Action buttons */}
               <div className="space-y-2">
-                <button onClick={apply} disabled={application?.status === 'applied' || application?.status === 'shortlisted'} className="btn-primary w-full">
-                  <ExternalLink size={16} />
-                  {application?.status === 'applied' ? 'Applied ✓' : application?.status === 'shortlisted' ? 'Shortlisted ✓' : (opp.applyUrl || opp.applyLink) ? 'Apply on Source' : 'Apply now'}
-                </button>
+                {applyUrl ? (
+                  <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="btn-primary w-full text-center">
+                    <ExternalLink size={16} /> Apply on Source
+                  </a>
+                ) : (
+                  <button disabled className="btn-primary w-full opacity-50 cursor-not-allowed">
+                    No Apply Link Available
+                  </button>
+                )}
                 <button onClick={save} className="btn-secondary w-full">
                   <Bookmark size={16} />
                   {application?.status === 'saved' ? 'Saved ✓' : 'Save for later'}
                 </button>
-                {(opp.applyUrl || opp.applyLink || opp.sourceUrl) && !application ? (
-                  <a href={opp.applyUrl || opp.applyLink || opp.sourceUrl} target="_blank" rel="noreferrer" className="btn-secondary w-full">
+                {applyUrl ? (
+                  <a href={applyUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary w-full text-center">
                     <ExternalLink size={16} /> View original source
                   </a>
                 ) : null}
