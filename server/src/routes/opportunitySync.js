@@ -5,6 +5,7 @@
  */
 
 import { Router } from 'express';
+import { auth } from '../middleware/auth.js';
 import { requireAdmin } from '../middleware/roles.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { fetchAllOpportunities, archiveExpiredOpportunities, getSyncStatus } from '../services/opportunities/aggregator.js';
@@ -13,7 +14,7 @@ import { connectors, getConnectorIds } from '../services/opportunities/connector
 const router = Router();
 
 // GET /api/opportunities/sync/status — sync status for all connectors
-router.get('/status', requireAdmin, asyncHandler(async (req, res) => {
+router.get('/status', auth, requireAdmin, asyncHandler(async (req, res) => {
   const status = await getSyncStatus();
   const availableConnectors = connectors.map((c) => ({
     id: c.id,
@@ -25,7 +26,7 @@ router.get('/status', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 // POST /api/opportunities/sync — trigger a sync
-router.post('/', requireAdmin, asyncHandler(async (req, res) => {
+router.post('/', auth, requireAdmin, asyncHandler(async (req, res) => {
   const { connectorIds, dryRun } = req.body || {};
   const ids = Array.isArray(connectorIds) && connectorIds.length > 0 ? connectorIds : null;
 
@@ -50,7 +51,7 @@ router.post('/', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 // POST /api/opportunities/sync/archive — archive expired opportunities
-router.post('/archive', requireAdmin, asyncHandler(async (req, res) => {
+router.post('/archive', auth, requireAdmin, asyncHandler(async (req, res) => {
   const count = await archiveExpiredOpportunities();
   res.json({ message: `Archived ${count} expired opportunities`, count });
 }));
