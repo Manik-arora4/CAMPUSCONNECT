@@ -1,11 +1,22 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+
+// Resolve uploads directory — works in both ESM and CJS bundles
 let uploadsDir;
-try { uploadsDir = path.resolve(__dirname, '../../uploads'); } catch { uploadsDir = '/tmp/cc-uploads'; }
+try {
+  // ESM path: use import.meta.url
+  const { fileURLToPath } = require('url');
+  const __filename = fileURLToPath(import.meta.url);
+  uploadsDir = path.resolve(path.dirname(__filename), '../../uploads');
+} catch {
+  try {
+    // CJS fallback: use process.cwd()
+    uploadsDir = path.resolve(process.cwd(), 'uploads');
+  } catch {
+    uploadsDir = '/tmp/cc-uploads';
+  }
+}
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({

@@ -3,20 +3,15 @@
 
 let _prisma;
 
-async function createClient() {
-  // Dynamic import — works in ESM modules
-  const mod = await import('@prisma/client');
-  const PrismaClient = mod.PrismaClient;
-  return new PrismaClient();
-}
-
-// Sync fallback using createRequire for top-level calls
-import { createRequire } from 'module';
-const require_ = createRequire(import.meta.url);
-
 function createClientSync() {
-  const { PrismaClient } = require_('@prisma/client');
-  return new PrismaClient();
+  try {
+    // CJS require — works in bundled CJS output and Node.js CJS modules
+    const { PrismaClient } = require('@prisma/client');
+    return new PrismaClient();
+  } catch (err) {
+    console.warn('[prisma] Could not init PrismaClient:', err.message);
+    return null;
+  }
 }
 
 export function getPrisma() {
@@ -29,6 +24,7 @@ export function getPrisma() {
 // Backwards compat: existing code imports `prisma` as a named export.
 export const prisma = new Proxy({}, {
   get(_, prop) {
-    return getPrisma()[prop];
+    const client = getPrisma();
+    return client ? client[prop] : undefined;
   }
 });
