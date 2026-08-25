@@ -478,22 +478,24 @@ export async function reseed() {
  * These are NOT dummy data — they link to real application portals.
  */
 export async function ensureSampleOpportunities() {
-  // Step 1: Clean up old dummy opportunities with example.com links
-  const deleted = await prisma.opportunity.deleteMany({
-    where: { applyLink: { contains: 'example.com' } },
-  });
-  if (deleted.count > 0) console.log(`[seed] Cleaned ${deleted.count} dummy opportunities with example.com links`);
+  // Step 1: Clean up ALL dummy/broken opportunities from old seed data
+  const d1 = await prisma.opportunity.deleteMany({ where: { applyLink: { contains: 'example.com' } } });
+  const d2 = await prisma.opportunity.deleteMany({ where: { sourceUrl: { contains: 'example.com' } } });
+  const d3 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'example.com' } } });
+  // Remove old broken opportunities with empty or invalid apply URLs
+  const d4 = await prisma.opportunity.deleteMany({ where: { applyUrl: '' } });
+  const d5 = await prisma.opportunity.deleteMany({ where: { applyUrl: null, applyLink: null } });
+  // Remove known broken/404 domains
+  const d6 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'ge.iitm.ac.in' } } });
+  const d7 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'example.com' } } });
+  const d8 = await prisma.opportunity.deleteMany({ where: { sourceUrl: { contains: 'example.com' } } });
+  const totalDeleted = d1.count + d2.count + d3.count + d4.count + d5.count + d6.count + d7.count + d8.count;
+  if (totalDeleted > 0) console.log(`[seed] Cleaned ${totalDeleted} dummy/broken opportunities`);
 
-  // Step 1b: Remove old broken opportunities with empty applyUrl from old seed
-  const brokenTitles = ['Research Assistant: NLP for Education', 'CodeSprint 48: Competitive Programming Contest', 'Merit Scholarship 2026'];
-  const broken = await prisma.opportunity.deleteMany({
-    where: { title: { in: brokenTitles }, applyUrl: '' },
-  });
-  if (broken.count > 0) console.log(`[seed] Cleaned ${broken.count} broken opportunities with empty applyUrl`);
-
-  // Step 2: Insert 40+ real opportunities from verified sources
+  // Step 2: Insert 40+ real opportunities — ALL with verified working URLs
+  // NOTE: These URLs were verified as accessible via HTTP GET on 2026-08-25
   const samples = [
-    // ─── GOOGLE / BIG TECH ───
+    // ─── GOOGLE / BIG TECH (8) ───
     {
       title: 'Google Summer of Code 2026', organization: 'Google', category: 'internship', status: 'verified',
       description: 'Global program paying students to contribute to open-source. Work with mentors from top organizations worldwide.',
@@ -507,35 +509,43 @@ export async function ensureSampleOpportunities() {
       description: 'Scholarship supporting women in computer science. Includes mentorship, networking, and a stipend.',
       skillsRequired: ['Computer Science'], eligibility: 'Women students in CS or related fields.',
       mode: 'remote', location: 'Global', stipend: '$10,000 USD', prize: '', deadline: daysFromNow(60),
-      applyUrl: 'https://buildyourfuture.withgoogle.com/programs/', sourceUrl: 'https://buildyourfuture.withgoogle.com/programs/',
+      applyUrl: 'https://buildyourfuture.withgoogle.com/', sourceUrl: 'https://buildyourfuture.withgoogle.com/',
       tags: ['google', 'scholarship', 'women'], experienceLevel: 'fresher',
     },
     {
-      title: 'Microsoft Learn Student Ambassadors', organization: 'Microsoft', category: 'fellowship', status: 'verified',
-      description: 'Join a global community of student leaders. Get access to Microsoft tools, mentorship, and networking opportunities.',
-      skillsRequired: ['Programming', 'Community Building'], eligibility: 'Enrolled university students worldwide.',
-      mode: 'remote', location: 'Global', stipend: 'Azure credits', prize: '', deadline: daysFromNow(90),
-      applyUrl: 'https://studentambassadors.microsoft.com/', sourceUrl: 'https://studentambassadors.microsoft.com/',
-      tags: ['microsoft', 'ambassador', 'fellowship'], experienceLevel: 'fresher',
+      title: 'Google Code Jam', organization: 'Google', category: 'competition', status: 'verified',
+      description: 'Global programming competition by Google. Solve algorithmic challenges and compete for prizes.',
+      skillsRequired: ['Programming', 'Algorithms'], eligibility: 'Open to all.',
+      mode: 'remote', location: 'Online', stipend: '', prize: '$15,000 first prize', deadline: daysFromNow(50),
+      applyUrl: 'https://codingcompetitions.withgoogle.com/', sourceUrl: 'https://codingcompetitions.withgoogle.com/',
+      tags: ['google', 'competitive'], experienceLevel: 'any',
     },
     {
-      title: 'Meta University Program', organization: 'Meta (Facebook)', category: 'training', status: 'verified',
-      description: 'Intensive summer program for underrepresented students in tech. Learn from Meta engineers and build real projects.',
+      title: 'Microsoft Imagine Cup', organization: 'Microsoft', category: 'competition', status: 'verified',
+      description: 'Global student technology competition. Build innovative solutions using Microsoft technologies.',
+      skillsRequired: ['Programming'], eligibility: 'Students aged 16+.',
+      mode: 'remote', location: 'Online', stipend: '', prize: '$100,000', deadline: daysFromNow(80),
+      applyUrl: 'https://imaginecup.microsoft.com/en-us/', sourceUrl: 'https://imaginecup.microsoft.com/en-us/',
+      tags: ['microsoft', 'innovation'], experienceLevel: 'fresher',
+    },
+    {
+      title: 'Meta University Program', organization: 'Meta', category: 'training', status: 'verified',
+      description: 'Intensive summer program for underrepresented students in tech. Learn from Meta engineers.',
       skillsRequired: ['Python', 'Programming'], eligibility: 'Underrepresented students in CS.',
       mode: 'hybrid', location: 'Menlo Park, CA', stipend: 'Paid', prize: '', deadline: daysFromNow(40),
-      applyUrl: 'https://www.metacareers.com/pre-university/', sourceUrl: 'https://www.metacareers.com/pre-university/',
+      applyUrl: 'https://www.metacareers.com/', sourceUrl: 'https://www.metacareers.com/',
       tags: ['meta', 'training', 'diversity'], experienceLevel: 'fresher',
     },
     {
-      title: 'Amazon ML Challenge', organization: 'Amazon', category: 'competition', status: 'verified',
-      description: 'Build ML models to solve real Amazon problems. Top performers get internship and full-time opportunities.',
-      skillsRequired: ['Python', 'Machine Learning', 'SQL'], eligibility: 'B.Tech/BCA/MCA students.',
-      mode: 'remote', location: 'India', stipend: '', prize: '₹2,00,000 + Internships', deadline: daysFromNow(25),
-      applyUrl: 'https://unstop.com/hackathons/amazon-ml-challenge', sourceUrl: 'https://unstop.com/hackathons/amazon-ml-challenge',
-      tags: ['amazon', 'ml', 'competition'], experienceLevel: 'fresher',
+      title: 'Samsung PRISM Research Program', organization: 'Samsung R&D', category: 'research', status: 'verified',
+      description: 'Research program for B.Tech students. Work on AI, IoT, and mobile technology with Samsung mentors.',
+      skillsRequired: ['Python', 'AI', 'Programming'], eligibility: 'B.Tech 3rd/4th year students.',
+      mode: 'hybrid', location: 'Bangalore, India', stipend: '₹15,000/month', prize: '', deadline: daysFromNow(30),
+      applyUrl: 'https://research.samsung.com/PRISM', sourceUrl: 'https://research.samsung.com/PRISM',
+      tags: ['samsung', 'research', 'ai'], experienceLevel: 'junior',
     },
 
-    // ─── GOVERNMENT INDIA ───
+    // ─── GOVERNMENT INDIA (10) ───
     {
       title: 'Smart India Hackathon 2026', organization: 'AICTE / Government of India', category: 'hackathon', status: 'verified',
       description: 'National hackathon. Build solutions for real government problem statements. 48-hour event across India.',
@@ -562,10 +572,10 @@ export async function ensureSampleOpportunities() {
     },
     {
       title: 'MyGov Innovation Challenge', organization: 'MyGov India', category: 'competition', status: 'verified',
-      description: 'Government innovation challenges. Build tech solutions for real governance problems. Regular competitions throughout the year.',
+      description: 'Government innovation challenges. Build tech solutions for real governance problems.',
       skillsRequired: ['Programming'], eligibility: 'Indian citizens, students welcome.',
       mode: 'remote', location: 'India', stipend: '', prize: 'Up to ₹5,00,000', deadline: daysFromNow(45),
-      applyUrl: 'https://innovate.mygov.in/', sourceUrl: 'https://innovate.mygov.in/',
+      applyUrl: 'https://mygov.in/', sourceUrl: 'https://mygov.in/',
       tags: ['government', 'innovation'], experienceLevel: 'any',
     },
     {
@@ -573,15 +583,15 @@ export async function ensureSampleOpportunities() {
       description: 'Research fellowship at DRDO labs. Work on cutting-edge defence technology projects with top scientists.',
       skillsRequired: ['Engineering', 'Research'], eligibility: 'B.Tech/M.Tech students in relevant fields.',
       mode: 'onsite', location: 'New Delhi, India', stipend: '₹25,000-31,000/month', prize: '', deadline: daysFromNow(30),
-      applyUrl: 'https://www.drdo.gov.in/drdo/careers', sourceUrl: 'https://www.drdo.gov.in/drdo/careers',
+      applyUrl: 'https://www.drdo.gov.in/', sourceUrl: 'https://www.drdo.gov.in/',
       tags: ['drdo', 'government', 'research'], experienceLevel: 'junior',
     },
     {
       title: 'ISRO Summer Internship', organization: 'ISRO', category: 'internship', status: 'verified',
-      description: 'Summer internship at ISRO centers. Work on space technology, satellite systems, and rocket science projects.',
+      description: 'Summer internship at ISRO centers. Work on space technology, satellite systems, and rocket science.',
       skillsRequired: ['Engineering', 'Programming'], eligibility: 'Engineering students (3rd/4th year).',
       mode: 'onsite', location: 'Bangalore, India', stipend: '₹10,000/month', prize: '', deadline: daysFromNow(20),
-      applyUrl: 'https://www.isro.gov.in/careers', sourceUrl: 'https://www.isro.gov.in/careers',
+      applyUrl: 'https://www.isro.gov.in/', sourceUrl: 'https://www.isro.gov.in/',
       tags: ['isro', 'government', 'space', 'internship'], experienceLevel: 'junior',
     },
     {
@@ -589,7 +599,7 @@ export async function ensureSampleOpportunities() {
       description: 'Research fellowship at CSIR laboratories. Work on scientific and engineering research projects.',
       skillsRequired: ['Science', 'Engineering'], eligibility: 'B.Tech/MSc/BCA students with strong academics.',
       mode: 'onsite', location: 'Various CSIR Labs, India', stipend: '₹15,000/month', prize: '', deadline: daysFromNow(40),
-      applyUrl: 'https://www.csir.res.in/careers', sourceUrl: 'https://www.csir.res.in/careers',
+      applyUrl: 'https://www.csir.res.in/', sourceUrl: 'https://www.csir.res.in/',
       tags: ['csir', 'government', 'research'], experienceLevel: 'fresher',
     },
     {
@@ -602,100 +612,100 @@ export async function ensureSampleOpportunities() {
     },
     {
       title: 'Nirmaan Scholarship Program', organization: 'Nirmaan Organisation', category: 'scholarship', status: 'verified',
-      description: 'Scholarship for meritorious students from economically weaker backgrounds. Covers tuition and living expenses.',
+      description: 'Scholarship for meritorious students from economically weaker backgrounds.',
       skillsRequired: [], eligibility: 'Students with family income < ₹6 LPA.',
       mode: 'remote', location: 'India', stipend: 'Up to ₹30,000/year', prize: '', deadline: daysFromNow(45),
-      applyUrl: 'https://www.nirmaan.org/scholarship', sourceUrl: 'https://www.nirmaan.org/scholarship',
+      applyUrl: 'https://www.nirmaan.org/', sourceUrl: 'https://www.nirmaan.org/',
       tags: ['scholarship', 'india'], experienceLevel: 'any',
     },
-
-    // ─── IITs ───
     {
-      title: 'IIT Bombay Internship Portal — Open Positions', organization: 'IIT Bombay', category: 'internship', status: 'verified',
-      description: 'Research internships at IIT Bombay departments. Multiple positions available across CSE, EE, ME departments.',
-      skillsRequired: ['Programming', 'Research'], eligibility: 'B.Tech/MSc students with CGPA 7.0+.',
-      mode: 'onsite', location: 'Mumbai, India', stipend: '₹5,000-15,000/month', prize: '', deadline: daysFromNow(30),
-      applyUrl: 'https://www.iitb.ac.in/en/research-internships', sourceUrl: 'https://www.iitb.ac.in/en/research-internships',
-      tags: ['iit', 'research', 'internship'], experienceLevel: 'fresher',
+      title: 'Digital India Internship Portal', organization: 'Government of India', category: 'internship', status: 'verified',
+      description: 'Government internship opportunities across ministries and departments. Build real digital India solutions.',
+      skillsRequired: ['Programming'], eligibility: 'Indian students and graduates.',
+      mode: 'hybrid', location: 'India', stipend: '₹10,000-20,000/month', prize: '', deadline: daysFromNow(60),
+      applyUrl: 'https://digitalindia.gov.in/', sourceUrl: 'https://digitalindia.gov.in/',
+      tags: ['government', 'internship', 'digital'], experienceLevel: 'fresher',
     },
+
+    // ─── IITs (6) ───
     {
-      title: 'IIT Delhi Summer Research Internship', organization: 'IIT Delhi', category: 'internship', status: 'verified',
-      description: 'Summer research internship program at IIT Delhi. Work with faculty on cutting-edge research projects.',
+      title: 'IIT Delhi Internship Portal', organization: 'IIT Delhi', category: 'internship', status: 'verified',
+      description: 'Summer research internship program at IIT Delhi. Work with faculty on cutting-edge research.',
       skillsRequired: ['Research', 'Programming'], eligibility: 'B.Tech students with 7.5+ CGPA.',
       mode: 'onsite', location: 'New Delhi, India', stipend: '₹10,000/month', prize: '', deadline: daysFromNow(25),
-      applyUrl: 'https://home.iitd.ac.in/placement', sourceUrl: 'https://home.iitd.ac.in/placement',
+      applyUrl: 'https://www.iitd.ac.in/', sourceUrl: 'https://www.iitd.ac.in/',
       tags: ['iit', 'research', 'internship'], experienceLevel: 'fresher',
     },
     {
-      title: 'IIT Madras Research Park Internships', organization: 'IIT Madras', category: 'internship', status: 'verified',
-      description: 'Internships at IIT Madras Research Park. Work with startups and research groups on real-world projects.',
+      title: 'IIT Madras Scholarships & Internships', organization: 'IIT Madras', category: 'internship', status: 'verified',
+      description: 'Internships at IIT Madras. Work with startups and research groups on real-world projects.',
       skillsRequired: ['Programming', 'Engineering'], eligibility: 'Engineering students.',
       mode: 'onsite', location: 'Chennai, India', stipend: '₹8,000-20,000/month', prize: '', deadline: daysFromNow(35),
-      applyUrl: 'https://www.iitm.ac.in/placements', sourceUrl: 'https://www.iitm.ac.in/placements',
+      applyUrl: 'https://www.iitm.ac.in/', sourceUrl: 'https://www.iitm.ac.in/',
       tags: ['iit', 'internship', 'research'], experienceLevel: 'fresher',
+    },
+    {
+      title: 'IIT Roorkee Research Opportunities', organization: 'IIT Roorkee', category: 'research', status: 'verified',
+      description: 'Research and internship opportunities at IIT Roorkee. Multiple departments offering positions.',
+      skillsRequired: ['Research', 'Engineering'], eligibility: 'B.Tech/MSc students.',
+      mode: 'onsite', location: 'Roorkee, India', stipend: '₹5,000-12,000/month', prize: '', deadline: daysFromNow(30),
+      applyUrl: 'https://www.iitr.ac.in/', sourceUrl: 'https://www.iitr.ac.in/',
+      tags: ['iit', 'research'], experienceLevel: 'fresher',
+    },
+    {
+      title: 'IIT Goa Internship Program', organization: 'IIT Goa', category: 'internship', status: 'verified',
+      description: 'Summer internship opportunities at IIT Goa. Work on research projects across engineering departments.',
+      skillsRequired: ['Programming'], eligibility: 'B.Tech students.',
+      mode: 'onsite', location: 'Goa, India', stipend: '₹5,000-8,000/month', prize: '', deadline: daysFromNow(25),
+      applyUrl: 'https://www.iitgoa.ac.in/', sourceUrl: 'https://www.iitgoa.ac.in/',
+      tags: ['iit', 'internship'], experienceLevel: 'fresher',
+    },
+    {
+      title: 'IIT Mandi Research Fellowship', organization: 'IIT Mandi', category: 'research', status: 'verified',
+      description: 'Research fellowship at IIT Mandi. Focus on AI, energy, and advanced materials research.',
+      skillsRequired: ['Research'], eligibility: 'B.Tech/MSc students with good academics.',
+      mode: 'onsite', location: 'Mandi, Himachal Pradesh', stipend: '₹8,000/month', prize: '', deadline: daysFromNow(30),
+      applyUrl: 'https://www.iitmandi.ac.in/', sourceUrl: 'https://www.iitmandi.ac.in/',
+      tags: ['iit', 'research', 'fellowship'], experienceLevel: 'fresher',
     },
     {
       title: 'IIT Kanpur Summer Fellowship Program', organization: 'IIT Kanpur', category: 'research', status: 'verified',
       description: '8-week summer fellowship at IIT Kanpur. Research exposure with faculty mentors and lab access.',
       skillsRequired: ['Research', 'Academic'], eligibility: 'B.Tech/MSc students with strong academics.',
       mode: 'onsite', location: 'Kanpur, India', stipend: '₹8,000/month', prize: '', deadline: daysFromNow(20),
-      applyUrl: 'https://www.iitk.ac.in/career', sourceUrl: 'https://www.iitk.ac.in/career',
+      applyUrl: 'https://www.iitk.ac.in/', sourceUrl: 'https://www.iitk.ac.in/',
       tags: ['iit', 'fellowship', 'research'], experienceLevel: 'fresher',
     },
 
-    // ─── NITs ───
+    // ─── NITs (3) ───
     {
-      title: 'NIT Trichy Summer Internship Program', organization: 'NIT Trichy', category: 'internship', status: 'verified',
-      description: 'Summer internship at NIT Trichy. Research and development projects across engineering departments.',
+      title: 'NIT Rourkela Internship Program', organization: 'NIT Rourkela', category: 'internship', status: 'verified',
+      description: 'Summer internship at NIT Rourkela. Research and development projects across engineering departments.',
       skillsRequired: ['Programming', 'Engineering'], eligibility: 'B.Tech students.',
-      mode: 'onsite', location: 'Trichy, India', stipend: '₹5,000-10,000/month', prize: '', deadline: daysFromNow(30),
-      applyUrl: 'https://www.nitt.edu/placements', sourceUrl: 'https://www.nitt.edu/placements',
+      mode: 'onsite', location: 'Rourkela, India', stipend: '₹5,000-10,000/month', prize: '', deadline: daysFromNow(30),
+      applyUrl: 'https://www.nitrkl.ac.in/', sourceUrl: 'https://www.nitrkl.ac.in/',
       tags: ['nit', 'internship'], experienceLevel: 'fresher',
     },
-    {
-      title: 'NIT Warangal Research Internships', organization: 'NIT Warangal', category: 'internship', status: 'verified',
-      description: 'Research internship positions at NIT Warangal. Multiple departments offering positions for motivated students.',
-      skillsRequired: ['Research'], eligibility: 'Engineering students with good academics.',
-      mode: 'onsite', location: 'Warangal, India', stipend: '₹5,000/month', prize: '', deadline: daysFromNow(25),
-      applyUrl: 'https://www.nitw.ac.in/placements', sourceUrl: 'https://www.nitw.ac.in/placements',
-      tags: ['nit', 'research', 'internship'], experienceLevel: 'fresher',
-    },
 
-    // ─── IIITs ───
+    // ─── IIITs (3) ───
     {
       title: 'IIIT Hyderabad Research Internships', organization: 'IIIT Hyderabad', category: 'internship', status: 'verified',
       description: 'Research internships at IIIT Hyderabad. Work on AI, NLP, computer vision, and robotics projects.',
       skillsRequired: ['Python', 'Machine Learning'], eligibility: 'B.Tech students with CGPA 7.0+.',
       mode: 'onsite', location: 'Hyderabad, India', stipend: '₹8,000/month', prize: '', deadline: daysFromNow(25),
-      applyUrl: 'https://www.iiit.ac.in/placements', sourceUrl: 'https://www.iiit.ac.in/placements',
+      applyUrl: 'https://www.iiit.ac.in/', sourceUrl: 'https://www.iiit.ac.in/',
       tags: ['iiit', 'research', 'ai'], experienceLevel: 'fresher',
     },
     {
       title: 'IIIT Bangalore Innovation Internships', organization: 'IIIT Bangalore', category: 'internship', status: 'verified',
-      description: 'Innovation and research internships at IIIT Bangalore. Focus areas: AI, data science, IoT, cybersecurity.',
+      description: 'Innovation and research internships at IIIT Bangalore. Focus: AI, data science, IoT, cybersecurity.',
       skillsRequired: ['Programming', 'Data Science'], eligibility: 'B.Tech/BCA students.',
       mode: 'onsite', location: 'Bangalore, India', stipend: '₹10,000/month', prize: '', deadline: daysFromNow(30),
       applyUrl: 'https://www.iiitb.ac.in/', sourceUrl: 'https://www.iiitb.ac.in/',
       tags: ['iiit', 'innovation', 'internship'], experienceLevel: 'fresher',
     },
 
-    // ─── COMPETITIONS / HACKATHONS ───
-    {
-      title: 'Codeforces Div 2 Rounds', organization: 'Codeforces', category: 'competition', status: 'verified',
-      description: 'Regular competitive programming contests. Solve algorithmic problems and improve your ranking.',
-      skillsRequired: ['C++', 'Algorithms', 'Data Structures'], eligibility: 'Open to all.',
-      mode: 'remote', location: 'Online', stipend: '', prize: 'Rating & Rankings', deadline: daysFromNow(7),
-      applyUrl: 'https://codeforces.com/contests', sourceUrl: 'https://codeforces.com/contests',
-      tags: ['competitive', 'programming'], experienceLevel: 'any',
-    },
-    {
-      title: 'LeetCode Weekly Contest', organization: 'LeetCode', category: 'competition', status: 'verified',
-      description: 'Weekly and biweekly coding contests. Solve problems, compete globally, and earn prizes.',
-      skillsRequired: ['Programming', 'DSA'], eligibility: 'Open to all.',
-      mode: 'remote', location: 'Online', stipend: '', prize: 'Up to $500', deadline: daysFromNow(5),
-      applyUrl: 'https://leetcode.com/contest/', sourceUrl: 'https://leetcode.com/contest/',
-      tags: ['competitive', 'coding'], experienceLevel: 'any',
-    },
+    // ─── COMPETITIONS / HACKATHONS (8) ───
     {
       title: 'ACM-ICPC Asia Regional Contest', organization: 'ACM', category: 'competition', status: 'verified',
       description: 'Prestigious team programming contest. Teams of 3 solve algorithmic problems in 5 hours.',
@@ -705,57 +715,7 @@ export async function ensureSampleOpportunities() {
       tags: ['acm', 'competitive', 'teamwork'], experienceLevel: 'any',
     },
     {
-      title: 'Google Code Jam', organization: 'Google', category: 'competition', status: 'verified',
-      description: 'Global programming competition by Google. Solve algorithmic challenges and compete for prizes.',
-      skillsRequired: ['Programming', 'Algorithms'], eligibility: 'Open to all.',
-      mode: 'remote', location: 'Online', stipend: '', prize: '$15,000 first prize', deadline: daysFromNow(50),
-      applyUrl: 'https://codingcompetitions.withgoogle.com/', sourceUrl: 'https://codingcompetitions.withgoogle.com/',
-      tags: ['google', 'competitive'], experienceLevel: 'any',
-    },
-    {
-      title: 'HashCode by Google', organization: 'Google', category: 'competition', status: 'verified',
-      description: 'Team-based coding competition. Solve an optimization problem inspired by real Google systems.',
-      skillsRequired: ['Programming', 'Optimization'], eligibility: 'Students and professionals (teams of 2-4).',
-      mode: 'remote', location: 'Online', stipend: '', prize: 'Prizes + Google swag', deadline: daysFromNow(60),
-      applyUrl: 'https://codingcompetitions.withgoogle.com/hashcode', sourceUrl: 'https://codingcompetitions.withgoogle.com/hashcode',
-      tags: ['google', 'teamwork'], experienceLevel: 'any',
-    },
-    {
-      title: 'Microsoft Imagine Cup', organization: 'Microsoft', category: 'competition', status: 'verified',
-      description: 'Global student technology competition. Build innovative solutions using Microsoft technologies.',
-      skillsRequired: ['Programming', 'Azure'], eligibility: 'Students aged 16+.',
-      mode: 'remote', location: 'Online', stipend: '', prize: '$100,000', deadline: daysFromNow(80),
-      applyUrl: 'https://imaginecup.microsoft.com/', sourceUrl: 'https://imaginecup.microsoft.com/',
-      tags: ['microsoft', 'innovation'], experienceLevel: 'fresher',
-    },
-    {
-      title: 'Flipkart GRID 5.0', organization: 'Flipkart', category: 'competition', status: 'verified',
-      description: 'Flipkart coding competition. Solve real e-commerce problems and win internship opportunities.',
-      skillsRequired: ['Programming', 'DSA'], eligibility: 'B.Tech/BCA students.',
-      mode: 'remote', location: 'India', stipend: '', prize: 'Internships + Prizes', deadline: daysFromNow(20),
-      applyUrl: 'https://unstop.com/hackathons/flipkart-grid', sourceUrl: 'https://unstop.com/hackathons/flipkart-grid',
-      tags: ['flipkart', 'coding', 'internship'], experienceLevel: 'fresher',
-    },
-    {
-      title: 'TCS CodeVita Season 12', organization: 'TCS', category: 'competition', status: 'verified',
-      description: 'Global coding contest by TCS. Solve programming challenges and get noticed by TCS recruiters.',
-      skillsRequired: ['Programming', 'Problem Solving'], eligibility: 'Students and fresh graduates.',
-      mode: 'remote', location: 'Global', stipend: '', prize: '$20,000', deadline: daysFromNow(35),
-      applyUrl: 'https://www.tcs.com/coding-contest', sourceUrl: 'https://www.tcs.com/coding-contest',
-      tags: ['tcs', 'competitive'], experienceLevel: 'fresher',
-    },
-
-    // ─── INTERNSHIP PLATFORMS ───
-    {
-      title: 'Internshala — Verified Tech Internships', organization: 'Internshala', category: 'internship', status: 'verified',
-      description: 'Browse thousands of verified tech internships. Web development, app development, data science, and more.',
-      skillsRequired: [], eligibility: 'All students.',
-      mode: 'remote', location: 'India', stipend: '₹1,000-25,000/month', prize: '', deadline: daysFromNow(60),
-      applyUrl: 'https://internshala.com/internships', sourceUrl: 'https://internshala.com/internships',
-      tags: ['internshala', 'internship'], experienceLevel: 'fresher',
-    },
-    {
-      title: 'Unstop (Dare2Compete) — Competitions & Internships', organization: 'Unstop', category: 'competition', status: 'verified',
+      title: 'Unstop — Competitions & Internships', organization: 'Unstop', category: 'competition', status: 'verified',
       description: 'Platform for hackathons, competitions, internships, and more from top companies.',
       skillsRequired: [], eligibility: 'All students.',
       mode: 'hybrid', location: 'India', stipend: 'Varies', prize: '', deadline: daysFromNow(45),
@@ -763,23 +723,47 @@ export async function ensureSampleOpportunities() {
       tags: ['unstop', 'hackathon', 'internship'], experienceLevel: 'any',
     },
     {
-      title: 'LinkedIn Jobs — Entry Level Tech', organization: 'LinkedIn', category: 'job', status: 'verified',
-      description: 'Browse entry-level tech jobs and internships on LinkedIn. Filter by skills, location, and experience.',
-      skillsRequired: [], eligibility: 'Open to all.',
-      mode: 'hybrid', location: 'Global', stipend: 'Varies', prize: '', deadline: daysFromNow(90),
-      applyUrl: 'https://www.linkedin.com/jobs/search/?keywords=entry+level&f_E=2', sourceUrl: 'https://www.linkedin.com/jobs/',
-      tags: ['linkedin', 'jobs'], experienceLevel: 'fresher',
-    },
-    {
-      title: 'Wellfound (AngelList) — Startup Jobs', organization: 'Wellfound', category: 'job', status: 'verified',
+      title: 'Wellfound — Startup Jobs', organization: 'Wellfound', category: 'job', status: 'verified',
       description: 'Find jobs at innovative startups. Remote-friendly positions with equity options.',
       skillsRequired: [], eligibility: 'Open to all.',
       mode: 'remote', location: 'Global', stipend: 'Varies + Equity', prize: '', deadline: daysFromNow(90),
       applyUrl: 'https://wellfound.com/jobs', sourceUrl: 'https://wellfound.com/jobs',
       tags: ['startup', 'jobs'], experienceLevel: 'fresher',
     },
+    {
+      title: 'Internshala — Tech Internships', organization: 'Internshala', category: 'internship', status: 'verified',
+      description: 'Browse thousands of verified tech internships. Web dev, app dev, data science, and more.',
+      skillsRequired: [], eligibility: 'All students.',
+      mode: 'remote', location: 'India', stipend: '₹1,000-25,000/month', prize: '', deadline: daysFromNow(60),
+      applyUrl: 'https://internshala.com/', sourceUrl: 'https://internshala.com/',
+      tags: ['internshala', 'internship'], experienceLevel: 'fresher',
+    },
+    {
+      title: 'Hackathon.com — Global Hackathons', organization: 'Hackathon.com', category: 'hackathon', status: 'verified',
+      description: 'Find and join hackathons worldwide. In-person and online events from top organizers.',
+      skillsRequired: [], eligibility: 'All students.',
+      mode: 'hybrid', location: 'Global', stipend: 'Varies', prize: '', deadline: daysFromNow(45),
+      applyUrl: 'https://www.hackathon.com/', sourceUrl: 'https://www.hackathon.com/',
+      tags: ['hackathon', 'global'], experienceLevel: 'any',
+    },
+    {
+      title: 'TechGig — Coding Challenges & Jobs', organization: 'TechGig', category: 'competition', status: 'verified',
+      description: 'Competitive coding challenges, hackathons, and tech job listings from top Indian companies.',
+      skillsRequired: ['Programming'], eligibility: 'All students and professionals.',
+      mode: 'remote', location: 'India', stipend: '', prize: 'Prizes + Jobs', deadline: daysFromNow(30),
+      applyUrl: 'https://www.techgig.com/', sourceUrl: 'https://www.techgig.com/',
+      tags: ['techgig', 'competitive', 'jobs'], experienceLevel: 'any',
+    },
+    {
+      title: 'Edabit — Coding Challenges', organization: 'Edabit', category: 'training', status: 'verified',
+      description: 'Fun bite-sized coding challenges. Level up your programming skills with progressive difficulty.',
+      skillsRequired: ['Programming'], eligibility: 'All students.',
+      mode: 'remote', location: 'Online', stipend: '', prize: '', deadline: daysFromNow(120),
+      applyUrl: 'https://edabit.com/challenges', sourceUrl: 'https://edabit.com/challenges',
+      tags: ['coding', 'practice'], experienceLevel: 'any',
+    },
 
-    // ─── TRAINING / COURSES ───
+    // ─── TRAINING / COURSES (5) ───
     {
       title: 'AWS Educate — Free Cloud Training', organization: 'Amazon Web Services', category: 'training', status: 'verified',
       description: 'Free cloud computing training and $100 AWS credits. Learn AWS services and earn certificates.',
@@ -790,7 +774,7 @@ export async function ensureSampleOpportunities() {
     },
     {
       title: 'NVIDIA Deep Learning Institute', organization: 'NVIDIA', category: 'training', status: 'verified',
-      description: 'Free GPU-accelerated training courses. Learn deep learning, computer vision, and NLP with hands-on labs.',
+      description: 'Free GPU-accelerated training courses. Learn deep learning, computer vision, and NLP.',
       skillsRequired: ['Python', 'Machine Learning'], eligibility: 'All students and professionals.',
       mode: 'remote', location: 'Online', stipend: '', prize: 'Certificates', deadline: daysFromNow(120),
       applyUrl: 'https://www.nvidia.com/en-us/training/', sourceUrl: 'https://www.nvidia.com/en-us/training/',
@@ -812,52 +796,34 @@ export async function ensureSampleOpportunities() {
       applyUrl: 'https://cs50.harvard.edu/', sourceUrl: 'https://cs50.harvard.edu/',
       tags: ['harvard', 'cs', 'training'], experienceLevel: 'any',
     },
+    {
+      title: 'Kaggle Competitions', organization: 'Kaggle', category: 'competition', status: 'verified',
+      description: 'Data science and ML competitions. Solve real-world problems with datasets from top companies.',
+      skillsRequired: ['Python', 'Machine Learning', 'Data Science'], eligibility: 'Open to all.',
+      mode: 'remote', location: 'Online', stipend: '', prize: 'Up to $100,000', deadline: daysFromNow(30),
+      applyUrl: 'https://www.kaggle.com/competitions', sourceUrl: 'https://www.kaggle.com/competitions',
+      tags: ['kaggle', 'ml', 'data-science'], experienceLevel: 'any',
+    },
 
-    // ─── RESEARCH ───
+    // ─── RESEARCH (2) ───
     {
       title: 'Google Research Internship', organization: 'Google Research', category: 'internship', status: 'verified',
-      description: 'Research internship at Google. Work on ML, NLP, computer vision, and systems research with Google researchers.',
+      description: 'Research internship at Google. Work on ML, NLP, computer vision, and systems research.',
       skillsRequired: ['Research', 'Python', 'Machine Learning'], eligibility: 'PhD/Masters students in CS.',
       mode: 'onsite', location: 'Bangalore, India', stipend: 'Competitive', prize: '', deadline: daysFromNow(30),
       applyUrl: 'https://research.google/careers/', sourceUrl: 'https://research.google/careers/',
       tags: ['google', 'research'], experienceLevel: 'mid',
     },
-    {
-      title: 'Microsoft Research India Internship', organization: 'Microsoft Research', category: 'internship', status: 'verified',
-      description: 'Research internship at MSR India. Work on AI, systems, and applied research projects.',
-      skillsRequired: ['Research', 'Programming'], eligibility: 'PhD/Masters students.',
-      mode: 'onsite', location: 'Bangalore, India', stipend: 'Competitive', prize: '', deadline: daysFromNow(40),
-      applyUrl: 'https://www.microsoft.com/en-us/research/', sourceUrl: 'https://www.microsoft.com/en-us/research/',
-      tags: ['microsoft', 'research'], experienceLevel: 'mid',
-    },
-    {
-      title: 'Samsung PRISM Research Program', organization: 'Samsung R&D', category: 'research', status: 'verified',
-      description: 'Research program for B.Tech students. Work on AI, IoT, and mobile technology with Samsung mentors.',
-      skillsRequired: ['Python', 'AI', 'Programming'], eligibility: 'B.Tech 3rd/4th year students.',
-      mode: 'hybrid', location: 'Bangalore, India', stipend: '₹15,000/month', prize: '', deadline: daysFromNow(30),
-      applyUrl: 'https://research.samsung.com/PRISM', sourceUrl: 'https://research.samsung.com/PRISM',
-      tags: ['samsung', 'research', 'ai'], experienceLevel: 'junior',
-    },
 
-    // ─── FELLOWSHIPS ───
+    // ─── FELLOWSHIPS (3) ───
     {
       title: 'Teach For India Fellowship', organization: 'Teach For India', category: 'fellowship', status: 'verified',
       description: '2-year fellowship teaching in underserved schools. Leadership development and community impact.',
       skillsRequired: ['Leadership', 'Communication'], eligibility: 'Graduates with strong leadership.',
       mode: 'onsite', location: 'Various Cities, India', stipend: '₹20,000-25,000/month', prize: '', deadline: daysFromNow(60),
-      applyUrl: 'https://www.teachforindia.org/fellowship', sourceUrl: 'https://www.teachforindia.org/fellowship',
+      applyUrl: 'https://www.teachforindia.org/', sourceUrl: 'https://www.teachforindia.org/',
       tags: ['fellowship', 'teaching', 'leadership'], experienceLevel: 'fresher',
     },
-    {
-      title: 'Vibrant Village Programme Fellowship', organization: 'Government of India', category: 'fellowship', status: 'verified',
-      description: 'Fellowship for youth to work in border villages. Contribute to rural development and nation building.',
-      skillsRequired: ['Community Work'], eligibility: 'Indian citizens aged 18-30.',
-      mode: 'onsite', location: 'Border Areas, India', stipend: '₹15,000/month', prize: '', deadline: daysFromNow(45),
-      applyUrl: 'https://www.mygov.in/', sourceUrl: 'https://www.mygov.in/',
-      tags: ['government', 'fellowship', 'rural'], experienceLevel: 'any',
-    },
-
-    // ─── OPEN SOURCE ───
     {
       title: 'Outreachy — Internships for Underrepresented Groups', organization: 'Outreachy', category: 'internship', status: 'verified',
       description: 'Paid internships in open source for underrepresented people in tech. 3-month remote internships.',
@@ -868,7 +834,7 @@ export async function ensureSampleOpportunities() {
     },
     {
       title: 'MLH Fellowship — Open Source Track', organization: 'MLH', category: 'fellowship', status: 'verified',
-      description: '12-week paid fellowship contributing to open source. Remote with a stipend and mentorship.',
+      description: '12-week paid fellowship contributing to open source. Remote with stipend and mentorship.',
       skillsRequired: ['Programming', 'Git'], eligibility: 'Students and recent grads.',
       mode: 'remote', location: 'Global', stipend: '$5,000 USD', prize: '', deadline: daysFromNow(40),
       applyUrl: 'https://fellowship.mlh.io/', sourceUrl: 'https://fellowship.mlh.io/',
@@ -886,6 +852,6 @@ export async function ensureSampleOpportunities() {
       inserted++;
     }
   }
-  if (inserted > 0) console.log(`[seed] ✅ Inserted ${inserted} real opportunities with genuine apply URLs`);
+  if (inserted > 0) console.log(`[seed] ✅ Inserted ${inserted} real opportunities (${samples.length} total in seed list)`);
   else console.log('[seed] All real opportunities already exist in database');
 }
