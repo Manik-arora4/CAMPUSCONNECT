@@ -4,6 +4,7 @@
  * Pipeline: Source → Fetch → Parse → Normalize → Deduplicate → Store
  * 
  * Orchestrates all connectors, handles deduplication, and stores results in DB.
+ * Includes retry logic, concurrency control, and comprehensive error handling.
  */
 
 import { prisma } from '../../lib/prisma.js';
@@ -14,9 +15,10 @@ import { connectors } from './connectors/index.js';
  * @param {Object} options
  * @param {string[]} [options.connectorIds] - specific connectors to fetch from (default: all)
  * @param {boolean} [options.dryRun=false] - if true, don't write to DB
+ * @param {number} [options.retries=1] - number of retries per connector on failure
  * @returns {Promise<{total:number, stored:number, duplicates:number, errors:number, byConnector:Object}>}
  */
-export async function fetchAllOpportunities({ connectorIds = null, dryRun = false } = {}) {
+export async function fetchAllOpportunities({ connectorIds = null, dryRun = false, retries = 1 } = {}) {
   const startTime = Date.now();
   const activeConnectors = connectorIds
     ? connectors.filter((c) => connectorIds.includes(c.id))
@@ -30,34 +32,54 @@ export async function fetchAllOpportunities({ connectorIds = null, dryRun = fals
   let errors = 0;
   const byConnector = {};
 
+  // Process connectors sequentially to avoid overwhelming remote servers
   for (const connector of activeConnectors) {
-    try {
-      console.log(`[aggregator] Fetching from: ${connector.name} (${connector.id})`);
-      const items = await connector.fetch();
-      total += items.length;
-      byConnector[connector.id] = { fetched: items.length, stored: 0, duplicates: 0 };
+    let lastError = null;
+    let items = [];
 
-      for (const item of items) {
-        try {
-          const result = await storeOpportunity(item, connector, dryRun);
-          if (result === 'stored') {
-            stored++;
-            byConnector[connector.id].stored++;
-          } else if (result === 'duplicate') {
-            duplicates++;
-            byConnector[connector.id].duplicates++;
-          }
-        } catch (err) {
-          console.warn(`[aggregator] Failed to store: ${item.title}: ${err.message}`);
-          errors++;
+    // Retry logic
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        if (attempt > 0) {
+          console.log(`[aggregator] Retrying ${connector.id} (attempt ${attempt + 1})...`);
+          await new Promise((r) => setTimeout(r, 3000)); // 3s delay before retry
         }
+        items = await connector.fetch();
+        lastError = null;
+        break;
+      } catch (err) {
+        lastError = err;
+        console.warn(`[aggregator] ${connector.id} attempt ${attempt + 1} failed: ${err.message}`);
       }
-
-      console.log(`[aggregator] ${connector.id}: fetched=${items.length}, stored=${byConnector[connector.id].stored}, dupes=${byConnector[connector.id].duplicates}`);
-    } catch (err) {
-      console.error(`[aggregator] Connector ${connector.id} failed: ${err.message}`);
-      errors++;
     }
+
+    if (lastError) {
+      console.error(`[aggregator] Connector ${connector.id} failed after ${retries + 1} attempts: ${lastError.message}`);
+      byConnector[connector.id] = { fetched: 0, stored: 0, duplicates: 0, error: lastError.message };
+      errors++;
+      continue;
+    }
+
+    total += items.length;
+    byConnector[connector.id] = { fetched: items.length, stored: 0, duplicates: 0 };
+
+    for (const item of items) {
+      try {
+        const result = await storeOpportunity(item, connector, dryRun);
+        if (result === 'stored') {
+          stored++;
+          byConnector[connector.id].stored++;
+        } else if (result === 'duplicate') {
+          duplicates++;
+          byConnector[connector.id].duplicates++;
+        }
+      } catch (err) {
+        console.warn(`[aggregator] Failed to store: ${item.title}: ${err.message}`);
+        errors++;
+      }
+    }
+
+    console.log(`[aggregator] ${connector.id}: fetched=${items.length}, stored=${byConnector[connector.id].stored}, dupes=${byConnector[connector.id].duplicates}`);
   }
 
   const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -68,14 +90,14 @@ export async function fetchAllOpportunities({ connectorIds = null, dryRun = fals
 
 /**
  * Store a single normalized opportunity in the DB.
- * Handles deduplication via externalId + source.
+ * Handles deduplication via externalId + source, and also via title + organization for fuzzy dedup.
  * @returns {'stored'|'duplicate'|'updated'}
  */
 export async function storeOpportunity(item, connector, dryRun = false) {
   const externalId = item.externalId || null;
   const source = item.organization || connector.source;
 
-  // Deduplication: check if this externalId + source combo already exists
+  // Deduplication layer 1: externalId + source (exact match)
   if (externalId) {
     const existing = await prisma.opportunity.findFirst({
       where: {
@@ -86,15 +108,32 @@ export async function storeOpportunity(item, connector, dryRun = false) {
 
     if (existing) {
       // Update lastSynced and any changed fields
+      const updateData = { lastSynced: new Date() };
+      if (item.deadline) updateData.deadline = new Date(item.deadline);
+      if (item.description && item.description !== existing.description) updateData.description = item.description;
+      if (item.applyUrl && item.applyUrl !== existing.applyUrl) updateData.applyUrl = item.applyUrl;
+      if (item.sourceUrl && item.sourceUrl !== existing.sourceUrl) updateData.sourceUrl = item.sourceUrl;
+
+      await prisma.opportunity.update({ where: { id: existing.id }, data: updateData });
+      return 'duplicate';
+    }
+  }
+
+  // Deduplication layer 2: title + organization (fuzzy match via contains)
+  const titleLower = (item.title || '').toLowerCase().trim();
+  if (titleLower.length > 10) {
+    const existing = await prisma.opportunity.findFirst({
+      where: {
+        title: { contains: item.title, mode: 'insensitive' },
+        organization: { contains: source, mode: 'insensitive' },
+        status: { notIn: ['expired', 'rejected'] },
+      },
+    });
+
+    if (existing) {
       await prisma.opportunity.update({
         where: { id: existing.id },
-        data: {
-          lastSynced: new Date(),
-          // Update deadline if it changed
-          ...(item.deadline ? { deadline: new Date(item.deadline) } : {}),
-          // Update description if it changed
-          ...(item.description && item.description !== existing.description ? { description: item.description } : {}),
-        },
+        data: { lastSynced: new Date() },
       });
       return 'duplicate';
     }
@@ -156,7 +195,7 @@ export async function archiveExpiredOpportunities() {
       status: 'expired',
     },
   });
-  console.log(`[aggregator] Archived ${result.count} expired opportunities`);
+  if (result.count > 0) console.log(`[aggregator] Archived ${result.count} expired opportunities`);
   return result.count;
 }
 
@@ -179,9 +218,20 @@ export async function getSyncStatus() {
     where: { sourceConnector: '' },
   });
 
+  const totalVerified = await prisma.opportunity.count({
+    where: { status: 'verified' },
+  });
+
+  const totalExpired = await prisma.opportunity.count({
+    where: { status: 'expired' },
+  });
+
   return {
     totalFetched,
     totalManual,
+    totalVerified,
+    totalExpired,
+    totalAll: totalFetched + totalManual,
     connectors: connectorStats.map((s) => ({
       id: s.sourceConnector,
       count: s._count.id,

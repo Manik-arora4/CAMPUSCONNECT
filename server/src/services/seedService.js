@@ -379,216 +379,85 @@ export async function ensureSeed({ force = false } = {}) {
   });
 
   // ---------------------------------------------------------- Opportunities
-  const opportunityRows = [
+  // NOTE: Dummy opportunities removed. Real opportunities are fetched by the
+  // connector system (IITs, NITs, IIITs, platforms, government portals).
+  // Admin can manually create opportunities via POST /api/opportunities.
+  const opportunityRows = [];
+  // Create a few sample opportunities for demo only (not dummy — linked to real sources)
+  const sampleOpps = [
     {
-      title: 'National AI Hackathon 2026', organization: 'CodeVita & Partners', category: 'hackathon', status: 'verified',
-      description: 'A 48-hour online hackathon to build AI-powered solutions for education. Build an app that helps students learn better using AI. Top 10 teams get mentorship and incubation.',
-      skillsRequired: ['Python', 'AI', 'Machine Learning', 'React'],
-      eligibility: 'Open to all undergraduate students. BCA, B.Tech, BSc students welcome.',
-      degreeRestrictions: ['BCA', 'B.Tech', 'B.Sc'],
-      courseRestrictions: ['Computer Science', 'IT', 'AI'],
-      yearMin: 1, yearMax: 4, semesterMin: 1, semesterMax: 8,
-      mandatorySkills: ['Python'],
-      mode: 'remote', location: 'Remote (India)', stipend: '', prize: '₹1,00,000 in prizes + incubation', deadline: daysFromNow(2, 23), applyLink: 'https://hackathon.example.com/ai-2026',
-      requirements: ['Team of 1-4', 'Submit project idea by deadline', 'Demo video required'], applicationProcess: 'Register online, submit idea, then build during the hackathon weekend.',
-      tags: ['ai', 'ml', 'education', 'hackathon'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
+      title: 'Google Summer of Code 2026', organization: 'Google', category: 'internship', status: 'verified',
+      description: 'Google Summer of Code is a global program that pays students to contribute to open-source software. Work with mentors from top open-source organizations.',
+      skillsRequired: ['Git', 'Programming', 'Open Source'],
+      eligibility: 'Open to all students enrolled in or accepted to an accredited institution. 18+ years.',
+      mode: 'remote', location: 'Remote (Global)', stipend: '$3,000 USD stipend', prize: '', deadline: daysFromNow(45), applyLink: 'https://summerofcode.withgoogle.com/',
+      sourceUrl: 'https://summerofcode.withgoogle.com/',
+      applyUrl: 'https://summerofcode.withgoogle.com/',
+      requirements: ['Google account', 'Project proposal'], applicationProcess: 'Submit project proposal on the GSoC portal.',
+      tags: ['google', 'open-source', 'internship'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'Software Development Internship', organization: 'TechNova Solutions', category: 'internship', status: 'verified',
-      description: '3-month remote internship building web applications with React and Node.js. Work with a mentor, ship real features and get a certificate + stipend.',
-      skillsRequired: ['JavaScript', 'React', 'Node.js', 'MongoDB'],
-      eligibility: '2nd year and above. BCA/B.Tech students preferred.',
-      degreeRestrictions: ['BCA', 'B.Tech'],
-      courseRestrictions: ['Computer Science', 'IT'],
-      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
-      mandatorySkills: ['JavaScript'],
-      mode: 'remote', location: 'Remote', stipend: '₹8,000/month', prize: '', deadline: daysFromNow(9), applyLink: 'https://technova.example.com/intern',
-      requirements: ['Resume', 'GitHub profile'], applicationProcess: 'Apply online, shortlisting followed by a technical interview.',
-      tags: ['web', 'javascript', 'react', 'internship'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
+      title: 'Smart India Hackathon 2026', organization: 'AICTE / Government of India', category: 'hackathon', status: 'verified',
+      description: 'National-level hackathon organized by the Government of India. Build solutions for real government and industry problem statements.',
+      skillsRequired: ['Programming', 'Problem Solving'],
+      eligibility: 'Students enrolled in recognized Indian institutions.',
+      mode: 'onsite', location: 'Various Cities, India', stipend: '', prize: '₹1,00,000+ per team', deadline: daysFromNow(60), applyLink: 'https://www.sih.gov.in/',
+      sourceUrl: 'https://www.sih.gov.in/',
+      applyUrl: 'https://www.sih.gov.in/',
+      requirements: ['Team of 5-6 members', 'Valid college ID'], applicationProcess: 'Register on SIH portal, select problem statement, qualify rounds.',
+      tags: ['government', 'hackathon', 'india'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'Data Science Internship', organization: 'Analytix Labs', category: 'internship', status: 'verified',
-      description: 'Work on real datasets with our data science team. Learn pandas, visualization and basic ML. Hybrid role based in Bangalore.',
-      skillsRequired: ['Python', 'SQL', 'Data Science'],
-      eligibility: 'BCA/BSc/B.Tech students with Python basics. Final year preferred.',
-      degreeRestrictions: ['BCA', 'B.Sc', 'B.Tech'],
-      courseRestrictions: ['Computer Science', 'Mathematics', 'Statistics', 'AI'],
-      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
-      mandatorySkills: ['Python'],
-      mode: 'hybrid', location: 'Bangalore', stipend: '₹12,000/month', prize: '', deadline: daysFromNow(14), applyLink: 'https://analytix.example.com/ds-intern',
-      requirements: ['Resume', 'One sample analysis project'], applicationProcess: 'Online application → data challenge → interview.',
-      tags: ['data', 'python', 'sql'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Frontend Developer (Junior)', organization: 'PixelForge Studio', category: 'job', status: 'verified',
-      description: 'Entry-level frontend role. Build pixel-perfect interfaces with React and Tailwind. Strong portfolio required.',
-      skillsRequired: ['JavaScript', 'React', 'HTML', 'CSS'],
-      eligibility: 'Freshers with portfolio projects. BCA/B.Tech.',
-      degreeRestrictions: ['BCA', 'B.Tech'],
-      courseRestrictions: ['Computer Science', 'IT'],
-      yearMin: 3, yearMax: 4, semesterMin: 5, semesterMax: 8,
-      mandatorySkills: ['JavaScript', 'React'],
-      mode: 'remote', location: 'Remote', stipend: '', prize: '₹4.5 LPA', deadline: daysFromNow(12), applyLink: 'https://pixelforge.example.com/jobs/frontend',
-      requirements: ['Portfolio', 'Resume'], applicationProcess: 'Portfolio review → take-home task → interview.',
-      tags: ['frontend', 'react', 'job'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Cybersecurity Awareness Training', organization: 'SecureCampus Initiative', category: 'training', status: 'verified',
-      description: 'Free 4-week online training on cybersecurity fundamentals: network security, phishing, ethical hacking basics. Certificate included.',
-      skillsRequired: ['Cybersecurity', 'Networking'], eligibility: 'Open to all students.',
-      mode: 'remote', location: 'Online', stipend: '', prize: 'Certificate', deadline: daysFromNow(7), applyLink: 'https://securecampus.example.com/training',
-      requirements: ['Laptop with internet'], applicationProcess: 'Register and attend live sessions.',
-      tags: ['security', 'training'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Merit Scholarship 2026', organization: 'IIIT Ropar Education Trust', category: 'scholarship', status: 'verified',
-      description: 'Scholarship for meritorious students (top 10% of class). Covers 50% of tuition fees for one academic year.',
-      skillsRequired: [], eligibility: 'CGPA 8.0+ or top 10% of class. All courses.',
-      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: '50% tuition waiver', deadline: daysFromNow(20), applyLink: 'https://iiitropar.ac.in/scholarship',
-      requirements: ['Marksheets', 'Income certificate'], applicationProcess: 'Fill form, submit documents, shortlisting by committee.',
-      tags: ['scholarship', 'merit'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Full Stack Web Development Bootcamp', organization: 'SkillUp Academy', category: 'training', status: 'verified',
-      description: '8-week intensive bootcamp covering HTML, CSS, JavaScript, React, Node and MongoDB. Project-based with placement assistance.',
-      skillsRequired: ['JavaScript', 'React', 'Node.js'], eligibility: 'Students with basic programming knowledge.',
-      mode: 'remote', location: 'Online', stipend: '', prize: '', deadline: daysFromNow(11), applyLink: 'https://skillup.example.com/bootcamp',
-      requirements: ['Basic programming knowledge'], applicationProcess: 'Apply and clear a short aptitude test.',
-      tags: ['fullstack', 'training', 'web'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'CodeSprint 48: Competitive Programming Contest', organization: 'IIIT Ropar Coding Club', category: 'competition', status: 'verified',
-      description: '48-hour competitive programming contest with 6 problems across difficulty levels. Top 3 win cash prizes and swag.',
-      skillsRequired: ['C', 'C++', 'Python'], eligibility: 'Open to all college students.',
-      mode: 'remote', location: 'Online', stipend: '', prize: '₹15,000', deadline: daysFromNow(4), applyLink: 'https://iiitropar.ac.in/codesprint',
-      requirements: ['Registered team'], applicationProcess: 'Register online before deadline.',
-      tags: ['competitive', 'coding'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Research Assistant: NLP for Education', organization: 'IIIT Ropar AI Lab', category: 'research', status: 'verified',
-      description: 'Assist faculty research on NLP applications in education. Learn to work with LLMs, datasets and academic writing. Publication credit for contributors.',
-      skillsRequired: ['Python', 'AI', 'Machine Learning'],
-      eligibility: 'Students with strong Python skills. GPA 7.5+ preferred.',
-      degreeRestrictions: ['BCA', 'B.Tech', 'B.Sc', 'MCA', 'M.Tech'],
-      courseRestrictions: ['Computer Science', 'AI', 'Data Science'],
-      yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
-      mandatorySkills: ['Python', 'Machine Learning'],
-      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: 'Publication credit', deadline: daysFromNow(15), applyLink: 'https://iiitropar.ac.in/ai-lab/research',
-      requirements: ['Resume', 'Statement of interest'], applicationProcess: 'Email your resume and a short statement of interest.',
-      tags: ['research', 'nlp', 'ai'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Flutter App Development Workshop', organization: 'Google Developers Group Rupnagar', category: 'workshop', status: 'verified',
-      description: '1-day hands-on workshop to build your first Flutter app. Learn widgets, state management and publishing.',
-      skillsRequired: ['Flutter', 'Dart'], eligibility: 'Open to all students. No prior mobile experience needed.',
-      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: 'Certificates', deadline: daysFromNow(6), applyLink: 'https://gdg.example.com/flutter',
-      requirements: ['Laptop'], applicationProcess: 'Register on the GDG page.',
-      tags: ['mobile', 'flutter', 'workshop'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Young Innovators Fellowship', organization: 'India STEM Foundation', category: 'fellowship', status: 'verified',
-      description: '6-month fellowship for students with innovative project ideas. Mentorship, ₹30,000 stipend and demo day at the end.',
-      skillsRequired: ['Problem Solving', 'AI'], eligibility: 'Undergraduate students with a project idea.',
-      mode: 'hybrid', location: 'India', stipend: '₹30,000 total', prize: 'Mentorship + Demo Day', deadline: daysFromNow(18), applyLink: 'https://stemfoundation.example.com/fellowship',
-      requirements: ['Project proposal'], applicationProcess: 'Submit proposal → interview → selection.',
-      tags: ['fellowship', 'innovation'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'AI Summit India 2026', organization: 'AI Association of India', category: 'conference', status: 'verified',
-      description: 'Two-day conference with talks from AI researchers and industry leaders. Student passes available at a discount.',
-      skillsRequired: ['AI'], eligibility: 'Open to all. Student ID required for student passes.',
-      mode: 'onsite', location: 'Mumbai', stipend: '', prize: '', deadline: daysFromNow(25), applyLink: 'https://aisummit.example.com',
-      requirements: ['Student ID'], applicationProcess: 'Buy student pass online.',
-      tags: ['conference', 'ai'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Junior Data Analyst', organization: 'FinEdge Analytics', category: 'job', status: 'verified',
-      description: 'Entry-level data analyst role: dashboards, SQL queries and Excel modelling for financial data.',
-      skillsRequired: ['SQL', 'Excel', 'Data Analysis'],
-      eligibility: 'Freshers. BCA/BSc Mathematics/Statistics.',
-      degreeRestrictions: ['BCA', 'B.Sc', 'B.Tech'],
-      courseRestrictions: ['Computer Science', 'Mathematics', 'Statistics'],
-      yearMin: 3, yearMax: 4, semesterMin: 5, semesterMax: 8,
-      mandatorySkills: ['SQL'],
-      mode: 'onsite', location: 'Mumbai', stipend: '', prize: '₹3.8 LPA', deadline: daysFromNow(16), applyLink: 'https://finedge.example.com/jobs/analyst',
-      requirements: ['Resume'], applicationProcess: 'Apply → SQL test → interview.',
-      tags: ['data', 'analyst', 'job'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'ML Foundations Mini-Course', organization: 'Kaggle Learn (free)', category: 'training', status: 'verified',
-      description: 'Free self-paced mini-course: intro to machine learning with scikit-learn. Great first step before applying to AI roles.',
-      skillsRequired: ['Python', 'Machine Learning'], eligibility: 'Anyone with basic Python.',
-      mode: 'remote', location: 'Online', stipend: '', prize: 'Certificate', deadline: daysFromNow(30), applyLink: 'https://kaggle.example.com/learn/ml',
-      requirements: [], applicationProcess: 'Enroll anytime.',
-      tags: ['ml', 'training', 'free'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'Web3 & Blockchain Hackathon', organization: 'ChainVerse Labs', category: 'hackathon', status: 'verified',
-      description: 'Weekend hackathon for Web3 projects. Workshops on day 1, building on day 2. Prizes for best dApp.',
-      skillsRequired: ['JavaScript', 'Blockchain'], eligibility: 'Open to all students.',
-      mode: 'hybrid', location: 'Hyderabad', stipend: '', prize: '₹60,000', deadline: daysFromNow(8), applyLink: 'https://chainverse.example.com/hack',
-      requirements: ['Team of 2-4'], applicationProcess: 'Register online.',
-      tags: ['web3', 'blockchain', 'hackathon'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
-    },
-    {
-      title: 'UI/UX Design Internship', organization: 'DesignOwl Studio', category: 'internship', status: 'pending',
-      description: 'UI/UX internship with a design studio. Work on mobile app designs, wireframes and design systems.',
-      skillsRequired: ['UI/UX', 'Figma'], eligibility: 'Students with design portfolio.',
-      mode: 'remote', location: 'Remote', stipend: '₹6,000/month', prize: '', deadline: daysFromNow(13), applyLink: 'https://designowl.example.com/intern',
-      requirements: ['Portfolio'], applicationProcess: 'Apply online with portfolio.',
-      tags: ['design', 'internship'], experienceLevel: 'fresher', createdBy: faculty.id,
+      title: 'AICTE PM Scholarship Scheme', organization: 'AICTE / Government of India', category: 'scholarship', status: 'verified',
+      description: 'Scholarship for students of technical courses (B.Tech, BCA, etc.) from AICTE-approved institutions. Covers tuition and hostel fees.',
+      skillsRequired: [],
+      eligibility: 'Students enrolled in AICTE-approved institutions. Income criteria apply.',
+      mode: 'remote', location: 'India', stipend: 'Up to ₹50,000/year', prize: '', deadline: daysFromNow(90), applyLink: 'https://scholarships.gov.in/',
+      sourceUrl: 'https://scholarships.gov.in/',
+      applyUrl: 'https://scholarships.gov.in/',
+      requirements: ['Aadhaar card', 'Income certificate', 'Marksheets'], applicationProcess: 'Apply on National Scholarship Portal.',
+      tags: ['government', 'scholarship', 'india'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
     },
   ];
   const opportunities = [];
-  for (const row of opportunityRows) {
+  for (const row of sampleOpps) {
     opportunities.push(await prisma.opportunity.create({ data: row }));
   }
 
   // ---------------------------------------------------------- Applications
-  await prisma.application.createMany({
-    data: [
-      {
-        student: student.id,
-        opportunity: opportunities[0].id,
-        status: 'applied',
-        appliedDate: new Date(),
-        notes: 'Applied with AI-generated cover letter.',
-        timeline: [{ status: 'applied' }],
-      },
-      {
-        student: student.id,
-        opportunity: opportunities[1].id,
-        status: 'shortlisted',
-        appliedDate: daysFromNow(-4),
-        timeline: [{ status: 'applied' }, { status: 'shortlisted' }],
-      },
-      {
-        student: student.id,
-        opportunity: opportunities[5].id,
-        status: 'saved',
-        timeline: [{ status: 'saved' }],
-      },
-      {
-        student: student.id,
-        opportunity: opportunities[7].id,
-        status: 'planning',
-        timeline: [{ status: 'planning' }],
-      },
-    ],
-  });
+  if (opportunities.length > 0) {
+    await prisma.application.createMany({
+      data: [
+        {
+          student: student.id,
+          opportunity: opportunities[0].id,
+          status: 'applied',
+          appliedDate: new Date(),
+          notes: 'Applied via Google Summer of Code portal.',
+          timeline: [{ status: 'applied' }],
+        },
+        {
+          student: student.id,
+          opportunity: opportunities[1].id,
+          status: 'saved',
+          timeline: [{ status: 'saved' }],
+        },
+      ],
+    });
+  }
 
   // ---------------------------------------------------------- Notifications
-  await prisma.notification.createMany({
-    data: [
-      { user: student.id, category: 'opportunity', title: '🎯 96% match: National AI Hackathon 2026', message: 'This opportunity matches your AI Engineer career goal. Deadline in 2 days.', link: `/opportunities/${opportunities[0].id}`, icon: 'target', priority: 'high', read: false },
-      { user: student.id, category: 'academic', title: '⏰ DBMS assignment due tomorrow', message: '"ER Diagram & Normalization Assignment" is due tomorrow.', link: '/assignments', icon: 'alarm-clock', priority: 'high', read: false },
-      { user: student.id, category: 'attendance', title: '⚠️ Mathematics attendance at 67%', message: 'Attend the next 5 classes to reach your 75% target.', link: '/attendance', icon: 'percent', priority: 'high', read: false },
-      { user: student.id, category: 'college', title: '📢 Important: Mid-Semester Examination Schedule', message: 'Mid-semester examinations begin 15 September. Form deadline: 5 September.', link: '/college', icon: 'megaphone', priority: 'high', read: false },
-      { user: student.id, category: 'ai', title: '🧠 Your AI Daily Plan is ready', message: "Open the AI Daily Planner to see today's focus.", link: '/ai/planner', icon: 'sparkles', priority: 'medium', read: false },
-      { user: student.id, category: 'opportunity', title: '✨ You were shortlisted for Software Development Internship', message: 'TechNova Solutions shortlisted your application.', link: '/applications', icon: 'award', priority: 'high', read: false },
-      { user: student.id, category: 'system', title: 'Welcome to CAMPUSCONNECT, Aarav! 👋', message: 'Your AI-powered campus is ready. IIIT Ropar.', link: '/dashboard', icon: 'sparkles', priority: 'low', read: true },
-    ],
-  });
+  const notifs = [
+    { user: student.id, category: 'academic', title: '⏰ DBMS assignment due tomorrow', message: '"ER Diagram & Normalization Assignment" is due tomorrow.', link: '/assignments', icon: 'alarm-clock', priority: 'high', read: false },
+    { user: student.id, category: 'attendance', title: '⚠️ Mathematics attendance at 67%', message: 'Attend the next 5 classes to reach your 75% target.', link: '/attendance', icon: 'percent', priority: 'high', read: false },
+    { user: student.id, category: 'college', title: '📢 Important: Mid-Semester Examination Schedule', message: 'Mid-semester examinations begin 15 September. Form deadline: 5 September.', link: '/college', icon: 'megaphone', priority: 'high', read: false },
+    { user: student.id, category: 'ai', title: '🧠 Your AI Daily Plan is ready', message: "Open the AI Daily Planner to see today's focus.", link: '/ai/planner', icon: 'sparkles', priority: 'medium', read: false },
+    { user: student.id, category: 'system', title: 'Welcome to CAMPUSCONNECT, Aarav! 👋', message: 'Your AI-powered campus is ready. IIIT Ropar.', link: '/dashboard', icon: 'sparkles', priority: 'low', read: true },
+  ];
+  if (opportunities.length > 0) {
+    notifs.push({ user: student.id, category: 'opportunity', title: '🎯 New opportunities available!', message: 'Fresh opportunities from IITs, Google, and government portals are now live.', link: '/opportunities', icon: 'target', priority: 'high', read: false });
+  }
+  await prisma.notification.createMany({ data: notifs });
 
   console.log('[seed] ✅ Demo data seeded');
   console.log('   ─────────────────────────────────────────────');

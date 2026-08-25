@@ -305,17 +305,25 @@ model Opportunity {
   applicationProcess String   @default("")
   tags               String[] @default([])
   source             String   @default("admin")
+  sourceUrl          String   @default("")
+  applyUrl           String   @default("")
+  sourceConnector    String   @default("")
   externalId         String?
+  lastSynced         DateTime?
+  expiresAt          DateTime?
   status             String   @default("pending")
   verifiedBy         String?
   createdBy          String?
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
+  @@unique([externalId, source], name: "unique_external_source")
   @@index([category, status, deadline])
   @@index([status])
   @@index([deadline])
   @@index([mode])
+  @@index([source])
+  @@index([sourceConnector])
 }
 
 model Application {

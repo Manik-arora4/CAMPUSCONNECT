@@ -93,6 +93,15 @@ export function startScheduledJobs() {
   setInterval(hourlyRun, HOUR);
   console.log('[scheduler] Hourly jobs started (opportunity archiving + deadline reminders)');
 
+  // Run opportunity sync 30 seconds after startup (non-blocking)
+  // This ensures fresh data is available as soon as the server starts
+  setTimeout(() => {
+    syncOpportunities().catch((err) => {
+      console.error('[scheduler] Startup sync failed:', err.message);
+    });
+  }, 30 * 1000);
+  console.log('[scheduler] Startup opportunity sync scheduled (in 30s)');
+
   // Daily opportunity sync at 6 AM (every 24 hours)
   const DAY = 24 * HOUR;
   const now = new Date();

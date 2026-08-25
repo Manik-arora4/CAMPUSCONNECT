@@ -134,14 +134,15 @@ export default function Opportunities() {
     fetchOpportunities(null, true);
   };
 
-  const apply = async (e, id) => {
+  const apply = async (e, id, opp) => {
     e.preventDefault();
     e.stopPropagation();
     try {
       const res = await api.post(`/opportunities/${id}/apply`);
-      // If there's an external URL, open it in new tab
-      if (res.applyUrl && res.isExternal) {
-        window.open(res.applyUrl, '_blank', 'noopener,noreferrer');
+      // Always try to open the original source URL
+      const url = res.applyUrl || opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
+      if (url) {
+        window.open(url, '_blank', 'noopener,noreferrer');
       }
     } catch {
       // Silently handle
@@ -450,14 +451,14 @@ export default function Opportunities() {
                           onClick={(e) => {
                             e.stopPropagation();
                             e.preventDefault();
-                            apply(e, opp._id || opp.id);
+                            apply(e, opp._id || opp.id, opp);
                           }}
                           className="btn-primary flex-1 !py-2 text-xs"
                         >
                           <ExternalLink size={14} /> Apply on Source
                         </a>
                       ) : (
-                        <button onClick={(e) => apply(e, opp._id || opp.id)} className="btn-primary flex-1 !py-2 text-xs">
+                        <button onClick={(e) => apply(e, opp._id || opp.id, opp)} className="btn-primary flex-1 !py-2 text-xs">
                           <Send size={14} /> Apply
                         </button>
                       )}

@@ -62,7 +62,12 @@ export default function OpportunityDetail() {
   };
 
   const apply = async () => {
-    await api.post(`/opportunities/${id}/apply`);
+    const res = await api.post(`/opportunities/${id}/apply`);
+    // Always try to open the original source URL
+    const url = res.applyUrl || opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
+    if (url) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
     reload();
   };
 
@@ -348,16 +353,16 @@ export default function OpportunityDetail() {
               {/* Action buttons */}
               <div className="space-y-2">
                 <button onClick={apply} disabled={application?.status === 'applied' || application?.status === 'shortlisted'} className="btn-primary w-full">
-                  <Send size={16} />
-                  {application?.status === 'applied' ? 'Applied ✓' : application?.status === 'shortlisted' ? 'Shortlisted ✓' : 'Apply now'}
+                  <ExternalLink size={16} />
+                  {application?.status === 'applied' ? 'Applied ✓' : application?.status === 'shortlisted' ? 'Shortlisted ✓' : (opp.applyUrl || opp.applyLink) ? 'Apply on Source' : 'Apply now'}
                 </button>
                 <button onClick={save} className="btn-secondary w-full">
                   <Bookmark size={16} />
                   {application?.status === 'saved' ? 'Saved ✓' : 'Save for later'}
                 </button>
-                {opp.applyLink ? (
-                  <a href={opp.applyLink} target="_blank" rel="noreferrer" className="btn-secondary w-full">
-                    <ExternalLink size={16} /> External application
+                {(opp.applyUrl || opp.applyLink || opp.sourceUrl) && !application ? (
+                  <a href={opp.applyUrl || opp.applyLink || opp.sourceUrl} target="_blank" rel="noreferrer" className="btn-secondary w-full">
+                    <ExternalLink size={16} /> View original source
                   </a>
                 ) : null}
               </div>
