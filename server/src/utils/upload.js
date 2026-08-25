@@ -2,7 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Resolve uploads directory — works in both ESM and CJS bundles
+// Resolve uploads directory — works in both local and serverless (Vercel) environments
 let uploadsDir;
 try {
   // ESM path: use import.meta.url
@@ -10,12 +10,8 @@ try {
   const __filename = fileURLToPath(import.meta.url);
   uploadsDir = path.resolve(path.dirname(__filename), '../../uploads');
 } catch {
-  try {
-    // CJS fallback: use process.cwd()
-    uploadsDir = path.resolve(process.cwd(), 'uploads');
-  } catch {
-    uploadsDir = '/tmp/cc-uploads';
-  }
+  // CJS bundle or serverless fallback
+  uploadsDir = '/tmp/cc-uploads';
 }
 fs.mkdirSync(uploadsDir, { recursive: true });
 

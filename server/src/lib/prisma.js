@@ -5,11 +5,10 @@ let _prisma;
 
 function createClientSync() {
   try {
-    // CJS require — works in bundled CJS output and Node.js CJS modules
+    // Works in CJS bundle and Node.js CJS modules
     const { PrismaClient } = require('@prisma/client');
     return new PrismaClient();
-  } catch (err) {
-    console.warn('[prisma] Could not init PrismaClient:', err.message);
+  } catch {
     return null;
   }
 }
