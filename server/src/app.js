@@ -36,6 +36,20 @@ let __dirname;
 try { __dirname = path.dirname(new URL(import.meta.url).pathname); } catch { __dirname = '/tmp'; }
 const app = express();
 
+// One-time: ensure real sample opportunities exist in the database
+// This runs lazily on the first request in Vercel serverless functions
+let _seededOpportunities = false;
+async function ensureRealOpportunities() {
+  if (_seededOpportunities) return;
+  _seededOpportunities = true;
+  try {
+    const { ensureSampleOpportunities } = await import('./services/seedService.js');
+    await ensureSampleOpportunities();
+  } catch (err) {
+    console.warn('[app] Failed to ensure sample opportunities:', err.message);
+  }
+}
+
 app.set('trust proxy', 1);
 
 // Security headers (X-Frame-Options, X-Content-Type-Options, CSP, HSTS, …)
@@ -115,6 +129,12 @@ const routes = {
   '/api/push': pushRoutes,
 };
 for (const [prefix, router] of Object.entries(routes)) app.use(prefix, router);
+
+// Trigger real opportunity seeding on first request (lazy init for Vercel serverless)
+app.use(async (req, res, next) => {
+  if (!_seededOpportunities) ensureRealOpportunities();
+  next();
+});
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
