@@ -251,37 +251,23 @@ router.post('/:id/save', auth, asyncHandler(async (req, res) => {
   res.json({ application: app, saved: true });
 }));
 
-// POST /api/opportunities/:id/apply — student applies (or gets redirect URL for external sources)
+// POST /api/opportunities/:id/apply — redirect to original source website
+// This does NOT create an internal application record.
+// The Apply button's sole purpose is to take the user to the original application page.
 router.post('/:id/apply', auth, asyncHandler(async (req, res) => {
   const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } });
   if (!opp) throw ApiError.notFound('Opportunity not found');
 
-  // For external/fetched opportunities, return the direct apply URL
-  const isExternal = opp.source.startsWith('fetched:');
+  // The apply URL is always the original source — never a CampusConnect page
   const applyUrl = opp.applyUrl || opp.applyLink || opp.sourceUrl || '';
 
-  let app = await prisma.application.findFirst({ where: { student: req.user.id, opportunity: opp.id } });
-  if (!app) {
-    app = await prisma.application.create({ data: { student: req.user.id, opportunity: opp.id, status: isExternal ? 'planning' : 'applied', appliedDate: isExternal ? null : new Date(), timeline: [{ status: isExternal ? 'planning' : 'applied' }] } });
-  } else if (app.status === 'saved' || app.status === 'planning') {
-    const timeline = [...(app.timeline || []), { status: isExternal ? 'redirected' : 'applied' }];
-    app = await prisma.application.update({ where: { id: app.id }, data: { status: isExternal ? 'planning' : 'applied', appliedDate: isExternal ? null : new Date(), timeline } });
-  }
-  await prisma.recommendationEvent.create({ data: { user: req.user.id, type: 'applied', opportunity: opp.id, category: opp.category } });
+  // Track that user clicked apply (for analytics only, no application record)
+  try {
+    await prisma.recommendationEvent.create({ data: { user: req.user.id, type: 'applied', opportunity: opp.id, category: opp.category } });
+  } catch { /* non-critical */ }
 
-  if (!isExternal) {
-    await createNotification(req.user.id, {
-      category: 'opportunity',
-      title: `Application submitted 🎉`,
-      message: `You applied to "${opp.title}" at ${opp.organization}. Good luck!`,
-      link: '/applications',
-      icon: 'send',
-      priority: 'medium',
-    });
-  }
-
-  // Return the redirect URL so frontend can open the original source page
-  res.json({ application: app, applyUrl, isExternal, sourceUrl: opp.sourceUrl });
+  // Return the original source URL so frontend opens it in a new tab
+  res.json({ applyUrl, source: opp.organization, title: opp.title });
 }));
 
 // PATCH /api/opportunities/:id — admin edit

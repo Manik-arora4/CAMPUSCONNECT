@@ -62,13 +62,13 @@ export default function OpportunityDetail() {
   };
 
   const apply = async () => {
-    const res = await api.post(`/opportunities/${id}/apply`);
-    // Always try to open the original source URL
-    const url = res.applyUrl || opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
+    // Open the original source URL directly
+    const url = opp?.applyUrl || opp?.applyLink || opp?.sourceUrl || '';
     if (url) {
       window.open(url, '_blank', 'noopener,noreferrer');
+      // Record click in background
+      api.post(`/opportunities/${id}/apply`).catch(() => {});
     }
-    reload();
   };
 
   const statusBadge = application?.status;

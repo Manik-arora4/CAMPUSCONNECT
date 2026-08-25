@@ -80,21 +80,20 @@ async function syncOpportunities() {
 }
 
 export function startScheduledJobs() {
-  // Hourly jobs: archiving + deadline reminders
+  // Hourly jobs: archiving + deadline reminders + opportunity sync
   const hourlyRun = async () => {
     try {
       await archiveExpiredOpportunities();
       await sendDeadlineReminders();
     } catch (err) {
-      console.error('[scheduler] job failed:', err.message);
+      console.error('[scheduler] hourly job failed:', err.message);
     }
   };
   hourlyRun();
   setInterval(hourlyRun, HOUR);
-  console.log('[scheduler] Hourly jobs started (opportunity archiving + deadline reminders)');
+  console.log('[scheduler] Hourly jobs started (archiving + reminders)');
 
   // Run opportunity sync 30 seconds after startup (non-blocking)
-  // This ensures fresh data is available as soon as the server starts
   setTimeout(() => {
     syncOpportunities().catch((err) => {
       console.error('[scheduler] Startup sync failed:', err.message);
@@ -102,16 +101,11 @@ export function startScheduledJobs() {
   }, 30 * 1000);
   console.log('[scheduler] Startup opportunity sync scheduled (in 30s)');
 
-  // Daily opportunity sync at 6 AM (every 24 hours)
-  const DAY = 24 * HOUR;
-  const now = new Date();
-  const next6AM = new Date(now);
-  next6AM.setHours(6, 0, 0, 0);
-  if (next6AM <= now) next6AM.setDate(next6AM.getDate() + 1);
-  const msUntil6AM = next6AM.getTime() - now.getTime();
-  setTimeout(() => {
-    syncOpportunities();
-    setInterval(syncOpportunities, DAY);
-  }, msUntil6AM);
-  console.log(`[scheduler] Daily opportunity sync scheduled (first run in ${Math.round(msUntil6AM / 60000)} min)`);
+  // HOURLY opportunity sync — refresh data every hour
+  setInterval(() => {
+    syncOpportunities().catch((err) => {
+      console.error('[scheduler] Hourly sync failed:', err.message);
+    });
+  }, HOUR);
+  console.log('[scheduler] Hourly opportunity sync started (every 60 minutes)');
 }
