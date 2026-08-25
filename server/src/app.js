@@ -20,6 +20,7 @@ import noticeRoutes from './routes/notices.js';
 import eventRoutes from './routes/events.js';
 import clubRoutes from './routes/clubs.js';
 import opportunityRoutes from './routes/opportunities.js';
+import opportunitySyncRoutes from './routes/opportunitySync.js';
 import applicationRoutes from './routes/applications.js';
 import resumeRoutes from './routes/resumes.js';
 import aiRoutes from './routes/ai.js';
@@ -102,6 +103,7 @@ const routes = {
   '/api/events': eventRoutes,
   '/api/clubs': clubRoutes,
   '/api/opportunities': opportunityRoutes,
+  '/api/opportunities/sync': opportunitySyncRoutes,
   '/api/applications': applicationRoutes,
   '/api/resumes': resumeRoutes,
   '/api/ai': aiRoutes,

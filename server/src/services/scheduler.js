@@ -68,8 +68,20 @@ async function sendDeadlineReminders() {
   }
 }
 
+async function syncOpportunities() {
+  try {
+    const { fetchAllOpportunities } = await import('./opportunities/aggregator.js');
+    console.log('[scheduler] Starting opportunity sync...');
+    const result = await fetchAllOpportunities();
+    console.log(`[scheduler] Sync complete: ${result.stored} new, ${result.duplicates} duplicates, ${result.errors} errors`);
+  } catch (err) {
+    console.error('[scheduler] Opportunity sync failed:', err.message);
+  }
+}
+
 export function startScheduledJobs() {
-  const run = async () => {
+  // Hourly jobs: archiving + deadline reminders
+  const hourlyRun = async () => {
     try {
       await archiveExpiredOpportunities();
       await sendDeadlineReminders();
@@ -77,7 +89,20 @@ export function startScheduledJobs() {
       console.error('[scheduler] job failed:', err.message);
     }
   };
-  run();
-  setInterval(run, HOUR);
+  hourlyRun();
+  setInterval(hourlyRun, HOUR);
   console.log('[scheduler] Hourly jobs started (opportunity archiving + deadline reminders)');
+
+  // Daily opportunity sync at 6 AM (every 24 hours)
+  const DAY = 24 * HOUR;
+  const now = new Date();
+  const next6AM = new Date(now);
+  next6AM.setHours(6, 0, 0, 0);
+  if (next6AM <= now) next6AM.setDate(next6AM.getDate() + 1);
+  const msUntil6AM = next6AM.getTime() - now.getTime();
+  setTimeout(() => {
+    syncOpportunities();
+    setInterval(syncOpportunities, DAY);
+  }, msUntil6AM);
+  console.log(`[scheduler] Daily opportunity sync scheduled (first run in ${Math.round(msUntil6AM / 60000)} min)`);
 }

@@ -92,7 +92,7 @@ function CreateCollegeModal({ open, onClose, onCreated }) {
       <form onSubmit={submit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <Field label="Name">
-            <input required className="input" value={form.name} onChange={set('name')} placeholder="Nova Institute of Technology" />
+            <input required className="input" value={form.name} onChange={set('name')} placeholder="IIIT Ropar" />
           </Field>
           <Field label="Code">
             <input className="input" value={form.code} onChange={set('code')} placeholder="NIT" />
@@ -100,10 +100,10 @@ function CreateCollegeModal({ open, onClose, onCreated }) {
         </div>
         <div className="grid grid-cols-2 gap-4">
           <Field label="City">
-            <input className="input" value={form.city} onChange={set('city')} placeholder="Pune" />
+            <input className="input" value={form.city} onChange={set('city')} placeholder="Rupnagar" />
           </Field>
           <Field label="State">
-            <input className="input" value={form.state} onChange={set('state')} placeholder="Maharashtra" />
+            <input className="input" value={form.state} onChange={set('state')} placeholder="Punjab" />
           </Field>
         </div>
         <div className="grid grid-cols-2 gap-4">

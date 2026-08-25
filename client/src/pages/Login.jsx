@@ -119,7 +119,7 @@ export default function Login() {
         </div>
 
         <p className="relative text-sm text-white/50 animate-fade-up" style={{ animationDelay: '0.7s' }}>
-          © 2026 CAMPUSCONNECT · Nova Institute of Technology
+          © 2026 CAMPUSCONNECT · IIIT Ropar
         </p>
       </div>
 

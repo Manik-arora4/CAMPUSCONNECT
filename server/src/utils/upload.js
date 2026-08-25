@@ -1,8 +1,11 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 let uploadsDir;
-try { const d = path.dirname(new URL(import.meta.url).pathname); uploadsDir = path.resolve(d, '../../uploads'); } catch { uploadsDir = '/tmp/cc-uploads'; }
+try { uploadsDir = path.resolve(__dirname, '../../uploads'); } catch { uploadsDir = '/tmp/cc-uploads'; }
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 const storage = multer.diskStorage({

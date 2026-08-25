@@ -187,7 +187,7 @@ export default function Register() {
                     <label className="block text-sm font-medium text-white/80 mb-1.5">College</label>
                     <div className="relative">
                       <School size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
-                      <input value={form.college} onChange={set('college')} placeholder="e.g. Nova Institute of Technology" className={INPUT_CLS} />
+                      <input value={form.college} onChange={set('college')} placeholder="e.g. IIIT Ropar" className={INPUT_CLS} />
                     </div>
                   </div>
                   <InteractiveHoverButton type="submit" className="w-full py-2.5">

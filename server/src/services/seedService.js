@@ -60,15 +60,15 @@ export async function ensureSeed({ force = false } = {}) {
   // ---------------------------------------------------------- College
   const college = await prisma.college.create({
     data: {
-      name: 'Nova Institute of Technology',
-      code: 'NIT',
-      city: 'Pune',
-      state: 'Maharashtra',
-      address: '12 Knowledge Park, Pune',
-      website: 'https://nova.edu',
-      contactEmail: 'office@nova.edu',
-      contactPhone: '+91 20 2555 4400',
-      establishedYear: 2005,
+      name: 'Indian Institute of Information Technology, Ropar',
+      code: 'IIIT-RPR',
+      city: 'Rupnagar',
+      state: 'Punjab',
+      address: 'Nangal Road, Rupnagar, Punjab 140001',
+      website: 'https://www.iiit.ac.in',
+      contactEmail: 'office@iiitropar.ac.in',
+      contactPhone: '+91 1881 227078',
+      establishedYear: 2014,
     },
   });
 
@@ -107,7 +107,7 @@ export async function ensureSeed({ force = false } = {}) {
   const faculty2 = await prisma.user.create({
     data: {
       name: 'Prof. Sneha Iyer',
-      email: 'sneha.iyer@nova.edu',
+      email: 'sneha.iyer@iiitropar.ac.in',
       password: passwordHash,
       role: 'faculty',
       college: college.id,
@@ -134,7 +134,7 @@ export async function ensureSeed({ force = false } = {}) {
   const student2 = await prisma.user.create({
     data: {
       name: 'Priya Patel',
-      email: 'priya.patel@nova.edu',
+      email: 'priya.patel@iiitropar.ac.in',
       password: passwordHash,
       role: 'student',
       college: college.id,
@@ -168,7 +168,7 @@ export async function ensureSeed({ force = false } = {}) {
         ],
         interests: ['AI/ML', 'Web Development', 'Data Science'],
         careerGoal: 'AI Engineer',
-        preferredLocation: 'Pune',
+        preferredLocation: 'Rupnagar',
         remotePreference: 'remote',
         weeklyLearningHours: 12,
         preferredOpportunityTypes: ['internship', 'hackathon', 'training', 'scholarship'],
@@ -338,7 +338,7 @@ export async function ensureSeed({ force = false } = {}) {
 
   await prisma.notice.createMany({
     data: [
-      { college: college.id, title: 'TechFest 2026 Registrations Open', content: 'Nova TechFest 2026 registrations are now open. Workshops, hackathons, and coding competitions across 3 days. Register on the student portal before 20 September.', category: 'event', important: false, date: daysFromNow(-2), createdBy: admin.id },
+      { college: college.id, title: 'TechFest 2026 Registrations Open', content: 'IIIT Ropar TechFest 2026 registrations are now open. Workshops, hackathons, and coding competitions across 3 days. Register on the student portal before 20 September.', category: 'event', important: false, date: daysFromNow(-2), createdBy: admin.id },
       { college: college.id, title: 'Library Timings Extended During Exams', content: 'The central library will remain open until 10 PM from 1 September to 20 September for exam preparation. No books will be issued during this period.', category: 'general', important: false, date: daysFromNow(-3), createdBy: admin.id },
       { college: college.id, title: 'Placement Drive: Infosys & TCS Campus Visit', content: 'Campus placements for final-year students begin in October. Pre-placement talks and mock interviews will be conducted by the placement cell. Register your interest in the placement office.', category: 'placement', important: true, date: daysFromNow(-4), createdBy: admin.id },
       { college: college.id, title: 'Holiday: Independence Day', content: 'The college will remain closed on 15 August on account of Independence Day. Classes resume on 16 August.', category: 'holiday', important: false, date: daysFromNow(-6), createdBy: admin.id },
@@ -349,9 +349,9 @@ export async function ensureSeed({ force = false } = {}) {
   await prisma.event.createMany({
     data: [
       { college: college.id, title: 'AI & ML Workshop', description: 'Hands-on workshop covering machine learning fundamentals with Python. Bring your laptops!', category: 'workshop', date: daysFromNow(6), startTime: '10:00', endTime: '16:00', location: 'Seminar Hall', organizer: 'AI/ML Club', registrationLink: 'https://forms.gle/demo', createdBy: faculty2.id },
-      { college: college.id, title: 'Nova Hackathon 2026', description: '24-hour hackathon. Build something that solves a real campus problem. Prizes worth ₹50,000.', category: 'hackathon', date: daysFromNow(10), startTime: '09:00', endTime: '09:00', location: 'Main Auditorium', organizer: 'Coding Club', createdBy: faculty.id },
+      { college: college.id, title: 'IIIT Ropar Hackathon 2026', description: '24-hour hackathon. Build something that solves a real campus problem. Prizes worth ₹50,000.', category: 'hackathon', date: daysFromNow(10), startTime: '09:00', endTime: '09:00', location: 'Main Auditorium', organizer: 'Coding Club', createdBy: faculty.id },
       { college: college.id, title: 'Industry Talk: Careers in Data Science', description: 'Guest lecture by alumni working at a top analytics firm. Networking session after.', category: 'talk', date: daysFromNow(8), startTime: '15:00', endTime: '17:00', location: 'Lecture Hall 2', organizer: 'Placement Cell', createdBy: admin.id },
-      { college: college.id, title: 'Cultural Fest: Nova Utsav', description: 'Music, dance, drama and art competitions across the campus.', category: 'fest', date: daysFromNow(14), startTime: '10:00', endTime: '18:00', location: 'Open Air Theatre', organizer: 'Cultural Committee', createdBy: admin.id },
+      { college: college.id, title: 'Cultural Fest: IIIT Ropar Utsav', description: 'Music, dance, drama and art competitions across the campus.', category: 'fest', date: daysFromNow(14), startTime: '10:00', endTime: '18:00', location: 'Open Air Theatre', organizer: 'Cultural Committee', createdBy: admin.id },
     ],
   });
 
@@ -441,10 +441,10 @@ export async function ensureSeed({ force = false } = {}) {
       tags: ['security', 'training'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'Merit Scholarship 2026', organization: 'Nova Education Trust', category: 'scholarship', status: 'verified',
+      title: 'Merit Scholarship 2026', organization: 'IIIT Ropar Education Trust', category: 'scholarship', status: 'verified',
       description: 'Scholarship for meritorious students (top 10% of class). Covers 50% of tuition fees for one academic year.',
       skillsRequired: [], eligibility: 'CGPA 8.0+ or top 10% of class. All courses.',
-      mode: 'onsite', location: 'Pune', stipend: '', prize: '50% tuition waiver', deadline: daysFromNow(20), applyLink: 'https://nova.edu/scholarship',
+      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: '50% tuition waiver', deadline: daysFromNow(20), applyLink: 'https://iiitropar.ac.in/scholarship',
       requirements: ['Marksheets', 'Income certificate'], applicationProcess: 'Fill form, submit documents, shortlisting by committee.',
       tags: ['scholarship', 'merit'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
     },
@@ -457,15 +457,15 @@ export async function ensureSeed({ force = false } = {}) {
       tags: ['fullstack', 'training', 'web'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'CodeSprint 48: Competitive Programming Contest', organization: 'Nova Coding Club', category: 'competition', status: 'verified',
+      title: 'CodeSprint 48: Competitive Programming Contest', organization: 'IIIT Ropar Coding Club', category: 'competition', status: 'verified',
       description: '48-hour competitive programming contest with 6 problems across difficulty levels. Top 3 win cash prizes and swag.',
       skillsRequired: ['C', 'C++', 'Python'], eligibility: 'Open to all college students.',
-      mode: 'remote', location: 'Online', stipend: '', prize: '₹15,000', deadline: daysFromNow(4), applyLink: 'https://nova.edu/codesprint',
+      mode: 'remote', location: 'Online', stipend: '', prize: '₹15,000', deadline: daysFromNow(4), applyLink: 'https://iiitropar.ac.in/codesprint',
       requirements: ['Registered team'], applicationProcess: 'Register online before deadline.',
       tags: ['competitive', 'coding'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'Research Assistant: NLP for Education', organization: 'Nova AI Lab', category: 'research', status: 'verified',
+      title: 'Research Assistant: NLP for Education', organization: 'IIIT Ropar AI Lab', category: 'research', status: 'verified',
       description: 'Assist faculty research on NLP applications in education. Learn to work with LLMs, datasets and academic writing. Publication credit for contributors.',
       skillsRequired: ['Python', 'AI', 'Machine Learning'],
       eligibility: 'Students with strong Python skills. GPA 7.5+ preferred.',
@@ -473,15 +473,15 @@ export async function ensureSeed({ force = false } = {}) {
       courseRestrictions: ['Computer Science', 'AI', 'Data Science'],
       yearMin: 2, yearMax: 4, semesterMin: 3, semesterMax: 8,
       mandatorySkills: ['Python', 'Machine Learning'],
-      mode: 'onsite', location: 'Pune', stipend: '', prize: 'Publication credit', deadline: daysFromNow(15), applyLink: 'https://nova.edu/ai-lab/research',
+      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: 'Publication credit', deadline: daysFromNow(15), applyLink: 'https://iiitropar.ac.in/ai-lab/research',
       requirements: ['Resume', 'Statement of interest'], applicationProcess: 'Email your resume and a short statement of interest.',
       tags: ['research', 'nlp', 'ai'], experienceLevel: 'fresher', verifiedBy: admin.id, createdBy: admin.id,
     },
     {
-      title: 'Flutter App Development Workshop', organization: 'Google Developers Group Pune', category: 'workshop', status: 'verified',
+      title: 'Flutter App Development Workshop', organization: 'Google Developers Group Rupnagar', category: 'workshop', status: 'verified',
       description: '1-day hands-on workshop to build your first Flutter app. Learn widgets, state management and publishing.',
       skillsRequired: ['Flutter', 'Dart'], eligibility: 'Open to all students. No prior mobile experience needed.',
-      mode: 'onsite', location: 'Pune', stipend: '', prize: 'Certificates', deadline: daysFromNow(6), applyLink: 'https://gdg.example.com/flutter',
+      mode: 'onsite', location: 'Rupnagar', stipend: '', prize: 'Certificates', deadline: daysFromNow(6), applyLink: 'https://gdg.example.com/flutter',
       requirements: ['Laptop'], applicationProcess: 'Register on the GDG page.',
       tags: ['mobile', 'flutter', 'workshop'], experienceLevel: 'any', verifiedBy: admin.id, createdBy: admin.id,
     },
@@ -586,7 +586,7 @@ export async function ensureSeed({ force = false } = {}) {
       { user: student.id, category: 'college', title: '📢 Important: Mid-Semester Examination Schedule', message: 'Mid-semester examinations begin 15 September. Form deadline: 5 September.', link: '/college', icon: 'megaphone', priority: 'high', read: false },
       { user: student.id, category: 'ai', title: '🧠 Your AI Daily Plan is ready', message: "Open the AI Daily Planner to see today's focus.", link: '/ai/planner', icon: 'sparkles', priority: 'medium', read: false },
       { user: student.id, category: 'opportunity', title: '✨ You were shortlisted for Software Development Internship', message: 'TechNova Solutions shortlisted your application.', link: '/applications', icon: 'award', priority: 'high', read: false },
-      { user: student.id, category: 'system', title: 'Welcome to CAMPUSCONNECT, Aarav! 👋', message: 'Your AI-powered campus is ready.', link: '/dashboard', icon: 'sparkles', priority: 'low', read: true },
+      { user: student.id, category: 'system', title: 'Welcome to CAMPUSCONNECT, Aarav! 👋', message: 'Your AI-powered campus is ready. IIIT Ropar.', link: '/dashboard', icon: 'sparkles', priority: 'low', read: true },
     ],
   });
 

@@ -19,8 +19,9 @@ async function studentContext(userId) {
 }
 
 // GET /api/opportunities — filterable, paginated, match-scored for students
+// Supports both page-based and cursor-based (infinite scroll) pagination
 router.get('/', optionalAuth, asyncHandler(async (req, res) => {
-  const { category, mode, location, skills, search, sort = 'match', page = 1, limit = 12, urgent, status } = req.query;
+  const { category, mode, location, skills, search, sort = 'match', page = 1, limit = 20, urgent, status, source, paid, institution, cursor } = req.query;
   const where = {};
 
   if (req.user?.role === 'admin') {
@@ -31,6 +32,14 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   if (category && category !== 'all') where.category = category;
   if (mode && mode !== 'all') where.mode = mode;
   if (location && location !== 'all') where.location = { contains: location, mode: 'insensitive' };
+  if (source && source !== 'all') {
+    where.source = { contains: source, mode: 'insensitive' };
+  }
+  if (paid === 'paid') where.stipend = { not: '' };
+  if (paid === 'free') where.stipend = '';
+  if (institution && institution !== 'all') {
+    where.organization = { contains: institution, mode: 'insensitive' };
+  }
   if (skills) {
     const skillList = String(skills).split(',').map((s) => s.trim()).filter(Boolean);
     if (skillList.length) where.skillsRequired = { hasSome: skillList };
@@ -45,32 +54,38 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   }
   if (urgent === 'true') where.deadline = { gte: new Date(), lte: new Date(Date.now() + 7 * 86400000) };
 
-  const skip = (Number(page) - 1) * Number(limit);
-  const total = await prisma.opportunity.count({ where });
+  const takeNum = Math.min(Number(limit), 50); // cap at 50 per page
   const profile = await studentContext(req.user?.id);
 
+  // Cursor-based pagination: use postedDate + id as cursor for stable infinite scroll
+  if (cursor) {
+    const cursorOpp = await prisma.opportunity.findUnique({ where: { id: cursor }, select: { postedDate: true, id: true } });
+    if (cursorOpp) {
+      where.OR = [
+        { postedDate: { lt: cursorOpp.postedDate } },
+        { postedDate: cursorOpp.postedDate, id: { lt: cursor.id } },
+      ];
+    }
+  }
+
   if (profile) {
-    // Students: fetch ALL opportunities for scoring, then paginate the ranked results.
-    // This ensures the best matches are never missed due to DB limit applied before scoring.
-    const allOpps = await prisma.opportunity.findMany({ where, orderBy: { postedDate: 'desc' }, take: 200 });
+    // Students: fetch more opportunities for scoring, then paginate the ranked results.
+    const fetchLimit = cursor ? takeNum * 3 : Math.max(takeNum * 5, 200);
+    const allOpps = await prisma.opportunity.findMany({ where, orderBy: [{ postedDate: 'desc' }, { id: 'desc' }], take: fetchLimit });
     const hasProfile = (profile.skills || []).length > 0 || (profile.interests || []).length > 0 || profile.careerGoal;
     let ranked = allOpps.map((o) => ({ ...computeMatch(profile, o), opportunity: o }));
     ranked.sort((a, b) => {
       if (sort === 'deadline') return new Date(a.opportunity.deadline) - new Date(b.opportunity.deadline);
       if (sort === 'newest') return new Date(b.opportunity.postedDate) - new Date(a.opportunity.postedDate);
+      if (sort === 'source') return a.opportunity.organization.localeCompare(b.opportunity.organization);
       return b.score - a.score;
     });
-    // Filter out irrelevant opportunities when student has a defined profile:
-    // 1. Score must be >= 15 (baseline relevance)
-    // 2. If both student AND opportunity have skills defined, at least one skill must overlap
-    //    (prevents showing ML/Python/Dev opportunities to a Cybersecurity-only student)
+    // Filter out low-relevance opportunities for students with defined profiles
     if (hasProfile) {
       ranked = ranked.filter((r) => {
         if (r.score < 15) return false;
         const studentSkillNames = (profile.skills || []).map((s) => s.name.toLowerCase());
         const oppRequired = (r.opportunity.skillsRequired || []).map((s) => s.toLowerCase());
-        // If opportunity requires specific skills AND student has skills,
-        // require at least one skill overlap (or at least one interest match)
         if (studentSkillNames.length && oppRequired.length) {
           const skillOverlap = oppRequired.some((s) => studentSkillNames.some((st) => st.includes(s) || s.includes(st)));
           const studentInterests = (profile.interests || []).map((i) => i.toLowerCase());
@@ -79,17 +94,33 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
           const careerMatch = profile.careerGoal && oppText.includes(profile.careerGoal.toLowerCase());
           return skillOverlap || interestOverlap || careerMatch;
         }
-        return true; // No strict skill requirements → keep it
+        return true;
       });
     }
-    // Paginate AFTER scoring
-    const paginated = ranked.slice(skip, skip + Number(limit));
-    res.json({ opportunities: paginated, total: ranked.length, page: Number(page), limit: Number(limit), profile });
+    const totalFiltered = ranked.length;
+    const skip = cursor ? 0 : (Number(page) - 1) * takeNum;
+    const paginated = ranked.slice(skip, skip + takeNum);
+    const nextCursor = paginated.length === takeNum ? paginated[paginated.length - 1].opportunity.id : null;
+    res.json({ opportunities: paginated, total: totalFiltered, page: Number(page), limit: takeNum, nextCursor, hasMore: paginated.length === takeNum, profile });
   } else {
-    // Non-students: simple DB pagination (no scoring needed)
-    const opportunities = await prisma.opportunity.findMany({ where, orderBy: { postedDate: 'desc' }, skip, take: Number(limit) });
-    res.json({ opportunities, total, page: Number(page), limit: Number(limit) });
+    // Non-students: simple DB pagination
+    const skip = cursor ? 0 : (Number(page) - 1) * takeNum;
+    const total = await prisma.opportunity.count({ where });
+    const opportunities = await prisma.opportunity.findMany({ where, orderBy: [{ postedDate: 'desc' }, { id: 'desc' }], skip, take: takeNum });
+    const nextCursor = opportunities.length === takeNum ? opportunities[opportunities.length - 1].id : null;
+    res.json({ opportunities, total, page: Number(page), limit: takeNum, nextCursor, hasMore: opportunities.length === takeNum });
   }
+}));
+
+// GET /api/opportunities/sources — list available sources for filter dropdown
+router.get('/sources', optionalAuth, asyncHandler(async (req, res) => {
+  const sources = await prisma.opportunity.groupBy({
+    by: ['organization'],
+    _count: { id: true },
+    where: { status: 'verified' },
+    orderBy: { _count: { id: 'desc' } },
+  });
+  res.json({ sources: sources.map((s) => ({ name: s.organization, count: s._count.id })) });
 }));
 
 // GET /api/opportunities/trending
@@ -220,27 +251,37 @@ router.post('/:id/save', auth, asyncHandler(async (req, res) => {
   res.json({ application: app, saved: true });
 }));
 
-// POST /api/opportunities/:id/apply — student applies
+// POST /api/opportunities/:id/apply — student applies (or gets redirect URL for external sources)
 router.post('/:id/apply', auth, asyncHandler(async (req, res) => {
   const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } });
   if (!opp) throw ApiError.notFound('Opportunity not found');
+
+  // For external/fetched opportunities, return the direct apply URL
+  const isExternal = opp.source.startsWith('fetched:');
+  const applyUrl = opp.applyUrl || opp.applyLink || opp.sourceUrl || '';
+
   let app = await prisma.application.findFirst({ where: { student: req.user.id, opportunity: opp.id } });
   if (!app) {
-    app = await prisma.application.create({ data: { student: req.user.id, opportunity: opp.id, status: 'applied', appliedDate: new Date(), timeline: [{ status: 'applied' }] } });
+    app = await prisma.application.create({ data: { student: req.user.id, opportunity: opp.id, status: isExternal ? 'planning' : 'applied', appliedDate: isExternal ? null : new Date(), timeline: [{ status: isExternal ? 'planning' : 'applied' }] } });
   } else if (app.status === 'saved' || app.status === 'planning') {
-    const timeline = [...(app.timeline || []), { status: 'applied' }];
-    app = await prisma.application.update({ where: { id: app.id }, data: { status: 'applied', appliedDate: new Date(), timeline } });
+    const timeline = [...(app.timeline || []), { status: isExternal ? 'redirected' : 'applied' }];
+    app = await prisma.application.update({ where: { id: app.id }, data: { status: isExternal ? 'planning' : 'applied', appliedDate: isExternal ? null : new Date(), timeline } });
   }
   await prisma.recommendationEvent.create({ data: { user: req.user.id, type: 'applied', opportunity: opp.id, category: opp.category } });
-  await createNotification(req.user.id, {
-    category: 'opportunity',
-    title: `Application submitted 🎉`,
-    message: `You applied to "${opp.title}" at ${opp.organization}. Good luck!`,
-    link: '/applications',
-    icon: 'send',
-    priority: 'medium',
-  });
-  res.json({ application: app });
+
+  if (!isExternal) {
+    await createNotification(req.user.id, {
+      category: 'opportunity',
+      title: `Application submitted 🎉`,
+      message: `You applied to "${opp.title}" at ${opp.organization}. Good luck!`,
+      link: '/applications',
+      icon: 'send',
+      priority: 'medium',
+    });
+  }
+
+  // Return the redirect URL so frontend can open the original source page
+  res.json({ application: app, applyUrl, isExternal, sourceUrl: opp.sourceUrl });
 }));
 
 // PATCH /api/opportunities/:id — admin edit

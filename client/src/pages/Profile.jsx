@@ -193,7 +193,7 @@ export default function Profile() {
               <input className="input" value={form.careerGoal} onChange={set('careerGoal')} placeholder="e.g. AI Engineer" />
             </Field>
             <Field label="Preferred location">
-              <input className="input" value={form.preferredLocation} onChange={set('preferredLocation')} placeholder="e.g. Pune" />
+              <input className="input" value={form.preferredLocation} onChange={set('preferredLocation')} placeholder="e.g. Rupnagar" />
             </Field>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
