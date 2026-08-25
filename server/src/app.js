@@ -40,13 +40,11 @@ const app = express();
 // This runs lazily on the first request in Vercel serverless functions
 let _seededOpportunities = false;
 async function ensureRealOpportunities() {
-  if (_seededOpportunities) return;
-  _seededOpportunities = true;
   try {
     const { ensureSampleOpportunities } = await import('./services/seedService.js');
     await ensureSampleOpportunities();
   } catch (err) {
-    console.warn('[app] Failed to ensure sample opportunities:', err.message);
+    console.warn('[app] Failed to ensure sample opportunities:', err?.message);
   }
 }
 
@@ -131,9 +129,15 @@ const routes = {
 for (const [prefix, router] of Object.entries(routes)) app.use(prefix, router);
 
 // Trigger real opportunity seeding on first request (lazy init for Vercel serverless)
+// Move seeding AFTER next() and catch errors to prevent process crash
 app.use(async (req, res, next) => {
-  if (!_seededOpportunities) ensureRealOpportunities();
   next();
+  if (!_seededOpportunities) {
+    _seededOpportunities = true;
+    ensureRealOpportunities().catch((err) => {
+      console.warn('[app] Background seeding failed:', err?.message);
+    });
+  }
 });
 
 // Health check

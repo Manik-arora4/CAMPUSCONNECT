@@ -314208,13 +314208,11 @@ try {
 var app = (0, import_express24.default)();
 var _seededOpportunities = false;
 async function ensureRealOpportunities() {
-  if (_seededOpportunities) return;
-  _seededOpportunities = true;
   try {
     const { ensureSampleOpportunities: ensureSampleOpportunities2 } = await Promise.resolve().then(() => (init_seedService(), seedService_exports));
     await ensureSampleOpportunities2();
   } catch (err) {
-    console.warn("[app] Failed to ensure sample opportunities:", err.message);
+    console.warn("[app] Failed to ensure sample opportunities:", err?.message);
   }
 }
 app.set("trust proxy", 1);
@@ -314284,8 +314282,13 @@ var routes = {
 };
 for (const [prefix, router24] of Object.entries(routes)) app.use(prefix, router24);
 app.use(async (req, res, next) => {
-  if (!_seededOpportunities) ensureRealOpportunities();
   next();
+  if (!_seededOpportunities) {
+    _seededOpportunities = true;
+    ensureRealOpportunities().catch((err) => {
+      console.warn("[app] Background seeding failed:", err?.message);
+    });
+  }
 });
 app.get("/api/health", (req, res) => res.json({ status: "ok", time: (/* @__PURE__ */ new Date()).toISOString() }));
 var clientDist = import_path8.default.resolve(__dirname2, "../../client/dist");
