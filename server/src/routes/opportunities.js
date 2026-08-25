@@ -293,7 +293,7 @@ router.post('/:id/verify', requireAdmin, asyncHandler(async (req, res) => {
   res.json({ opportunity: updated });
 }));
 
-router.post('/:id/reject', requireAdmin, asyncHandler(async (req, res) => {
+router.post('/:id/reject', auth, requireAdmin, asyncHandler(async (req, res) => {
   const opp = await prisma.opportunity.findUnique({ where: { id: req.params.id } });
   if (!opp) throw ApiError.notFound('Opportunity not found');
   const updated = await prisma.opportunity.update({ where: { id: opp.id }, data: { status: 'rejected' } });
@@ -301,7 +301,7 @@ router.post('/:id/reject', requireAdmin, asyncHandler(async (req, res) => {
 }));
 
 // DELETE /api/opportunities/:id — admin
-router.delete('/:id', requireAdmin, asyncHandler(async (req, res) => {
+router.delete('/:id', auth, requireAdmin, asyncHandler(async (req, res) => {
   await prisma.opportunity.deleteMany({ where: { id: req.params.id } });
   res.json({ message: 'Opportunity deleted' });
 }));
