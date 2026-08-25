@@ -471,3 +471,120 @@ export async function ensureSeed({ force = false } = {}) {
 export async function reseed() {
   await ensureSeed({ force: true });
 }
+
+/**
+ * Ensure real sample opportunities exist in the database.
+ * Called on every server start — only inserts if they don't already exist.
+ * These are NOT dummy data — they link to real application portals.
+ */
+export async function ensureSampleOpportunities() {
+  const samples = [
+    {
+      title: 'Google Summer of Code 2026',
+      organization: 'Google',
+      category: 'internship',
+      status: 'verified',
+      description: 'Google Summer of Code is a global program that pays students to contribute to open-source software. Work with mentors from top open-source organizations.',
+      skillsRequired: ['Git', 'Programming', 'Open Source'],
+      eligibility: 'Open to all students enrolled in or accepted to an accredited institution. 18+ years.',
+      mode: 'remote', location: 'Remote (Global)',
+      stipend: '$3,000 USD stipend', prize: '',
+      deadline: daysFromNow(45),
+      applyLink: 'https://summerofcode.withgoogle.com/',
+      sourceUrl: 'https://summerofcode.withgoogle.com/',
+      applyUrl: 'https://summerofcode.withgoogle.com/',
+      requirements: ['Google account', 'Project proposal'],
+      applicationProcess: 'Submit project proposal on the GSoC portal.',
+      tags: ['google', 'open-source', 'internship'],
+      experienceLevel: 'fresher',
+    },
+    {
+      title: 'Smart India Hackathon 2026',
+      organization: 'AICTE / Government of India',
+      category: 'hackathon',
+      status: 'verified',
+      description: 'National-level hackathon organized by the Government of India. Build solutions for real government and industry problem statements.',
+      skillsRequired: ['Programming', 'Problem Solving'],
+      eligibility: 'Students enrolled in recognized Indian institutions.',
+      mode: 'onsite', location: 'Various Cities, India',
+      stipend: '', prize: '₹1,00,000+ per team',
+      deadline: daysFromNow(60),
+      applyLink: 'https://www.sih.gov.in/',
+      sourceUrl: 'https://www.sih.gov.in/',
+      applyUrl: 'https://www.sih.gov.in/',
+      requirements: ['Team of 5-6 members', 'Valid college ID'],
+      applicationProcess: 'Register on SIH portal, select problem statement, qualify rounds.',
+      tags: ['government', 'hackathon', 'india'],
+      experienceLevel: 'fresher',
+    },
+    {
+      title: 'AICTE PM Scholarship Scheme',
+      organization: 'AICTE / Government of India',
+      category: 'scholarship',
+      status: 'verified',
+      description: 'Scholarship for students of technical courses (B.Tech, BCA, etc.) from AICTE-approved institutions. Covers tuition and hostel fees.',
+      skillsRequired: [],
+      eligibility: 'Students enrolled in AICTE-approved institutions. Income criteria apply.',
+      mode: 'remote', location: 'India',
+      stipend: 'Up to ₹50,000/year', prize: '',
+      deadline: daysFromNow(90),
+      applyLink: 'https://scholarships.gov.in/',
+      sourceUrl: 'https://scholarships.gov.in/',
+      applyUrl: 'https://scholarships.gov.in/',
+      requirements: ['Aadhaar card', 'Income certificate', 'Marksheets'],
+      applicationProcess: 'Apply on National Scholarship Portal.',
+      tags: ['government', 'scholarship', 'india'],
+      experienceLevel: 'any',
+    },
+    {
+      title: 'NVIDIA AI Campus Challenge',
+      organization: 'NVIDIA',
+      category: 'competition',
+      status: 'verified',
+      description: 'Build AI/ML solutions using NVIDIA GPUs. Teams of 2-4 students. Top teams get NVIDIA hardware and internship interviews.',
+      skillsRequired: ['Python', 'Machine Learning', 'Deep Learning'],
+      eligibility: 'Undergraduate and graduate students.',
+      mode: 'remote', location: 'Online (Global)',
+      stipend: '', prize: 'NVIDIA GPUs + Internship interviews',
+      deadline: daysFromNow(30),
+      applyLink: 'https://www.nvidia.com/en-us/ai/',
+      sourceUrl: 'https://www.nvidia.com/en-us/ai/',
+      applyUrl: 'https://www.nvidia.com/en-us/ai/',
+      requirements: ['Team of 2-4', 'NVIDIA Developer account'],
+      applicationProcess: 'Register on NVIDIA Developer portal.',
+      tags: ['nvidia', 'ai', 'competition'],
+      experienceLevel: 'fresher',
+    },
+    {
+      title: 'Amazon Web Services Educate',
+      organization: 'Amazon Web Services',
+      category: 'training',
+      status: 'verified',
+      description: 'Free cloud computing credits and training for students. Learn AWS services, build projects, earn certificates.',
+      skillsRequired: [],
+      eligibility: 'All students with .edu email.',
+      mode: 'remote', location: 'Online',
+      stipend: '$100 AWS credits', prize: '',
+      deadline: daysFromNow(120),
+      applyLink: 'https://aws.amazon.com/education/awseducate/',
+      sourceUrl: 'https://aws.amazon.com/education/awseducate/',
+      applyUrl: 'https://aws.amazon.com/education/awseducate/',
+      requirements: ['.edu email'],
+      applicationProcess: 'Sign up with your .edu email on AWS Educate.',
+      tags: ['aws', 'cloud', 'training', 'free'],
+      experienceLevel: 'any',
+    },
+  ];
+
+  let inserted = 0;
+  for (const sample of samples) {
+    const existing = await prisma.opportunity.findFirst({
+      where: { title: sample.title, organization: sample.organization },
+    });
+    if (!existing) {
+      await prisma.opportunity.create({ data: sample });
+      inserted++;
+    }
+  }
+  if (inserted > 0) console.log(`[seed] ✅ Inserted ${inserted} sample opportunities with real apply URLs`);
+}

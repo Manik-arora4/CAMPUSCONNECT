@@ -1,7 +1,7 @@
 import app from './app.js';
 import { connectDB } from './config/db.js';
 import { env } from './config/env.js';
-import { ensureSeed } from './services/seedService.js';
+import { ensureSeed, ensureSampleOpportunities } from './services/seedService.js';
 import { startScheduledJobs } from './services/scheduler.js';
 import { startNotificationScheduler } from './services/notificationScheduler.js';
 
@@ -23,6 +23,7 @@ async function connectWithRetry(attempts = 8, delayMs = 4000) {
 async function main() {
   await connectWithRetry();
   await ensureSeed();
+  await ensureSampleOpportunities();
   startScheduledJobs();
   startNotificationScheduler();
   app.listen(env.PORT, () => {
