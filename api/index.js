@@ -305156,7 +305156,7 @@ async function ensureSampleOpportunities() {
   const d2 = await prisma.opportunity.deleteMany({ where: { sourceUrl: { contains: "example.com" } } });
   const d3 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: "example.com" } } });
   const d4 = await prisma.opportunity.deleteMany({ where: { applyUrl: "" } });
-  const d5 = await prisma.opportunity.deleteMany({ where: { applyUrl: null, applyLink: null } });
+  const d5 = await prisma.opportunity.deleteMany({ where: { applyUrl: "", applyLink: "" } });
   const d6 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: "ge.iitm.ac.in" } } });
   const d7 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: "example.com" } } });
   const d8 = await prisma.opportunity.deleteMany({ where: { sourceUrl: { contains: "example.com" } } });

@@ -484,7 +484,7 @@ export async function ensureSampleOpportunities() {
   const d3 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'example.com' } } });
   // Remove old broken opportunities with empty or invalid apply URLs
   const d4 = await prisma.opportunity.deleteMany({ where: { applyUrl: '' } });
-  const d5 = await prisma.opportunity.deleteMany({ where: { applyUrl: null, applyLink: null } });
+  const d5 = await prisma.opportunity.deleteMany({ where: { applyUrl: '', applyLink: '' } });
   // Remove known broken/404 domains
   const d6 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'ge.iitm.ac.in' } } });
   const d7 = await prisma.opportunity.deleteMany({ where: { applyUrl: { contains: 'example.com' } } });
