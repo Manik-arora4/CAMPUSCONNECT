@@ -24,6 +24,7 @@ import {
   School,
   MessageSquare,
   LifeBuoy,
+  FolderOpen,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationPermissionPrompt from './NotificationPermissionPrompt';
@@ -51,7 +52,9 @@ const STUDENT_NAV = [
 
 const FACULTY_NAV = [
   { to: '/faculty', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/faculty/students', label: 'My Students', icon: Users },
   { to: '/faculty/assignments', label: 'Assignments', icon: ClipboardList },
+  { to: '/faculty/resources', label: 'Resources', icon: FolderOpen },
   { to: '/college', label: 'Notices', icon: Megaphone },
   { to: '/college-info', label: 'My College', icon: School },
   { to: '/messages', label: 'Messages', icon: MessageSquare },

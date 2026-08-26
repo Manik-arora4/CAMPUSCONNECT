@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BookOpen, ClipboardList, Megaphone, Users, Plus, CheckCircle2 } from 'lucide-react';
+import { BookOpen, ClipboardList, Megaphone, Users, Plus, CheckCircle2, FolderOpen, GraduationCap } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, StatCard, Badge, Modal, Field, EmptyState, ErrorBanner, Tabs } from '../../components/UI';
 import { useAsync } from '../../components/UI';
@@ -33,7 +33,20 @@ export default function FacultyDashboard() {
         <StatCard icon={BookOpen} label="Classes you teach" value={stats.classes} tone="brand" />
         <StatCard icon={ClipboardList} label="Assignments" value={stats.assignments} tone="violet" />
         <StatCard icon={Megaphone} label="Notices posted" value={stats.notices} tone="amber" />
-        <StatCard icon={Users} label="College students" value={stats.students} tone="emerald" />
+        <StatCard icon={Users} label="My students" value={stats.students} tone="emerald" />
+      </div>
+
+      {/* Quick actions */}
+      <div className="flex flex-wrap gap-3">
+        <a href="/faculty/students" className="btn-secondary flex items-center gap-2">
+          <GraduationCap size={16} /> View students
+        </a>
+        <a href="/faculty/resources" className="btn-secondary flex items-center gap-2">
+          <FolderOpen size={16} /> Share resources
+        </a>
+        <a href="/faculty/assignments" className="btn-secondary flex items-center gap-2">
+          <ClipboardList size={16} /> Manage assignments
+        </a>
       </div>
 
       <Tabs

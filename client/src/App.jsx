@@ -33,6 +33,8 @@ import AISkills from './pages/ai/AISkills';
 
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
 import FacultyAssignments from './pages/faculty/FacultyAssignments';
+import FacultyStudents from './pages/faculty/FacultyStudents';
+import FacultyResources from './pages/faculty/FacultyResources';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminStudents from './pages/admin/AdminStudents';
 import AdminFaculty from './pages/admin/AdminFaculty';
@@ -106,7 +108,9 @@ export default function App() {
 
         {/* Faculty */}
         <Route path="/faculty" element={<RoleGate role="faculty"><FacultyDashboard /></RoleGate>} />
+        <Route path="/faculty/students" element={<RoleGate role="faculty"><FacultyStudents /></RoleGate>} />
         <Route path="/faculty/assignments" element={<RoleGate role="faculty"><FacultyAssignments /></RoleGate>} />
+        <Route path="/faculty/resources" element={<RoleGate role="faculty"><FacultyResources /></RoleGate>} />
 
         {/* Admin */}
         <Route path="/admin" element={<RoleGate role="admin"><AdminOverview /></RoleGate>} />

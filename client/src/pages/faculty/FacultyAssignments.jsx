@@ -1,15 +1,16 @@
 import { useState } from 'react';
-import { Plus, Trash2, ClipboardList } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, Eye, CheckCircle } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, Badge, Modal, Field, EmptyState, ConfirmModal, ErrorBanner } from '../../components/UI';
 import { useAsync } from '../../components/UI';
 import PulsatingButton from '../../components/PulsatingButton';
-import { relativeDay } from '../../lib/format';
+import { relativeDay, fmtDate } from '../../lib/format';
 
 export default function FacultyAssignments() {
   const { data, loading, reload } = useAsync(() => api.get('/assignments'));
   const [createOpen, setCreateOpen] = useState(false);
   const [confirm, setConfirm] = useState(null);
+  const [gradeOpen, setGradeOpen] = useState(null); // assignment to grade
 
   if (loading) return <PageLoader />;
 
@@ -25,7 +26,7 @@ export default function FacultyAssignments() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Manage Assignments</h1>
-          <p className="page-subtitle">Create and track assignments for your college.</p>
+          <p className="page-subtitle">Create, track, and grade assignments for your students.</p>
         </div>
         <PulsatingButton onClick={() => setCreateOpen(true)}>
           <Plus size={16} /> New assignment
@@ -47,7 +48,7 @@ export default function FacultyAssignments() {
                   <th className="py-2.5 pr-4 font-semibold">Semester</th>
                   <th className="py-2.5 pr-4 font-semibold">Due</th>
                   <th className="py-2.5 pr-4 font-semibold">Priority</th>
-                  <th className="py-2.5 font-semibold">Submissions</th>
+                  <th className="py-2.5 pr-4 font-semibold">Submissions</th>
                   <th className="py-2.5" />
                 </tr>
               </thead>
@@ -55,6 +56,7 @@ export default function FacultyAssignments() {
                 {assignments.map((a) => {
                   const subCount = a.submissions?.length || 0;
                   const submitted = a.submissions?.filter((s) => ['submitted', 'graded'].includes(s.status)).length || 0;
+                  const graded = a.submissions?.filter((s) => s.status === 'graded').length || 0;
                   return (
                     <tr key={a._id} className="border-b border-slate-50 last:border-0">
                       <td className="py-3 pr-4 font-medium text-slate-800">{a.title}</td>
@@ -68,13 +70,28 @@ export default function FacultyAssignments() {
                           {a.priority}
                         </Badge>
                       </td>
-                      <td className="py-3 pr-4 text-slate-600">
-                        {submitted}/{subCount}
+                      <td className="py-3 pr-4">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-slate-600">{submitted}/{subCount}</span>
+                          {graded > 0 && <Badge className="bg-emerald-100 text-emerald-700 text-[10px]">{graded} graded</Badge>}
+                        </div>
                       </td>
                       <td className="py-3 text-right">
-                        <button onClick={() => setConfirm(a)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition" aria-label="Delete">
-                          <Trash2 size={15} />
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          {submitted > 0 && (
+                            <button
+                              onClick={() => setGradeOpen(a)}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition"
+                              aria-label="Grade submissions"
+                              title="View & grade submissions"
+                            >
+                              <CheckCircle size={15} />
+                            </button>
+                          )}
+                          <button onClick={() => setConfirm(a)} className="p-1.5 rounded-lg text-slate-300 hover:text-red-600 hover:bg-red-50 transition" aria-label="Delete">
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -86,6 +103,7 @@ export default function FacultyAssignments() {
       )}
 
       <CreateModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={reload} />
+      <GradeModal open={!!gradeOpen} assignment={gradeOpen} onClose={() => setGradeOpen(null)} onGraded={reload} />
       <ConfirmModal
         open={!!confirm}
         onClose={() => setConfirm(null)}
@@ -162,8 +180,7 @@ function CreateModal({ open, onClose, onCreated }) {
           <Field label="Max marks">
             <input type="number" min="1" className="input" value={form.maxMarks} onChange={set('maxMarks')} />
           </Field>
-        </div>
-        <div className="flex justify-end gap-2">
+        </div>          <div className="flex justify-end gap-2">
           <button type="button" className="btn-secondary" onClick={onClose}>
             Cancel
           </button>
@@ -172,6 +189,141 @@ function CreateModal({ open, onClose, onCreated }) {
           </button>
         </div>
       </form>
+    </Modal>
+  );
+}
+
+function GradeModal({ open, assignment, onClose, onGraded }) {
+  const [grading, setGrading] = useState(null); // studentId being graded
+  const [marks, setMarks] = useState('');
+  const [feedback, setFeedback] = useState('');
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  if (!open || !assignment) return null;
+
+  const submissions = assignment.submissions || [];
+  const pendingSubs = submissions.filter((s) => s.status === 'submitted');
+  const gradedSubs = submissions.filter((s) => s.status === 'graded');
+
+  const handleGrade = async (studentId) => {
+    setError('');
+    setSaving(true);
+    try {
+      await api.patch(`/faculty/assignments/${assignment._id}/grade`, {
+        studentId,
+        marks: Number(marks),
+        feedback,
+      });
+      setGrading(null);
+      setMarks('');
+      setFeedback('');
+      onGraded();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title={`Grade: ${assignment.title}`} wide>
+      <ErrorBanner error={error} />
+
+      {pendingSubs.length === 0 && gradedSubs.length === 0 ? (
+        <div className="text-center py-8">
+          <p className="text-slate-500">No submissions yet.</p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {/* Pending submissions */}
+          {pendingSubs.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 mb-3">Pending ({pendingSubs.length})</h4>
+              <div className="space-y-3">
+                {pendingSubs.map((sub) => (
+                  <div key={sub.student} className="rounded-xl border border-slate-100 p-4">
+                    {grading === sub.student ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-slate-800">Student: {sub.student}</span>
+                          <Badge className="bg-blue-100 text-blue-700">Submitted {fmtDate(sub.submittedAt)}</Badge>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <Field label={`Marks (out of ${assignment.maxMarks})`}>
+                            <input
+                              type="number"
+                              min="0"
+                              max={assignment.maxMarks}
+                              className="input"
+                              value={marks}
+                              onChange={(e) => setMarks(e.target.value)}
+                              placeholder="0"
+                            />
+                          </Field>
+                          <Field label="Feedback">
+                            <input
+                              className="input"
+                              value={feedback}
+                              onChange={(e) => setFeedback(e.target.value)}
+                              placeholder="Optional feedback..."
+                            />
+                          </Field>
+                        </div>
+                        <div className="flex gap-2">
+                          <button className="btn-primary text-xs" onClick={() => handleGrade(sub.student)} disabled={saving || !marks}>
+                            {saving ? 'Saving...' : 'Submit grade'}
+                          </button>
+                          <button className="btn-secondary text-xs" onClick={() => { setGrading(null); setMarks(''); setFeedback(''); }}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-sm font-medium text-slate-800">Student: {sub.student}</span>
+                          <span className="text-xs text-slate-400 ml-2">Submitted {fmtDate(sub.submittedAt)}</span>
+                        </div>
+                        <button
+                          className="btn-primary !py-1.5 !px-3 text-xs"
+                          onClick={() => setGrading(sub.student)}
+                        >
+                          Grade
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Graded submissions */}
+          {gradedSubs.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-slate-700 mb-3">Graded ({gradedSubs.length})</h4>
+              <div className="space-y-2">
+                {gradedSubs.map((sub) => (
+                  <div key={sub.student} className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3">
+                    <div>
+                      <span className="text-sm font-medium text-slate-800">Student: {sub.student}</span>
+                      {sub.feedback && <span className="text-xs text-slate-500 ml-2">— {sub.feedback}</span>}
+                    </div>
+                    <Badge className="bg-emerald-100 text-emerald-700">
+                      {sub.marks}/{assignment.maxMarks}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="flex justify-end mt-4">
+        <button className="btn-secondary" onClick={onClose}>Close</button>
+      </div>
     </Modal>
   );
 }
