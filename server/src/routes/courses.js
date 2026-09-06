@@ -21,7 +21,19 @@ router.get('/', optionalAuth, asyncHandler(async (req, res) => {
     where,
     orderBy: { name: 'asc' },
   });
-  res.json({ courses });
+
+  // Include sections for each course (needed for registration form)
+  const coursesWithSections = await Promise.all(
+    courses.map(async (course) => {
+      const sections = await prisma.section.findMany({
+        where: { course: course.id },
+        orderBy: [{ semester: 'asc' }, { name: 'asc' }],
+      });
+      return { ...course, sections };
+    })
+  );
+
+  res.json({ courses: coursesWithSections });
 }));
 
 // GET /api/courses/:id — Get course with sections

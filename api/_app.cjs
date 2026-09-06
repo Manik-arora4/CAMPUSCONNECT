@@ -8074,7 +8074,16 @@ router23.get("/", optionalAuth, asyncHandler(async (req, res) => {
     where,
     orderBy: { name: "asc" }
   });
-  res.json({ courses });
+  const coursesWithSections = await Promise.all(
+    courses.map(async (course) => {
+      const sections = await prisma.section.findMany({
+        where: { course: course.id },
+        orderBy: [{ semester: "asc" }, { name: "asc" }]
+      });
+      return { ...course, sections };
+    })
+  );
+  res.json({ courses: coursesWithSections });
 }));
 router23.get("/:id", asyncHandler(async (req, res) => {
   const course = await prisma.course.findUnique({
