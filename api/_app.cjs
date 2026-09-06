@@ -2692,11 +2692,14 @@ var router = (0, import_express.Router)();
 function signToken(user) {
   return import_jsonwebtoken2.default.sign({ id: user.id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 }
-async function ensureCollege(name) {
-  if (!name) return null;
-  const trimmed = name.trim();
+async function ensureCollege(nameOrId) {
+  if (!nameOrId) return null;
+  const trimmed = String(nameOrId).trim();
+  const byId = await prisma.college.findUnique({ where: { id: trimmed } });
+  if (byId) return byId;
   let college = await prisma.college.findFirst({ where: { name: trimmed } });
   if (!college) {
+    if (/^c[a-z0-9]{20,}$/i.test(trimmed)) return null;
     college = await prisma.college.create({
       data: { name: trimmed, code: trimmed.slice(0, 6).toUpperCase().replace(/\s+/g, "_") }
     });

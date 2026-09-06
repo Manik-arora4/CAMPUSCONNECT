@@ -17,11 +17,17 @@ function signToken(user) {
   return jwt.sign({ id: user.id, role: user.role }, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN });
 }
 
-async function ensureCollege(name) {
-  if (!name) return null;
-  const trimmed = name.trim();
+async function ensureCollege(nameOrId) {
+  if (!nameOrId) return null;
+  const trimmed = String(nameOrId).trim();
+  // Frontend sends college ID — resolve by ID first
+  const byId = await prisma.college.findUnique({ where: { id: trimmed } });
+  if (byId) return byId;
+  // Otherwise treat as a free-text college name
   let college = await prisma.college.findFirst({ where: { name: trimmed } });
   if (!college) {
+    // Never create colleges with cuid-like fake names from accidental ID passing
+    if (/^c[a-z0-9]{20,}$/i.test(trimmed)) return null;
     college = await prisma.college.create({
       data: { name: trimmed, code: trimmed.slice(0, 6).toUpperCase().replace(/\s+/g, '_') },
     });
