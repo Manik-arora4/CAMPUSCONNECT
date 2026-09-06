@@ -32,15 +32,19 @@ import AIPlanner from './pages/ai/AIPlanner';
 import AISkills from './pages/ai/AISkills';
 
 import FacultyDashboard from './pages/faculty/FacultyDashboard';
+import FacultySetup from './pages/faculty/FacultySetup';
 import FacultyAssignments from './pages/faculty/FacultyAssignments';
 import FacultyStudents from './pages/faculty/FacultyStudents';
 import FacultyResources from './pages/faculty/FacultyResources';
+import TakeAttendance from './pages/faculty/TakeAttendance';
+import AttendanceHistory from './pages/faculty/AttendanceHistory';
 import AdminOverview from './pages/admin/AdminOverview';
 import AdminStudents from './pages/admin/AdminStudents';
 import AdminFaculty from './pages/admin/AdminFaculty';
 import AdminOpportunities from './pages/admin/AdminOpportunities';
 import AdminColleges from './pages/admin/AdminColleges';
 import AdminSupport from './pages/admin/AdminSupport';
+import FacultyAssignmentPage from './pages/admin/FacultyAssignment';
 import Support from './pages/Support';
 import SupportTicketDetail from './pages/SupportTicketDetail';
 
@@ -108,6 +112,9 @@ export default function App() {
 
         {/* Faculty */}
         <Route path="/faculty" element={<RoleGate role="faculty"><FacultyDashboard /></RoleGate>} />
+        <Route path="/faculty/setup" element={<RoleGate role="faculty"><FacultySetup /></RoleGate>} />
+        <Route path="/faculty/attendance" element={<RoleGate role="faculty"><TakeAttendance /></RoleGate>} />
+        <Route path="/faculty/attendance/history" element={<RoleGate role="faculty"><AttendanceHistory /></RoleGate>} />
         <Route path="/faculty/students" element={<RoleGate role="faculty"><FacultyStudents /></RoleGate>} />
         <Route path="/faculty/assignments" element={<RoleGate role="faculty"><FacultyAssignments /></RoleGate>} />
         <Route path="/faculty/resources" element={<RoleGate role="faculty"><FacultyResources /></RoleGate>} />
@@ -119,6 +126,7 @@ export default function App() {
         <Route path="/admin/opportunities" element={<RoleGate role="admin"><AdminOpportunities /></RoleGate>} />
         <Route path="/admin/colleges" element={<RoleGate role="admin"><AdminColleges /></RoleGate>} />
         <Route path="/admin/support" element={<RoleGate role="admin"><AdminSupport /></RoleGate>} />
+        <Route path="/admin/faculty-assignment" element={<RoleGate role="admin"><FacultyAssignmentPage /></RoleGate>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

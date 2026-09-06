@@ -3,6 +3,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import multer from 'multer';
 import { rateLimit } from 'express-rate-limit';
 import { env } from './config/env.js';
@@ -28,12 +29,15 @@ import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
 import adminRoutes from './routes/admin.js';
 import facultyRoutes from './routes/faculty.js';
+import facultyAttendanceRoutes from './routes/faculty-attendance.js';
+import coursesRoutes from './routes/courses.js';
+import facultyAssignmentRoutes from './routes/faculty-assignment.js';
 import supportRoutes from './routes/support.js';
 import pushRoutes from './routes/push.js';
 import { ApiError } from './utils/ApiError.js';
 
 let __dirname;
-try { __dirname = path.dirname(new URL(import.meta.url).pathname); } catch { __dirname = '/tmp'; }
+try { __dirname = path.dirname(fileURLToPath(import.meta.url)); } catch { __dirname = '/tmp'; }
 const app = express();
 
 // One-time: ensure real sample opportunities exist in the database
@@ -123,6 +127,9 @@ const routes = {
   '/api/notifications': notificationRoutes,
   '/api/admin': adminRoutes,
   '/api/faculty': facultyRoutes,
+  '/api/faculty-attendance': facultyAttendanceRoutes,
+  '/api/courses': coursesRoutes,
+  '/api/faculty-assignment': facultyAssignmentRoutes,
   '/api/support': supportRoutes,
   '/api/push': pushRoutes,
 };

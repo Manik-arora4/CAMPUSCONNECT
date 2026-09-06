@@ -23,8 +23,8 @@ export default function CinematicTransition({ onComplete }) {
   const timerRef = useRef(null);
 
   useEffect(() => {
-    // Phase 1: zoom out login page (0-600ms)
-    timerRef.current = setTimeout(() => setPhase('reveal'), 600);
+    // Phase 1: zoom out login page (0-300ms)
+    timerRef.current = setTimeout(() => setPhase('reveal'), 300);
     return () => clearTimeout(timerRef.current);
   }, []);
 
@@ -38,9 +38,9 @@ export default function CinematicTransition({ onComplete }) {
       if (i >= fullTagline.length) {
         clearInterval(interval);
         // After tagline finishes, start burst
-        timerRef.current = setTimeout(() => setPhase('burst'), 800);
+        timerRef.current = setTimeout(() => setPhase('burst'), 400);
       }
-    }, 35);
+    }, 20);
     return () => {
       clearInterval(interval);
       clearTimeout(timerRef.current);
@@ -52,7 +52,7 @@ export default function CinematicTransition({ onComplete }) {
     timerRef.current = setTimeout(() => {
       setPhase('done');
       onComplete?.();
-    }, 700);
+    }, 500);
     return () => clearTimeout(timerRef.current);
   }, [phase, onComplete]);
 

@@ -14,6 +14,9 @@ import {
   Megaphone,
   CalendarClock,
   UserCheck,
+  GraduationCap,
+  Users,
+  Hash,
 } from 'lucide-react';
 import { api } from '../lib/api';
 import { PageLoader, Spinner, Card, StatCard, Badge, ProgressBar } from '../components/UI';
@@ -25,8 +28,21 @@ import { useAuth } from '../context/AuthContext';
 export default function Dashboard() {
   const { user, profileVersion } = useAuth();
   const { data, loading, error } = useAsync(() => api.get('/students/dashboard'), [profileVersion]);
+  const { data: enrollmentData } = useAsync(() => api.get('/students/me/enrollment'));
+  const [myFaculty, setMyFaculty] = useState([]);
   const [aiExplanation, setAiExplanation] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/faculty-assignment/my-faculty`, {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .then(d => setMyFaculty(d.faculty || []))
+      .catch(() => {});
+  }, []);
 
   // Lazy-load AI explanation after dashboard renders
   useEffect(() => {
@@ -240,6 +256,84 @@ export default function Dashboard() {
         </Card>
       </div>
       </Reveal>
+
+      {/* Enrollment Info */}
+      {enrollmentData?.enrollment && (
+        <Reveal delay={180}>
+          <Card className="bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-200">
+            <div className="flex items-center gap-4">
+              <div className="h-14 w-14 rounded-2xl bg-emerald-600 flex items-center justify-center shrink-0">
+                <GraduationCap size={24} className="text-white" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600 mb-0.5">Your Enrollment</p>
+                <p className="font-bold text-slate-800 text-lg">{enrollmentData.enrollment.courseDetails?.name || 'N/A'}</p>
+                <div className="flex flex-wrap items-center gap-3 mt-1.5">
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <Users size={14} className="text-emerald-500" /> Section {enrollmentData.enrollment.sectionDetails?.name || 'N/A'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <BookOpen size={14} className="text-emerald-500" /> Semester {enrollmentData.enrollment.semester}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <Hash size={14} className="text-emerald-500" /> {enrollmentData.enrollment.enrollmentNumber || profile?.enrollmentNumber || 'N/A'}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
+                    <CalendarDays size={14} className="text-emerald-500" /> Year {enrollmentData.enrollment.year}
+                  </span>
+                </div>
+              </div>
+              <a href="/profile" className="btn-secondary text-sm shrink-0">
+                Edit Profile
+              </a>
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
+      {/* My Faculty */}
+      {myFaculty.length > 0 && (
+        <Reveal delay={160}>
+          <Card>
+            <div className="flex items-center gap-2 mb-3">
+              <Users size={18} className="text-indigo-600" />
+              <h3 className="font-semibold text-slate-800">My Faculty</h3>
+            </div>
+            <div className="space-y-2">
+              {myFaculty.map((f, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                  <div>
+                    <p className="text-sm font-semibold text-indigo-800">{f.facultyDetails?.name || 'Unknown'}</p>
+                    <p className="text-xs text-indigo-600">
+                      {f.courseDetails?.name} {f.sectionDetails ? `• ${f.sectionDetails.name}` : ''} • Sem {f.semester}
+                    </p>
+                  </div>
+                  <span className="text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full">
+                    {f.facultyDetails?.designation || 'Faculty'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </Reveal>
+      )}
+
+      {!enrollmentData?.enrollment && enrollmentData && (
+        <Reveal delay={180}>
+          <Card className="border-amber-200 bg-amber-50">
+            <div className="flex items-center gap-3">
+              <AlertTriangle size={20} className="text-amber-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-amber-800">No enrollment found</p>
+                <p className="text-xs text-amber-600">Enroll in a course to see your details here</p>
+              </div>
+              <a href="/profile" className="btn-primary text-sm shrink-0">
+                Enroll Now
+              </a>
+            </div>
+          </Card>
+        </Reveal>
+      )}
 
       <Reveal delay={200}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

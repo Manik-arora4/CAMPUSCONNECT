@@ -30,6 +30,94 @@ function getProfile(userId) {
   return prisma.studentProfile.findFirst({ where: { user: userId } });
 }
 
+// GET /api/students/me/enrollment — student's current enrollment info
+router.get('/me/enrollment', asyncHandler(async (req, res) => {
+  const enrollment = await prisma.enrollment.findFirst({
+    where: { student: req.user.id, status: 'active' },
+    orderBy: { semester: 'desc' },
+  });
+  if (!enrollment) return res.json({ enrollment: null });
+
+  const [course, section] = await Promise.all([
+    prisma.course.findUnique({ where: { id: enrollment.course } }),
+    prisma.section.findUnique({ where: { id: enrollment.section } }),
+  ]);
+
+  res.json({ enrollment: { ...enrollment, courseDetails: course, sectionDetails: section } });
+}));
+
+// GET /api/students/courses — available courses for this college
+router.get('/courses', asyncHandler(async (req, res) => {
+  const courses = await prisma.course.findMany({
+    where: { college: req.user.college, active: true },
+    orderBy: { name: 'asc' },
+  });
+
+  // Get sections for each course
+  const coursesWithSections = await Promise.all(
+    courses.map(async (course) => {
+      const sections = await prisma.section.findMany({
+        where: { course: course.id },
+        orderBy: [{ semester: 'asc' }, { name: 'asc' }],
+      });
+      return { ...course, sections };
+    })
+  );
+
+  res.json({ courses: coursesWithSections });
+}));
+
+// POST /api/students/enroll — enroll in a course/section
+router.post('/enroll', asyncHandler(async (req, res) => {
+  const { courseId, sectionId, semester } = req.body;
+  if (!courseId || !sectionId || !semester) {
+    throw ApiError.badRequest('courseId, sectionId, and semester are required');
+  }
+
+  // Check if already enrolled
+  const existing = await prisma.enrollment.findFirst({
+    where: { student: req.user.id, course: courseId, semester: Number(semester) },
+  });
+  if (existing) throw ApiError.conflict('Already enrolled in this course for this semester');
+
+  // Verify course and section exist
+  const course = await prisma.course.findUnique({ where: { id: courseId } });
+  if (!course) throw ApiError.notFound('Course not found');
+
+  const section = await prisma.section.findFirst({ where: { id: sectionId, course: courseId } });
+  if (!section) throw ApiError.notFound('Section not found for this course');
+
+  // Check section capacity
+  const currentCount = await prisma.enrollment.count({ where: { section: sectionId, status: 'active' } });
+  if (currentCount >= section.maxStudents) throw ApiError.badRequest('Section is full');
+
+  const enrollment = await prisma.enrollment.create({
+    data: {
+      student: req.user.id,
+      course: courseId,
+      section: sectionId,
+      semester: Number(semester),
+      year: Number(semester) <= 2 ? 1 : Number(semester) <= 4 ? 2 : Number(semester) <= 6 ? 3 : 4,
+      status: 'active',
+      enrollmentNumber: req.body.enrollmentNumber || '',
+    },
+  });
+
+  // Update student profile
+  await prisma.studentProfile.updateMany({
+    where: { user: req.user.id },
+    data: {
+      course: course.name,
+      degree: course.name.split(' ')[0],
+      semester: Number(semester),
+      section: section.name,
+      enrollment: enrollment.id,
+    },
+  });
+
+  res.status(201).json({ enrollment });
+}));
+
 // GET /api/students/me/profile
 router.get('/me/profile', asyncHandler(async (req, res) => {
   let profile = await getProfile(req.user.id);

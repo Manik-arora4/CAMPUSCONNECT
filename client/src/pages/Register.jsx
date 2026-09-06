@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, AlertCircle, User, Mail, Lock, School, BookOpen, Building2, Briefcase, ShieldCheck, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -17,7 +17,7 @@ const ROLES = [
   { role: 'admin', label: 'College Admin', icon: ShieldCheck, emoji: '🛡️', color: 'from-emerald-500 to-teal-600', desc: 'Manage students, faculty, departments & analytics' },
 ];
 
-const DEGREES = ['BCA', 'B.Tech', 'BBA', 'B.Sc', 'B.Com', 'BA', 'MCA', 'M.Tech', 'MBA', 'M.Sc', 'MA', 'M.Com', 'PhD', 'Other'];
+const DEGREES_FALLBACK = ['BCA', 'B.Tech', 'BBA', 'B.Sc', 'B.Com', 'BA', 'MCA', 'M.Tech', 'MBA', 'M.Sc', 'MA', 'M.Com', 'PhD', 'Other'];
 const SKILLS = ['Python', 'JavaScript', 'Java', 'C', 'C++', 'SQL', 'React', 'Node.js', 'Machine Learning', 'AI', 'Data Science', 'HTML', 'CSS', 'Flutter', 'UI/UX', 'Cloud', 'Docker', 'Cybersecurity'];
 const INTERESTS = ['AI/ML', 'Web Development', 'Data Science', 'Cybersecurity', 'Mobile Development', 'Cloud', 'Blockchain', 'UI/UX Design', 'Competitive Programming', 'Robotics'];
 const CAREER_GOALS = ['AI Engineer', 'Software Developer', 'Data Scientist', 'Cybersecurity Engineer', 'Product Manager', 'Entrepreneur', 'Full Stack Developer', 'Backend Developer', 'Frontend Developer', 'Mobile Developer', 'UI/UX Designer', 'Cloud Engineer', 'DevOps Engineer', 'Machine Learning Engineer'];
@@ -39,6 +39,38 @@ export default function Register() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [dbCourses, setDbCourses] = useState([]);
+  const [colleges, setColleges] = useState([]);
+  const [departments, setDepartments] = useState([]);
+  const [selectedCollegeId, setSelectedCollegeId] = useState('');
+  const [loadingColleges, setLoadingColleges] = useState(false);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+
+  // Load colleges on mount
+  useEffect(() => {
+    setLoadingColleges(true);
+    import('../lib/api').then(({ api }) => {
+      api.get('/colleges').then(res => {
+        setColleges(res.colleges || []);
+      }).catch(() => {}).finally(() => setLoadingColleges(false));
+    });
+  }, []);
+
+  // When college is selected, load courses and departments for that college
+  useEffect(() => {
+    if (selectedCollegeId && step >= 2) {
+      setLoadingCourses(true);
+      import('../lib/api').then(({ api }) => {
+        Promise.all([
+          api.get(`/courses?collegeId=${selectedCollegeId}`),
+          api.get('/admin/departments').catch(() => ({ departments: [] })),
+        ]).then(([coursesRes, deptsRes]) => {
+          setDbCourses(coursesRes.courses || []);
+          setDepartments((deptsRes.departments || []).filter(d => d.college === selectedCollegeId));
+        }).catch(() => {}).finally(() => setLoadingCourses(false));
+      });
+    }
+  }, [selectedCollegeId, step]);
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
   const toggleArray = (key, value) =>
@@ -187,8 +219,28 @@ export default function Register() {
                     <label className="block text-sm font-medium text-white/80 mb-1.5">College</label>
                     <div className="relative">
                       <School size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/50" />
-                      <input value={form.college} onChange={set('college')} placeholder="e.g. IIIT Ropar" className={INPUT_CLS} />
+                      <select
+                        value={selectedCollegeId}
+                        onChange={(e) => {
+                          const cid = e.target.value;
+                          const college = colleges.find(c => c.id === cid);
+                          setSelectedCollegeId(cid);
+                          setForm(f => ({ ...f, college: cid, degree: '', course: '' }));
+                        }}
+                        className={INPUT_CLS}
+                        required
+                      >
+                        <option value="" className="text-slate-900">{loadingColleges ? 'Loading colleges...' : '-- Select your college --'}</option>
+                        {colleges.map(c => (
+                          <option key={c.id} value={c.id} className="text-slate-900">
+                            {c.name} ({c.city})
+                          </option>
+                        ))}
+                      </select>
                     </div>
+                    {colleges.length === 0 && !loadingColleges && (
+                      <p className="text-xs text-white/40 mt-1">No colleges found. Contact admin.</p>
+                    )}
                   </div>
                   <InteractiveHoverButton type="submit" className="w-full py-2.5">
                     Continue →
@@ -235,37 +287,57 @@ export default function Register() {
                 <p className="text-sm text-white/70 mt-1 mb-6">Tell us about your academic background</p>
 
                 <form onSubmit={(e) => { e.preventDefault(); setStep(3); }} className="space-y-4">
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">Degree</label>
-                      <select value={form.degree} onChange={set('degree')} className={SELECT_CLS} required>
-                        <option value="">Select degree</option>
-                        {DEGREES.map((d) => <option key={d} value={d}>{d}</option>)}
-                      </select>
+                  {!selectedCollegeId ? (
+                    <div className="bg-white/5 rounded-xl p-4 text-center">
+                      <p className="text-white/60 text-sm">👆 Please select your college first</p>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">Course / Branch</label>
-                      <input value={form.course} onChange={set('course')} placeholder="e.g. Computer Science" className={INPUT_CLS.replace('pl-10', 'px-3.5')} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">Year</label>
-                      <select value={form.year} onChange={set('year')} className={SELECT_CLS}>
-                        {[1, 2, 3, 4, 5].map((y) => <option key={y} value={y}>Year {y}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">Semester</label>
-                      <select value={form.semester} onChange={set('semester')} className={SELECT_CLS}>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => <option key={s} value={s}>Sem {s}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-white/80 mb-1.5">Section</label>
-                      <input value={form.section} onChange={set('section')} placeholder="A / B" className={INPUT_CLS.replace('pl-10', 'px-3.5')} />
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-white/80 mb-1.5">Course / Program</label>
+                        <select
+                          value={form.degree}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setForm(f => ({ ...f, degree: val, course: val, semester: 1 }));
+                          }}
+                          className={SELECT_CLS}
+                          required
+                        >
+                          <option value="" className="text-slate-900">{loadingCourses ? 'Loading courses...' : '-- Select course --'}</option>
+                          {dbCourses.map(c => (
+                            <option key={c.id} value={c.name} className="text-slate-900">
+                              {c.name} ({c.code}) — {c.totalSemesters} semesters
+                            </option>
+                          ))}
+                        </select>
+                        {dbCourses.length === 0 && !loadingCourses && (
+                          <p className="text-xs text-white/40 mt-1">No courses available for this college yet.</p>
+                        )}
+                      </div>
+                      {form.degree && (
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-sm font-medium text-white/80 mb-1.5">Semester</label>
+                            <select value={form.semester} onChange={set('semester')} className={SELECT_CLS}>
+                              {Array.from({ length: dbCourses.find(c => c.name === form.degree)?.totalSemesters || 8 }, (_, i) => i + 1).map((s) => (
+                                <option key={s} value={s} className="text-slate-900">Semester {s}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-white/80 mb-1.5">Section</label>
+                            <select value={form.section} onChange={set('section')} className={SELECT_CLS} required>
+                              <option value="" className="text-slate-900">-- Select --</option>
+                              {(dbCourses.find(c => c.name === form.degree)?.sections || []).filter(s => s.semester === Number(form.semester)).map(s => (
+                                <option key={s.id} value={s.name} className="text-slate-900">Section {s.name} (Sem {s.semester})</option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  )}
 
                   <InteractiveHoverButton type="submit" className="w-full py-2.5">
                     Continue →
@@ -291,7 +363,16 @@ export default function Register() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-white/80 mb-1.5">Department</label>
-                      <input value={form.department} onChange={set('department')} placeholder="e.g. Computer Science" className={INPUT_CLS.replace('pl-10', 'px-3.5')} />
+                      {departments.length > 0 ? (
+                        <select value={form.department} onChange={set('department')} className={SELECT_CLS}>
+                          <option value="" className="text-slate-900">-- Select --</option>
+                          {departments.map(d => (
+                            <option key={d.id} value={d.name} className="text-slate-900">{d.name}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input value={form.department} onChange={set('department')} placeholder="e.g. Computer Science" className={INPUT_CLS.replace('pl-10', 'px-3.5')} />
+                      )}
                     </div>
                   </div>
                   <div>

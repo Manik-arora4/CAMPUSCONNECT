@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BookOpen, ClipboardList, Megaphone, Users, Plus, CheckCircle2, FolderOpen, GraduationCap } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { BookOpen, ClipboardList, Megaphone, Users, Plus, CheckCircle2, FolderOpen, GraduationCap, UserCheck, Clock, History } from 'lucide-react';
 import { api } from '../../lib/api';
 import { PageLoader, Card, StatCard, Badge, Modal, Field, EmptyState, ErrorBanner, Tabs } from '../../components/UI';
 import { useAsync } from '../../components/UI';
@@ -7,11 +7,22 @@ import PulsatingButton from '../../components/PulsatingButton';
 import { fmtDate, relativeDay } from '../../lib/format';
 import { useAuth } from '../../context/AuthContext';
 
+const API = import.meta.env.VITE_API_URL || '';
+
 export default function FacultyDashboard() {
   const { user } = useAuth();
   const { data, loading, reload } = useAsync(() => api.get('/faculty/dashboard'));
   const [tab, setTab] = useState('overview');
   const [noticeOpen, setNoticeOpen] = useState(false);
+  const [myCourses, setMyCourses] = useState([]);
+  const [coursesLoading, setCoursesLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/faculty-assignment/my-courses')
+      .then(d => setMyCourses(d.courses || []))
+      .catch(() => {})
+      .finally(() => setCoursesLoading(false));
+  }, []);
 
   if (loading) return <PageLoader />;
 
@@ -38,16 +49,86 @@ export default function FacultyDashboard() {
 
       {/* Quick actions */}
       <div className="flex flex-wrap gap-3">
+        <a href="/faculty/attendance" className="btn-primary flex items-center gap-2">
+          <UserCheck size={16} /> Take Attendance
+        </a>
+        <a href="/faculty/attendance/history" className="btn-secondary flex items-center gap-2">
+          <History size={16} /> Attendance History
+        </a>
         <a href="/faculty/students" className="btn-secondary flex items-center gap-2">
           <GraduationCap size={16} /> View students
         </a>
         <a href="/faculty/resources" className="btn-secondary flex items-center gap-2">
           <FolderOpen size={16} /> Share resources
         </a>
-        <a href="/faculty/assignments" className="btn-secondary flex items-center gap-2">
-          <ClipboardList size={16} /> Manage assignments
-        </a>
       </div>
+
+      {/* My Assigned Courses */}
+      {!coursesLoading && myCourses.length > 0 && (
+        <Card>
+          <h3 className="font-semibold text-slate-800 mb-3">📚 My Assigned Courses</h3>
+          <div className="space-y-3">
+            {myCourses.map(mc => (
+              <div key={mc.assignmentId} className="flex items-center justify-between p-3 bg-indigo-50 rounded-lg">
+                <div>
+                  <p className="text-sm font-semibold text-indigo-800">{mc.course?.name || 'Unknown Course'}</p>
+                  <p className="text-xs text-indigo-600">
+                    {mc.section ? `${mc.section.name}` : 'All Sections'} • Semester {mc.semester} • {mc.studentCount} students
+                  </p>
+                </div>
+                <a href="/faculty/attendance" className="text-xs bg-indigo-600 text-white px-3 py-1 rounded-full hover:bg-indigo-700">
+                  Take Attendance
+                </a>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {!coursesLoading && myCourses.length === 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <div className="flex items-center gap-3">
+            <BookOpen size={20} className="text-amber-600" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">No courses assigned yet</p>
+              <p className="text-xs text-amber-600">Ask your admin to assign you courses</p>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Today's Sessions */}
+      {data.todaySessions?.length > 0 && (
+        <Card>
+          <h3 className="font-semibold text-slate-800 mb-3">Today's Attendance Sessions</h3>
+          <div className="space-y-2">
+            {data.todaySessions.map(s => (
+              <div key={s.id} className="flex items-center justify-between p-3 bg-emerald-50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+                  <span className="text-sm font-medium text-slate-700">{s.subjectName}</span>
+                </div>
+                <Badge className="bg-emerald-100 text-emerald-700">{s.status}</Badge>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {data.stats?.pendingSessions > 0 && (
+        <Card className="border-amber-200 bg-amber-50">
+          <div className="flex items-center gap-3">
+            <Clock size={20} className="text-amber-600" />
+            <div>
+              <p className="text-sm font-medium text-amber-800">{data.stats.pendingSessions} attendance session(s) pending</p>
+              <p className="text-xs text-amber-600">Complete them before the day ends</p>
+            </div>
+            <a href="/faculty/attendance" className="btn-primary ml-auto text-sm">
+              Take Now
+            </a>
+          </div>
+        </Card>
+      )}
 
       <Tabs
         tabs={[

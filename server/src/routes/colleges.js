@@ -9,7 +9,7 @@ const router = Router();
 router.get('/', optionalAuth, asyncHandler(async (req, res) => {
   const { search } = req.query;
   const where = search ? { name: { contains: search, mode: 'insensitive' } } : {};
-  const colleges = await prisma.college.findMany({ where, orderBy: { name: 'asc' }, take: 30 });
+  const colleges = await prisma.college.findMany({ where, orderBy: { name: 'asc' } });
   res.json({ colleges });
 }));
 

@@ -52,6 +52,8 @@ const STUDENT_NAV = [
 
 const FACULTY_NAV = [
   { to: '/faculty', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/faculty/attendance', label: 'Take Attendance', icon: UserCheck },
+  { to: '/faculty/attendance/history', label: 'Attendance History', icon: CalendarDays },
   { to: '/faculty/students', label: 'My Students', icon: Users },
   { to: '/faculty/assignments', label: 'Assignments', icon: ClipboardList },
   { to: '/faculty/resources', label: 'Resources', icon: FolderOpen },
@@ -68,6 +70,7 @@ const ADMIN_NAV = [
   { to: '/admin/faculty', label: 'Faculty', icon: UserCircle2 },
   { to: '/admin/opportunities', label: 'Opportunities', icon: Briefcase },
   { to: '/admin/colleges', label: 'Colleges', icon: School },
+  { to: '/admin/faculty-assignment', label: 'Assign Faculty', icon: UserCircle2 },
   { to: '/admin/support', label: 'Support', icon: LifeBuoy },
   { to: '/support', label: 'Help Center', icon: LifeBuoy },
 ];

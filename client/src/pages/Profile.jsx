@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Save, UserCircle2, GraduationCap, MapPin, CheckCircle2, Camera } from 'lucide-react';
+import { Sparkles, Save, UserCircle2, GraduationCap, MapPin, CheckCircle2, Camera, BookOpen, Users, Hash, CalendarDays, AlertTriangle } from 'lucide-react';
 import { api } from '../lib/api';
 import { PageLoader, Card, Field, Badge, ErrorBanner, Avatar } from '../components/UI';
 import { useAsync } from '../components/UI';
 import PulsatingButton from '../components/PulsatingButton';
 import { useAuth } from '../context/AuthContext';
-
-const DEGREES = ['BCA', 'B.Tech', 'BBA', 'B.Sc', 'B.Com', 'BA', 'MCA', 'M.Tech', 'MBA', 'M.Sc', 'MA', 'M.Com', 'PhD', 'Other'];
 const SKILLS = ['Python', 'JavaScript', 'Java', 'C', 'C++', 'SQL', 'React', 'Node.js', 'Machine Learning', 'AI', 'Data Science', 'HTML', 'CSS', 'Flutter', 'UI/UX', 'Cloud', 'Docker', 'Cybersecurity'];
 const INTERESTS = ['AI/ML', 'Web Development', 'Data Science', 'Cybersecurity', 'Mobile Development', 'Cloud', 'Blockchain', 'UI/UX Design', 'Competitive Programming', 'Robotics'];
 const OPP_TYPES = ['internship', 'hackathon', 'training', 'scholarship', 'job', 'workshop', 'competition', 'fellowship', 'research', 'conference'];
@@ -15,6 +13,8 @@ const ROADMAP_STATUS = ['Not Started', 'Learning', 'Completed'];
 export default function Profile() {
   const { user, refreshMe } = useAuth();
   const { data, loading, reload } = useAsync(() => api.get('/students/me/profile'));
+  const { data: enrollmentData, reload: reloadEnrollment } = useAsync(() => api.get('/students/me/enrollment'));
+  const { data: coursesData } = useAsync(() => api.get('/students/courses'));
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -135,6 +135,40 @@ export default function Profile() {
       <ErrorBanner error={error} />
 
       <form onSubmit={submit} className="space-y-5">
+        {/* Current Enrollment */}
+        <Card>
+          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
+            <GraduationCap size={18} className="text-emerald-600" /> Enrollment
+          </h3>
+          {enrollmentData?.enrollment ? (
+            <div className="bg-emerald-50 rounded-xl border border-emerald-200 p-4">
+              <div className="flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl bg-emerald-600 flex items-center justify-center shrink-0">
+                  <GraduationCap size={20} className="text-white" />
+                </div>
+                <div>
+                  <p className="font-bold text-slate-800">{enrollmentData.enrollment.courseDetails?.name || 'N/A'}</p>
+                  <div className="flex flex-wrap items-center gap-3 mt-1">
+                    <span className="text-sm text-slate-600">Section {enrollmentData.enrollment.sectionDetails?.name || 'N/A'}</span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-sm text-slate-600">Semester {enrollmentData.enrollment.semester}</span>
+                    <span className="text-slate-300">·</span>
+                    <span className="text-sm text-slate-600">Year {enrollmentData.enrollment.year}</span>
+                    {enrollmentData.enrollment.enrollmentNumber && (
+                      <>
+                        <span className="text-slate-300">·</span>
+                        <span className="text-sm text-slate-600">{enrollmentData.enrollment.enrollmentNumber}</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <EnrollForm coursesData={coursesData} onEnrolled={() => { reload(); reloadEnrollment(); }} />
+          )}
+        </Card>
+
         <Card>
           <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2">
             <UserCircle2 size={18} className="text-brand-600" /> Basic details
@@ -143,8 +177,8 @@ export default function Profile() {
             <Field label="Degree">
               <select className="input" value={form.degree} onChange={set('degree')}>
                 <option value="">Select degree</option>
-                {DEGREES.map((d) => (
-                  <option key={d} value={d}>{d}</option>
+                {(coursesData?.courses || []).map((c) => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
                 ))}
               </select>
             </Field>
@@ -314,5 +348,84 @@ export default function Profile() {
         </div>
       </form>
     </div>
+  );
+}
+
+function EnrollForm({ coursesData, onEnrolled }) {
+  const [selectedCourse, setSelectedCourse] = useState('');
+  const [selectedSection, setSelectedSection] = useState('');
+  const [semester, setSemester] = useState(1);
+  const [enrollmentNumber, setEnrollmentNumber] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const courses = coursesData?.courses || [];
+  const selectedCourseData = courses.find(c => c.id === selectedCourse);
+  const availableSections = selectedCourseData?.sections?.filter(s => s.semester === Number(semester)) || [];
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSaving(true);
+    try {
+      await api.post('/students/enroll', {
+        courseId: selectedCourse,
+        sectionId: selectedSection,
+        semester: Number(semester),
+        enrollmentNumber,
+      });
+      onEnrolled();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (courses.length === 0) {
+    return (
+      <div className="text-center py-6">
+        <AlertTriangle size={24} className="text-amber-500 mx-auto mb-2" />
+        <p className="text-sm text-slate-500">No courses available. Contact your admin to add courses.</p>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <p className="text-sm text-slate-600">Select your course and section to enroll:</p>
+      {error && <p className="text-sm text-red-600 bg-red-50 p-2 rounded-lg">{error}</p>}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <Field label="Course">
+          <select className="input" value={selectedCourse} onChange={e => { setSelectedCourse(e.target.value); setSelectedSection(''); }} required>
+            <option value="">-- Select Course --</option>
+            {courses.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Semester">
+          <select className="input" value={semester} onChange={e => { setSemester(e.target.value); setSelectedSection(''); }} required>
+            {[1,2,3,4,5,6,7,8].map(s => (
+              <option key={s} value={s}>Semester {s}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Section">
+          <select className="input" value={selectedSection} onChange={e => setSelectedSection(e.target.value)} required disabled={!selectedCourse}>
+            <option value="">-- Select Section --</option>
+            {availableSections.map(s => (
+              <option key={s.id} value={s.id}>{s.name} ({s.enrollmentCount || 0}/{s.maxStudents} enrolled)</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Enrollment Number (optional)">
+          <input className="input" value={enrollmentNumber} onChange={e => setEnrollmentNumber(e.target.value)} placeholder="e.g. EN2026001" />
+        </Field>
+      </div>
+      <button type="submit" className="btn-primary" disabled={saving || !selectedCourse || !selectedSection}>
+        {saving ? 'Enrolling...' : 'Enroll Now'}
+      </button>
+    </form>
   );
 }

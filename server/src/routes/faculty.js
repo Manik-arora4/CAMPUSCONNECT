@@ -13,26 +13,52 @@ router.use(auth, requireFaculty);
 
 // GET /api/faculty/dashboard
 router.get('/dashboard', asyncHandler(async (req, res) => {
-  const [subjects, assignments, notices, events] = await Promise.all([
-    prisma.subject.findMany({ where: { college: req.user.college, faculty: req.user.id }, orderBy: { name: 'asc' } }),
-    prisma.assignment.findMany({ where: { college: req.user.college, faculty: req.user.id }, orderBy: { dueDate: 'asc' } }),
-    prisma.notice.findMany({ where: { college: req.user.college, createdBy: req.user.id }, orderBy: { date: 'desc' }, take: 10 }),
+  const facultyId = req.user.id;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const dayIndex = today.getDay();
+
+  const [subjects, assignments, notices, events, todaySessions, recentSessions] = await Promise.all([
+    prisma.subject.findMany({ where: { college: req.user.college, faculty: facultyId }, orderBy: { name: 'asc' } }),
+    prisma.assignment.findMany({ where: { college: req.user.college, faculty: facultyId }, orderBy: { dueDate: 'asc' } }),
+    prisma.notice.findMany({ where: { college: req.user.college, createdBy: facultyId }, orderBy: { date: 'desc' }, take: 10 }),
     prisma.event.findMany({ where: { college: req.user.college }, orderBy: { date: 'asc' }, take: 10 }),
+    prisma.attendanceSession.findMany({ where: { faculty: facultyId, date: { gte: today, lt: tomorrow } }, orderBy: { startTime: 'asc' } }),
+    prisma.attendanceSession.findMany({ where: { faculty: facultyId }, orderBy: { date: 'desc' }, take: 5 }),
   ]);
+
+  const subjectIds = subjects.map(s => s.id);
+  const timetableSlots = subjectIds.length
+    ? await prisma.timetableSlot.findMany({ where: { college: req.user.college, subject: { in: subjectIds }, day: dayIndex }, orderBy: { startTime: 'asc' } }).catch(() => [])
+    : [];
+
   const studentCount = await prisma.user.count({ where: { college: req.user.college, role: 'student' } });
+
+  // Get pending attendance sessions count
+  const pendingSessions = await prisma.attendanceSession.count({
+    where: { faculty: facultyId, status: 'draft' },
+  });
+
   res.json({
     stats: {
       classes: subjects.length,
       assignments: assignments.length,
       notices: notices.length,
       students: studentCount,
+      todaySessions: todaySessions.length,
+      pendingSessions,
     },
     subjects,
     assignments,
     notices,
     events,
+    todaySchedule: timetableSlots,
+    todaySessions,
+    recentSessions,
   });
-}));
+}))
 
 // GET /api/faculty/classes
 router.get('/classes', asyncHandler(async (req, res) => {
