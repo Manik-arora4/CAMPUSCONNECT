@@ -327,12 +327,23 @@ export default function Register() {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-white/80 mb-1.5">Section</label>
-                            <select value={form.section} onChange={set('section')} className={SELECT_CLS} required>
-                              <option value="" className="text-slate-900">-- Select --</option>
-                              {(dbCourses.find(c => c.name === form.degree)?.sections || []).filter(s => s.semester === Number(form.semester)).map(s => (
-                                <option key={s.id} value={s.name} className="text-slate-900">Section {s.name} (Sem {s.semester})</option>
-                              ))}
-                            </select>
+                            {(() => {
+                              const courseSections = (dbCourses.find(c => c.name === form.degree)?.sections || []).filter(s => s.semester === Number(form.semester));
+                              if (courseSections.length > 0) {
+                                return (
+                                  <select value={form.section} onChange={set('section')} className={SELECT_CLS} required>
+                                    <option value="" className="text-slate-900">-- Select --</option>
+                                    {courseSections.map(s => (
+                                      <option key={s.id} value={s.name} className="text-slate-900">Section {s.name}</option>
+                                    ))}
+                                  </select>
+                                );
+                              }
+                              // Fallback: manual section input
+                              return (
+                                <input value={form.section} onChange={set('section')} placeholder="e.g. A, B, C" className={INPUT_CLS.replace('pl-10', 'px-3.5')} required />
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
