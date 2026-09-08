@@ -30,15 +30,9 @@ if (import.meta.env.PROD) {
   // Block window.__NEXT_DATA__ and similar debug globals
   Object.defineProperty(window, '__REACT_DEVTOOLS_GLOBAL_HOOK__', { value: null });
   Object.defineProperty(window, '__VUE_DEVTOOLS_GLOBAL_HOOK__', { value: null });
-
-  // Override JSON.stringify to redact sensitive keys if accidentally logged
-  const _origStringify = JSON.stringify;
-  JSON.stringify = function (value, replacer, space) {
-    return _origStringify.call(this, value, (key, val) => {
-      if (typeof key === 'string' && /password|token|secret|api.?key|database.?url|jwt/i.test(key)) return '[REDACTED]';
-      return replacer ? replacer(key, val) : val;
-    }, space);
-  };
+  // NOTE: Do NOT override JSON.stringify here — redacting keys like "password"
+  // corrupts outgoing request bodies (login/register send "[REDACTED]") and
+  // breaks the app in production.
 }
 
 import React from 'react';
