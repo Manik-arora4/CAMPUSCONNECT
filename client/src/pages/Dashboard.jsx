@@ -276,7 +276,7 @@ export default function Dashboard() {
                     <BookOpen size={14} className="text-emerald-500" /> Semester {enrollmentData.enrollment.semester}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
-                    <Hash size={14} className="text-emerald-500" /> {enrollmentData.enrollment.enrollmentNumber || profile?.enrollmentNumber || 'N/A'}
+                    <Hash size={14} className="text-emerald-500" /> {enrollmentData.enrollment.enrollmentNumber || 'N/A'}
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-sm text-slate-600">
                     <CalendarDays size={14} className="text-emerald-500" /> Year {enrollmentData.enrollment.year}
