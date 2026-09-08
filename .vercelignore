@@ -1,6 +1,9 @@
 node_modules/
 server/node_modules/
 client/node_modules/
+# api/src is bundled into api/_app.cjs — do not deploy it as serverless functions
+# (Vercel Hobby plan allows max 12 functions per deployment)
+api/src/
 screenshots/
 campusconnect/screenshots/
 *.log
