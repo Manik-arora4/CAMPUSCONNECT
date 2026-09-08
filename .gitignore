@@ -35,3 +35,4 @@ Thumbs.db
 server/test-groq.js
 
 .vercel
+.env*
