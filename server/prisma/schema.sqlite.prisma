@@ -1,0 +1,180 @@
+// SQLite-compatible schema for local seed data testing
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model College {
+  id            String   @id @default(cuid())
+  name           String
+  code           String?  @unique
+  address        String   @default("")
+  city           String   @default("")
+  state          String   @default("")
+  website        String   @default("")
+  contactEmail   String   @default("")
+  contactPhone   String   @default("")
+  establishedYear Int?
+  logo           String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Department {
+  id       String   @id @default(cuid())
+  college   String
+  name      String
+  code      String?
+  head      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String
+  role              String    @default("student")
+  college           String?
+  avatar            String    @default("")
+  phone             String    @default("")
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  active            Boolean   @default(true)
+  lastLoginAt       DateTime?
+  onboarded         Boolean   @default(false)
+  designation       String    @default("")
+  inviteCode        String?
+  approved          Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Opportunity {
+  id                String   @id @default(cuid())
+  title              String
+  organization       String
+  category           String
+  description        String   @default("")
+  skillsRequired     String   @default("[]") // JSON string for SQLite
+  eligibility        String   @default("")
+  courseRestrictions String   @default("[]")
+  degreeRestrictions String   @default("[]")
+  yearMin            Int      @default(1)
+  yearMax            Int      @default(4)
+  semesterMin        Int      @default(1)
+  semesterMax        Int      @default(8)
+  mandatorySkills    String   @default("[]")
+  experienceLevel    String   @default("any")
+  location           String   @default("Remote")
+  mode               String   @default("remote")
+  stipend            String   @default("")
+  prize              String   @default("")
+  deadline           DateTime
+  postedDate         DateTime @default(now())
+  applyLink          String   @default("")
+  requirements       String   @default("[]")
+  applicationProcess String   @default("")
+  tags               String   @default("[]")
+  source             String   @default("admin")
+  externalId         String?
+  status             String   @default("pending")
+  verifiedBy         String?
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  college            String
+  title              String
+  description        String   @default("")
+  category           String   @default("general")
+  date               DateTime
+  startTime          String   @default("10:00")
+  endTime            String   @default("16:00")
+  location           String   @default("")
+  organizer          String   @default("")
+  registrationLink   String   @default("")
+  registeredStudents String   @default("[]")
+  savedBy            String   @default("[]")
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model Club {
+  id           String   @id @default(cuid())
+  college       String
+  name          String
+  description   String   @default("")
+  category      String   @default("technical")
+  logo          String   @default("")
+  facultyAdvisor String  @default("")
+  members       String   @default("[]")
+  followers     String   @default("[]")
+  announcements String   @default("[]")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Notice {
+  id         String   @id @default(cuid())
+  college     String
+  title       String
+  content     String
+  category    String   @default("general")
+  important   Boolean  @default(false)
+  date        DateTime @default(now())
+  expiryDate  DateTime?
+  attachments String   @default("[]")
+  createdBy   String?
+  aiSummary   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Application {
+  id         String   @id @default(cuid())
+  student     String
+  opportunity String
+  status      String   @default("saved")
+  notes       String   @default("")
+  appliedDate DateTime?
+  timeline    String   @default("[]")
+  aiAssist    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  user      String
+  category  String   @default("system")
+  title     String
+  message   String   @default("")
+  link      String   @default("")
+  icon      String   @default("bell")
+  read      Boolean  @default(false)
+  priority  String   @default("medium")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  user         String   @unique
+  notifications String   @default("{}")
+  defaultView  String   @default("dashboard")
+  weeklyDigest Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

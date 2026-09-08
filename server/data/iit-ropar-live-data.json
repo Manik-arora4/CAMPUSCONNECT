@@ -1,0 +1,134 @@
+{
+  "scrapedAt": "2026-08-25T10:19:25.512Z",
+  "source": "IIT Ropar Official Website",
+  "departments": [
+    "Applied Research in Data Sciences (CARDS)",
+    "Drone and Autonomous System (DRAS)",
+    "Research for Energy and Decarbonization (CREED)"
+  ],
+  "events": [
+    {
+      "title": "Hackathon on AI for Social Good",
+      "category": "hackathon",
+      "date": "2026-02-06",
+      "location": "CS Block, IIT Ropar",
+      "description": "24-hour coding marathon where teams build innovative AI solutions. Mentorship from industry experts.",
+      "tags": [
+        "ai",
+        "social-good",
+        "hackathon"
+      ]
+    },
+    {
+      "title": "AI Fusion Prompt",
+      "category": "hackathon",
+      "date": "2026-02-06",
+      "location": "IIT Ropar",
+      "description": "Fast-paced prompt engineering hackathon focused on leveraging large language models through creative prompting.",
+      "tags": [
+        "ai",
+        "llm",
+        "prompt-engineering"
+      ]
+    },
+    {
+      "title": "AI Magination — AI Synthesis Recreation Challenge",
+      "category": "hackathon",
+      "date": "2026-02-08",
+      "location": "IIT Ropar",
+      "description": "Creative AI challenge exploring AI-driven synthesis, recreation, and generative techniques across text, image, audio, and multimedia.",
+      "tags": [
+        "ai",
+        "generative-ai",
+        "creative"
+      ]
+    },
+    {
+      "title": "DeployAI 2026 Winter School",
+      "category": "workshop",
+      "date": "2026-12-07",
+      "location": "IIT Ropar",
+      "description": "Winter school covering AI deployment, model serving, MLOps, and production AI systems.",
+      "tags": [
+        "ai",
+        "mlops",
+        "winter-school"
+      ]
+    },
+    {
+      "title": "Workshop for Internal Security and Public Safety",
+      "category": "workshop",
+      "date": "2026-02-05",
+      "location": "Main Auditorium, IIT Ropar",
+      "description": "Introductory workshop on AI for Punjab police. Covers cybercrime, ethical and legal considerations.",
+      "tags": [
+        "ai",
+        "security",
+        "workshop"
+      ]
+    }
+  ],
+  "opportunities": [
+    {
+      "title": "Research Internship — ARC Lab (Communications & ML)",
+      "organization": "Advance Research in Communications (ARC) Lab, IIT Ropar",
+      "category": "internship",
+      "description": "Paid internship at ARC Lab working on ML for Communications, 6G, UAV systems, and Distributed Radar. Up to ₹15,000/month based on merit. Minimum 6 months.",
+      "skillsRequired": [
+        "Python",
+        "MATLAB",
+        "C/C++",
+        "Machine Learning",
+        "Signal Processing"
+      ],
+      "eligibility": "B.Tech/M.Tech students with communication/ML background.",
+      "stipend": "Up to ₹15,000/month",
+      "location": "IIT Ropar",
+      "mode": "onsite",
+      "applyLink": "https://sites.google.com/iitrpr.ac.in/satyam/vacancies",
+      "tags": [
+        "communications",
+        "ml",
+        "6g",
+        "paid-internship"
+      ]
+    },
+    {
+      "title": "JRF Position — ARC Lab, IIT Ropar",
+      "organization": "Advance Research in Communications (ARC) Lab, IIT Ropar",
+      "category": "job",
+      "description": "Junior Research Fellow position. Work on cutting-edge communications R&D. Potential to continue as PhD/MTech. Rolling applications.",
+      "skillsRequired": [
+        "MATLAB",
+        "Python",
+        "C/C++",
+        "Signal Processing"
+      ],
+      "eligibility": "GATE/NET qualified preferred. B.Tech/M.Tech in EE/ECE/CS.",
+      "stipend": "₹4.88 LPA (with GATE/NET); ₹3.3 LPA (without)",
+      "location": "IIT Ropar",
+      "mode": "onsite",
+      "applyLink": "https://sites.google.com/iitrpr.ac.in/satyam/vacancies",
+      "tags": [
+        "jrf",
+        "research",
+        "communications",
+        "paid"
+      ]
+    }
+  ],
+  "metadata": {
+    "urls": {
+      "summerInternship": "https://www.iitrpr.ac.in/studentportal/summerinternship-2026",
+      "internshipAdmissions": "https://www.iitrpr.ac.in/internship-admissions",
+      "saideEvents": "https://saide.iitrpr.ac.in/events",
+      "projectPositions": "https://www.iitrpr.ac.in/project-positions",
+      "eeNews": "https://www.iitrpr.ac.in/ee/news.php",
+      "tbifEvents": "https://www.iitrpr.ac.in/tbif/events",
+      "jobs": "https://www.iitrpr.ac.in/jobs"
+    },
+    "totalDepartments": 3,
+    "totalEvents": 5,
+    "totalOpportunities": 2
+  }
+}

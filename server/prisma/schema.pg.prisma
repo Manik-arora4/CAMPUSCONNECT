@@ -1,0 +1,511 @@
+// CAMPUSCONNECT — PostgreSQL schema (Supabase)
+// Field names mirror the original MongoDB/Mongoose models so the API + frontend
+// shapes stay identical: every row has `_id` (cuid), `createdAt`, `updatedAt`.
+// Subdocuments (skills, submissions, timeline, aiSummary, analysis, …) are JSON columns.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  name              String
+  email             String    @unique
+  password          String
+  role              String    @default("student")
+  college           String?
+  avatar            String    @default("")
+  phone             String    @default("")
+  emailVerified     Boolean   @default(false)
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+  active            Boolean   @default(true)
+  lastLoginAt       DateTime?
+  onboarded         Boolean   @default(false)
+  designation       String    @default("")
+  inviteCode        String?   // for admin approval system
+  approved          Boolean   @default(false) // admin/faculty need approval
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([college])
+  @@index([role])
+  @@index([inviteCode])
+}
+
+model StudentProfile {
+  id                       String   @id @default(cuid())
+  user                      String   @unique
+  college                   String?
+  degree                    String   @default("")  // BCA, B.Tech, BBA, etc.
+  course                    String   @default("")
+  semester                  Int      @default(1)
+  year                      Int      @default(1)    // academic year
+  section                   String   @default("")
+  enrollmentNumber          String   @default("")
+  bio                       String   @default("")
+  linkedin                  String   @default("")
+  github                    String   @default("")
+  portfolio                 String   @default("")
+  skills                    Json     @default("[]") // [{ name, level }]
+  interests                 String[] @default([])
+  careerGoal                String   @default("")
+  roadmap                   Json     @default("[]") // [{ skill, status, order }]
+  preferredLocation         String   @default("")
+  remotePreference          String   @default("any")
+  weeklyLearningHours       Int      @default(10)
+  preferredOpportunityTypes String[] @default([])
+  experienceYears           Int      @default(0)
+  resume                    String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([college])
+}
+
+model College {
+  id            String   @id @default(cuid())
+  name           String
+  code           String?  @unique
+  address        String   @default("")
+  city           String   @default("")
+  state          String   @default("")
+  website        String   @default("")
+  contactEmail   String   @default("")
+  contactPhone   String   @default("")
+  establishedYear Int?
+  logo           String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model Department {
+  id       String   @id @default(cuid())
+  college   String
+  name      String
+  code      String?
+  head      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([college, name])
+  @@index([college])
+}
+
+model Subject {
+  id        String   @id @default(cuid())
+  college    String
+  department String?
+  name       String
+  code       String?
+  semester   Int      @default(1)
+  faculty    String?
+  color      String   @default("#6366f1")
+  credits    Int      @default(3)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([college])
+  @@index([semester])
+  @@index([faculty])
+  @@index([department])
+}
+
+model TimetableSlot {
+  id         String   @id @default(cuid())
+  student     String
+  college     String?
+  subject     String?
+  subjectName String
+  teacherName String   @default("")
+  room        String   @default("")
+  day         Int
+  startTime   String
+  endTime     String
+  color       String   @default("#6366f1")
+  type        String   @default("class")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([student])
+  @@index([student, day, startTime])
+  @@index([day])
+}
+
+model Attendance {
+  id         String   @id @default(cuid())
+  student     String
+  subject     String?
+  subjectName String
+  date        DateTime
+  status      String
+  markedBy    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([student, subject, date])
+  @@index([student])
+  @@index([date])
+}
+
+model Assignment {
+  id         String   @id @default(cuid())
+  college     String
+  subject     String?
+  subjectName String   @default("")
+  faculty     String?
+  semester    Int      @default(1)
+  title       String
+  description String   @default("")
+  type        String   @default("assignment")
+  dueDate     DateTime
+  priority    String   @default("medium")
+  maxMarks    Int      @default(100)
+  attachments String[] @default([])
+  submissions Json     @default("[]") // [{ student, status, submittedAt, marks }]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([college])
+  @@index([semester])
+  @@index([dueDate])
+  @@index([faculty])
+  @@index([subject])
+}
+
+model Task {
+  id         String   @id @default(cuid())
+  user        String
+  title       String
+  description String   @default("")
+  subject     String   @default("")
+  category    String   @default("study")
+  dueDate     DateTime?
+  priority    String   @default("medium")
+  status      String   @default("todo")
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([user])
+  @@index([user, status])
+}
+
+model Exam {
+  id         String   @id @default(cuid())
+  college     String
+  title       String
+  subject     String?
+  subjectName String   @default("")
+  semester    Int      @default(1)
+  date        DateTime
+  startTime   String   @default("10:00")
+  endTime     String   @default("13:00")
+  room        String   @default("")
+  maxMarks    Int      @default(100)
+  type        String   @default("midterm")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([college])
+  @@index([semester])
+  @@index([date])
+  @@index([subject])
+}
+
+model Notice {
+  id         String   @id @default(cuid())
+  college     String
+  title       String
+  content     String
+  category    String   @default("general")
+  important   Boolean  @default(false)
+  date        DateTime @default(now())
+  expiryDate  DateTime?
+  attachments String[] @default([])
+  createdBy   String?
+  aiSummary   Json? // { summary, importantDates, deadline, actionRequired, examDetails, generatedAt }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([college])
+  @@index([category])
+  @@index([date])
+}
+
+model Event {
+  id                String   @id @default(cuid())
+  college            String
+  title              String
+  description        String   @default("")
+  category           String   @default("general")
+  date               DateTime
+  startTime          String   @default("10:00")
+  endTime            String   @default("16:00")
+  location           String   @default("")
+  organizer          String   @default("")
+  registrationLink   String   @default("")
+  registeredStudents String[] @default([])
+  savedBy            String[] @default([])
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([college])
+  @@index([date])
+}
+
+model Club {
+  id           String   @id @default(cuid())
+  college       String
+  name          String
+  description   String   @default("")
+  category      String   @default("technical")
+  logo          String   @default("")
+  facultyAdvisor String  @default("")
+  members       String[] @default([])
+  followers     String[] @default([])
+  announcements Json     @default("[]") // [{ title, content, date }]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([college])
+}
+
+model Opportunity {
+  id                String   @id @default(cuid())
+  title              String
+  organization       String
+  category           String
+  description        String   @default("")
+  skillsRequired     String[] @default([])
+  eligibility        String   @default("")
+  courseRestrictions String[] @default([])
+  degreeRestrictions String[] @default([])  // BCA, B.Tech, BBA, etc.
+  yearMin            Int      @default(1)   // minimum year required
+  yearMax            Int      @default(4)   // maximum year allowed
+  semesterMin        Int      @default(1)
+  semesterMax        Int      @default(8)
+  mandatorySkills    String[] @default([])  // hard requirements
+  experienceLevel    String   @default("any")
+  location           String   @default("Remote")
+  mode               String   @default("remote")
+  stipend            String   @default("")
+  prize              String   @default("")
+  deadline           DateTime
+  postedDate         DateTime @default(now())
+  applyLink          String   @default("")
+  requirements       String[] @default([])
+  applicationProcess String   @default("")
+  tags               String[] @default([])
+  source             String   @default("admin")
+  externalId         String?
+  status             String   @default("pending")
+  verifiedBy         String?
+  createdBy          String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([category, status, deadline])
+  @@index([status])
+  @@index([deadline])
+  @@index([mode])
+}
+
+model Application {
+  id         String   @id @default(cuid())
+  student     String
+  opportunity String
+  status      String   @default("saved")
+  notes       String   @default("")
+  appliedDate DateTime?
+  timeline    Json     @default("[]") // [{ status, at }]
+  aiAssist    Json? // { coverLetter, introduction, whyYou, generatedAt }
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([student, opportunity])
+  @@index([student])
+  @@index([opportunity])
+  @@index([status])
+}
+
+model Resume {
+  id           String   @id @default(cuid())
+  student       String
+  filename      String
+  filePath      String
+  fileType      String   @default("application/pdf")
+  fileSize      Int      @default(0)
+  extractedText String   @default("")
+  analysis      Json? // { score, parsed, strengths, weaknesses, missingSkills, improvements, atsFriendly, generatedAt }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([student])
+}
+
+model Notification {
+  id       String   @id @default(cuid())
+  user      String
+  category  String   @default("system")
+  title     String
+  message   String   @default("")
+  link      String   @default("")
+  icon      String   @default("bell")
+  read      Boolean  @default(false)
+  priority  String   @default("medium")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([user])
+  @@index([user, read])
+  @@index([createdAt])
+}
+
+model AIPlan {
+  id       String   @id @default(cuid())
+  student   String
+  date      DateTime
+  title     String   @default("Your AI Daily Plan")
+  items     Json     @default("[]") // [{ time, title, type, status, source }]
+  summary   String   @default("")
+  source    String   @default("daily")
+  accepted  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([student, date])
+  @@index([student])
+}
+
+model RecommendationEvent {
+  id         String   @id @default(cuid())
+  user        String
+  type        String
+  opportunity String?
+  category    String   @default("")
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([user])
+  @@index([user, type])
+  @@index([opportunity])
+}
+
+model Resource {
+  id         String   @id @default(cuid())
+  college     String
+  title       String
+  description String   @default("")
+  subjectName String   @default("")
+  semester    Int      @default(1)
+  url         String   @default("")
+  type        String   @default("pdf")
+  faculty     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([college])
+  @@index([faculty])
+}
+
+model PushSubscription {
+  id          String   @id @default(cuid())
+  user        String
+  endpoint    String
+  p256dh      String
+  auth        String
+  userAgent   String   @default("")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([user, endpoint])
+  @@index([user])
+  @@index([user, active])
+}
+
+model UserPreference {
+  id          String   @id @default(cuid())
+  user         String   @unique
+  notifications Json    @default("{}") // { email, push, deadlineReminders, collegeAnnouncements, aiRecommendations, attendanceAlerts }
+  defaultView  String   @default("dashboard")
+  weeklyDigest Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model FacultyProfile {
+  id              String   @id @default(cuid())
+  user            String   @unique
+  college         String?
+  employeeId      String   @default("")
+  department      String   @default("")
+  designation     String   @default("")  // Professor, Asst Professor, etc.
+  subjects        String[] @default([])
+  classes         String[] @default([])
+  bio             String   @default("")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([college])
+}
+
+model Message {
+  id         String   @id @default(cuid())
+  senderId    String
+  receiverId  String
+  content     String
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([senderId, receiverId])
+}
+
+model SupportTicket {
+  id          String   @id @default(cuid())
+  user        String
+  subject     String
+  category    String   @default("general")
+  description String
+  priority    String   @default("medium")
+  attachment  String   @default("")
+  userRole    String   @default("student")
+  status      String   @default("open") // open | in_progress | resolved | closed
+  assignedTo  String?
+  response    String   @default("")
+  responseAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([user])
+  @@index([status])
+  @@index([user, status])
+  @@index([assignedTo])
+  @@index([createdAt])
+}
+
+model FAQ {
+  id         String   @id @default(cuid())
+  question   String
+  answer     String
+  category   String   @default("general")
+  order      Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([category])
+  @@index([active])
+}
