@@ -158,7 +158,7 @@ export default function College() {
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-slate-800 truncate">{s.name}</p>
-                    {s.faculty ? <p className="text-xs text-slate-500 truncate">Taught by faculty</p> : null}
+                    {s.facultyName ? <p className="text-xs text-slate-500 truncate">👨‍🏫 {s.facultyName}</p> : s.faculty ? <p className="text-xs text-slate-400 truncate">Taught by faculty</p> : null}
                   </div>
                   {s.semester ? <Badge className="bg-indigo-50 text-indigo-700">Sem {s.semester}</Badge> : null}
                 </div>
