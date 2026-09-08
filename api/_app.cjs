@@ -38299,9 +38299,9 @@ var require_lib4 = __commonJS({
   }
 });
 
-// ../../node_modules/bcryptjs/dist/bcrypt.js
+// node_modules/bcryptjs/dist/bcrypt.js
 var require_bcrypt = __commonJS({
-  "../../node_modules/bcryptjs/dist/bcrypt.js"(exports2, module2) {
+  "node_modules/bcryptjs/dist/bcrypt.js"(exports2, module2) {
     (function(global2, factory) {
       if (typeof define === "function" && define["amd"])
         define([], factory);
@@ -40110,9 +40110,9 @@ var require_bcrypt = __commonJS({
   }
 });
 
-// ../../node_modules/bcryptjs/index.js
+// node_modules/bcryptjs/index.js
 var require_bcryptjs = __commonJS({
-  "../../node_modules/bcryptjs/index.js"(exports2, module2) {
+  "node_modules/bcryptjs/index.js"(exports2, module2) {
     module2.exports = require_bcrypt();
   }
 });
@@ -46149,7 +46149,7 @@ app.use(rateLimit({
   message: { error: "Too many requests. Please try again later." }
 }));
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "2.0.0" });
+  res.json({ status: "ok", timestamp: (/* @__PURE__ */ new Date()).toISOString(), version: "2.1.0-bcrypt" });
 });
 app.use("/api/auth", require_auth2());
 app.use("/api/student", require_student());
@@ -46513,4 +46513,3 @@ bcryptjs/dist/bcrypt.js:
    * see: https://github.com/dcodeIO/bcrypt.js for details
    *)
 */
-
